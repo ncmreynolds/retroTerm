@@ -155,6 +155,10 @@ Once in the loop all it does is.
 - Check for button clicks and print in the scrolling window when this happens.
 - Run a housekeeping routine. This does all screen updating and processing of inputs, normally you should run it frequently. The more frequently it runs, the more responsive the application will be to inputs. If you are expecting no inputs, it is OK to run it only when you have changed the widgets.
 
+This example should look like this in a terminal.
+
+![](examples\Example04_singleButton\images\singleButton.png)
+
 **[Back to top](#table-of-contents)**
 
 # Release Process
