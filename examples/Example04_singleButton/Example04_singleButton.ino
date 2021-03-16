@@ -11,6 +11,7 @@ void setup() {
   terminal.enableMouse(); //Capture the mouse so it can be used with widgets
   terminal.setScrollWindow(4,12); //Set up somewhere to show the events without disrupting the button
   buttonId = terminal.newButton(1, 1, 15, 3, F("Button label"), COLOUR_GREEN, OUTER_BOX | BOX_SINGLE_LINE); //Create a green button in a box
+  terminal.widgetShortcutKey(buttonId,f1Pressed); //Assign a shortcut key of F1
   terminal.showWidget(buttonId); //Make the button visible, all widgets start 'invisible' for later display
 }
 

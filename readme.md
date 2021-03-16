@@ -1,8 +1,8 @@
 # retroTerm
 
-retroTerm is an Arduino library for creating user interfaces in a terminal emulator.
+retroTerm is an Arduino library for creating user interfaces in a terminal emulator for a microcontroller.
 
-Now that many microcontrollers have Bluetooth or Wi-Fi it might seem superfluous but there are many examples that do not and occasions when you want to configure or interact with them without having a network available.
+Now that many microcontrollers have Bluetooth or Wi-Fi it might seem superfluous but there are also many that do not and occasions when you want to configure or interact with them without having a network available.
 
 retroTerm allows you to create clickable 'buttons', 'checkboxes', 'option lists' and so on plus also simple line editing of text.
 
@@ -43,7 +43,8 @@ This project was originally created to help with making a fake 'mainframe' that 
 - Limit scrolling to certain regions
 - Set various character colours/attributes
 - Print at specific co-ordinates
-- Enable 'capture' of the mouse and respond to clicks
+- Draw boxes
+- Enable 'capture' of the mouse and record clicks
 
 ### Widget features
 
@@ -53,9 +54,13 @@ Creation and management of GUI-esque objects
 * Checkboxes
 * Radio buttons
 * Option lists
-* Text boxes with line editing of text with support for 'expected' features like home/end/insert/delete
+* Text boxes (editable text) single line editing of text, with support for 'expected' behaviour like home/end/insert/delete and the arrow keys
 * Text boxes (fixed text) with scrollbars, word wrapping and basic markdown support
-* Text boxes (changing text) for 'logging'
+* Text boxes (changing text) for 'logging' windows that scroll content
+* Keyboard shortcuts for use without a mouse
+* Basic styling for widget outlines/labels
+
+As you might expect, this library can use a lot of working memory. There is explicit support for storing strings in flash memory using the F() macro. You should use this whenever possible for things like labels on buttons that will not change.
 
 **[Back to top](#table-of-contents)**
 
@@ -119,6 +124,7 @@ void setup() {
   terminal.enableMouse(); //Capture the mouse so it can be used with widgets
   terminal.setScrollWindow(4,12); //Set up somewhere to show the events without disrupting the button
   buttonId = terminal.newButton(1, 1, 15, 3, F("Button label"), COLOUR_GREEN, OUTER_BOX | BOX_SINGLE_LINE); //Create a green button in a box
+  terminal.widgetShortcutKey(buttonId,f1Pressed); //Assign a shortcut key of F1
   terminal.showWidget(buttonId); //Make the button visible, all widgets start 'invisible' for later display
 }
 
@@ -133,7 +139,7 @@ void loop() {
 
 It includes the library then assigns a global variable for the widget. Widgets have simple numeric IDs from 1-255, 0 is considered invalid. If you delete a button its ID may be re-used.
 
-Effective setup for displaying widgets needs a few steps.
+Effective setup for displaying widgets needs quite a few steps, but is then simpler to interact with.
 
 - Pass the library the Stream used for display. Normally this is 'Serial' but it could be another Stream, for example Serial2.
 - Erase the screen to clear any mess from startup. Not necessary on all microcontrollers but ESP8266 & ESP32 output boot messages.
@@ -141,6 +147,7 @@ Effective setup for displaying widgets needs a few steps.
 - Enable the mouse, otherwise you will have to rely on keyboard shortcuts for interaction.
 - Set a scroll window. This is not a widget, but reduces the scrolling region of the terminal, making for trivial diagnostic/logging output.
 - Create the widget.
+- Assign a shortcut key to the widget. If you press the shortcut key it registers as a 'click'.
 - Make the widget visible.
 
 Once in the loop all it does is.
