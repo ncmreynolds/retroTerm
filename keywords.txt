@@ -53,6 +53,8 @@ mouseX	KEYWORD2
 mouseY	KEYWORD2
 mouseButtonDown	KEYWORD2
 mouseButtonUp	KEYWORD2
+mouseWheelDown	KEYWORD2
+mouseWheelUp	KEYWORD2
 
 //Boxes
 drawBox	KEYWORD2
