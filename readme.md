@@ -1,15 +1,14 @@
-# Project Title
+# retroTerm
 
-Provide an introductory paragraph, describing:
+retroTerm is an Arduino library for creating user interfaces in a terminal emulator.
 
-* What your project does
-* Why people should consider using your project
-* Link to project home page
+Now that many microcontrollers have Bluetooth or Wi-Fi it might seem superfluous but there are many examples that do not and occasions when you want to configure them without having a network available.
+
+retroTerm allows you to create clickable 'buttons', 'checkboxes', 'option lists' and so on plus also simple line editing of text.
 
 ## Table of Contents
 
-1. [About the Project](#about-the-project)
-1. [Project Status](#project-status)
+1. [About retoTerm](#about-the-project)
 1. [Getting Started](#getting-started)
 	1. [Dependencies](#dependencies)
 	1. [Building](#building)
@@ -25,9 +24,12 @@ Provide an introductory paragraph, describing:
 1. [Authors](#authors)
 1. [Acknowledgements](#acknowledgements)
 
-# About the Project
+# About retroTerm
 
-Here you can provide more details about the project
+retroTerm is an Arduino library for creating user interfaces in a terminal emulator.
+
+By default this is expected to be the Serial interface, but it could also be any Stream. Testing is done with the popular terminal emulator [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/) as it is open and supports many terminal features others do not. Please use PuTTY first before reporting issues. The Arduino IDE terminal is not useful, it supports almost no ANSI/VT terminal features.
+
 * What features does your project provide?
 * Short motivation for the project? (Don't be too long winded)
 * Links to the project site
@@ -39,42 +41,29 @@ Show some of your APIs
 
 **[Back to top](#table-of-contents)**
 
-# Project Status
-
-Show the build status if you have a CI server:
-
-[![Build Status](http://your-server:12345/job/badge/icon)](http://your-server:12345/job/http://your-server:12345/job/badge/icon/)
-
-Describe the current release and any notes about the current state of the project. Examples: currently compiles on your host machine, but is not cross-compiling for ARM, APIs are not set, feature not implemented, etc.
-
-**[Back to top](#table-of-contents)**
-
 # Getting Started
 
-This section should provide instructions for other developers to
+From the project page, select 'Code' -> 'Download ZIP' and save the file somewhere appropriate.
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+You can then install in the Arduino IDE by choosing 'Sketch' -> 'Include Library' -> 'Add .ZIP Library...'.
+
+You should try the first two example sketches to check it works with your terminal emulator, then try the 'Alarm Clock' example which is a very simple application that will work on most microcontrollers.
+
+Examples are found under After installation, the example will be available under "File" -> "Examples" -> "retroTerm" in the Arduino IDE.
+
+[Capability Test](examples/Example01_terminalCapabilityTests/readme/md)
+
+[Widget Test](examples/Example02_widgetTests/readme.md)
+
+[Alarm Clock](examples/Example03_alarmClock/readme.md)
 
 ## Dependencies
 
-Describe what software and libraries you will need to install in order to build and use this project. Provide details on how to resolve these dependencies.
-
-Remember: git-lfs is a dependency that developers will need to resolve before they can get started with a repo using LFS.
-
-```
-Examples should be included
-```
+This library has no specific dependencies, but you will need a fully featured terminal emulator that can connect to your target microcontroller over a serial or USB-serial interface. Testing is done with [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/) and it is strongly recommend you start with using this.
 
 ## Getting the Source
 
-Include a link to your github reposistory (you have no idea how people will find your code), and also a summary of how to clone.
-
-
-This project is [hosted on GitHub](https://github.com/embeddedartistry/embedded-resources). You can clone this project directly using this command:
-
-```
-git clone git@github.com:embeddedartistry/embedded-resources.git
-```
+This project is [hosted on GitHub](https://github.com/ncmreynolds/retroTerm).
 
 ## Building
 
@@ -122,7 +111,7 @@ Talk about the release process. How are releases made? What cadence? How to get 
 
 ## Versioning
 
-This project uses [Semantic Versioning](http://semver.org/). For a list of available versions, see the [repository tag list](https://github.com/your/project/tags).
+This project uses [Semantic Versioning](http://semver.org/). For a list of available versions, see the [repository tag list](https://github.com/ncmreynolds/retroTerm/tags).
 
 ## Payload
 
@@ -134,21 +123,27 @@ Provide any instructions or contact information for users who need to get furthe
 
 # Contributing
 
-Provide details about how people can contribute to your project. If you have a contributing guide, mention it here. e.g.:
-
 We encourage public contributions! Please review [CONTRIBUTING.md](docs/CONTRIBUTING.md) for details on our code of conduct and development process.
 
 **[Back to top](#table-of-contents)**
 
 # Further Reading
 
-Provide links to other relevant documentation here
+Serial 'dumb' terminals got quite smart over time, I took information from a variety of sources to help write this library including the ones linked below.
+
+[VT100.net](https://www.vt100.net/)
+
+[ascii-table.com](http://ascii-table.com/ansi-escape-sequences-vt-100.php)
+
+[Paul Bourke's list of VT commands](http://braun-home.net/michael/info/misc/VT100_commands.htm)
+
+[libvterm-ctrl](https://github.com/BryanHaley/libvterm-ctrl)
 
 **[Back to top](#table-of-contents)**
 
 # License
 
-Copyright (c) 2017 Embedded Artistry LLC
+Copyright (c) 2021 Nick Reynolds
 
 This project is licensed under the MIT License - see [LICENSE.md](LICENSE.md) file for details.
 
@@ -156,16 +151,12 @@ This project is licensed under the MIT License - see [LICENSE.md](LICENSE.md) fi
 
 # Authors
 
-* **[Phillip Johnston](https://github.com/phillipjohnston)** - *Initial work* - [Embedded Artistry](https://github.com/embeddedartistry)
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+* **[Nick Reynolds](https://github.com/ncmreynolds)** 
 
 **[Back to top](#table-of-contents)**
 
 # Acknowledgments
 
-Provide proper credits, shoutouts, and honorable mentions here. Also provide links to relevant repositories, blog posts, or contributors worth mentioning.
-
-Give proper credits. This could be a link to any repo which inspired you to build this project, any blogposts or links to people who contributed in this project. If you used external code, link to the original source.
+This project wouldn't be useful without the excellent open source terminal emulator [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/), which I have used for what feels like decades.
 
 **[Back to top](#table-of-contents)**
