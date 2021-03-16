@@ -463,6 +463,8 @@ class retroTerm
 		uint8_t mouseY();						//Returns last reported mouse Y
 		bool mouseButtonDown();					//Mouse button down event. Resets on read
 		bool mouseButtonUp();					//Mouse button up event. Resets on read
+		bool mouseWheelDown();					//Mouse wheel down. Resets on read
+		bool mouseWheelUp();					//Mouse wheel up. Resets on read
 				
 		//Box drawing convenience methods to avoid the tedious looking at unicode tables, they are overloaded heavily so be careful when calling
 		

@@ -3872,6 +3872,34 @@ bool retroTerm::mouseButtonUp()
 	return(false);
 }
 #if defined(ESP8266) || defined(ESP32)
+bool ICACHE_FLASH_ATTR retroTerm::mouseWheelDown()
+#else
+bool retroTerm::mouseWheelDown()
+#endif
+{
+	if(_mouseStatus & 0x10)
+	{
+		_mouseStatus = _mouseStatus & 0xEF;
+		return(true);
+	}
+	return(false);
+}
+#if defined(ESP8266) || defined(ESP32)
+bool ICACHE_FLASH_ATTR retroTerm::mouseWheelUp()
+#else
+bool retroTerm::mouseWheelUp()
+#endif
+{
+	if(_mouseStatus & 0x20)
+	{
+		_mouseStatus = _mouseStatus & 0xDF;
+		return(true);
+	}
+	return(false);
+}
+
+
+#if defined(ESP8266) || defined(ESP32)
 bool ICACHE_FLASH_ATTR retroTerm::widgetVisible(const uint8_t widgetId)		//Is this widget visible
 #else
 bool retroTerm::widgetVisible(const uint8_t widgetId)					//Is this widget visible

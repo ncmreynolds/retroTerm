@@ -63,13 +63,13 @@ void eightColourDemo()
   terminal.println();
   
   terminal.print(F("Testing green background - "));
-  terminal.attributes(BACKGROUND_COLOUR_GREEN);
+  terminal.attributes(COLOUR_BLACK | BACKGROUND_COLOUR_GREEN);
   terminal.print(F("Green Background"));
   terminal.resetAttributes();
   terminal.println();
   
   terminal.print(F("Testing yellow background - "));
-  terminal.attributes(BACKGROUND_COLOUR_YELLOW);
+  terminal.attributes(COLOUR_BLACK | BACKGROUND_COLOUR_YELLOW);
   terminal.print(F("Yellow Background"));
   terminal.resetAttributes();
   terminal.println();
@@ -87,13 +87,13 @@ void eightColourDemo()
   terminal.println();
   
   terminal.print(F("Testing cyan background - "));
-  terminal.attributes(BACKGROUND_COLOUR_CYAN);
+  terminal.attributes(COLOUR_BLACK | BACKGROUND_COLOUR_CYAN);
   terminal.print(F("Cyan Background"));
   terminal.resetAttributes();
   terminal.println();
   
   terminal.print(F("Testing white background - "));
-  terminal.attributes(BACKGROUND_COLOUR_WHITE);
+  terminal.attributes(COLOUR_BLACK | BACKGROUND_COLOUR_WHITE);
   terminal.print(F("White Background"));
   terminal.resetAttributes();
   terminal.println();

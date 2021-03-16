@@ -1,6 +1,6 @@
 void mouseDemo()
 {
-  newPage(F("Mouse capture test - prints D at mouse button down, U at mouse button up"));
+  newPage(F("Mouse capture test - prints D at mouse button down, U at mouse button up, N at wheel up, S at wheel down"));
   terminal.moveCursorTo(1,terminal.lines());
   terminal.print(F("Press any key to continue, or wait 30s"));
   terminal.hideCursor();
@@ -16,6 +16,14 @@ void mouseDemo()
     if(terminal.mouseButtonUp())
     {
       terminal.printAt(terminal.mouseX(),terminal.mouseY(),"U");
+    }
+    if(terminal.mouseWheelDown())
+    {
+      terminal.printAt(terminal.mouseX(),terminal.mouseY(),"N");
+    }
+    if(terminal.mouseWheelUp())
+    {
+      terminal.printAt(terminal.mouseX(),terminal.mouseY(),"S");
     }
   }
   terminal.readKeypress();
