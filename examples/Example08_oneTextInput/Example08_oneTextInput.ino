@@ -24,8 +24,7 @@ void loop() {
   if(terminal.contentChanged(widgetId)){ //This clears the 'changed' flag on checking
     terminal.scroll(terminal.retrieveContent(widgetId)); //Print inside the scroll window
   }
-  //if(terminal.keyPressed() == enterPressed){ //The 'enter' key is not captured by the widget and can be read normally
-  if(terminal.keyPressed()){
+  if(terminal.keyPressed() && terminal.readKeypress()){ //The 'enter' key and many others are not captured by the widget and can be read normally
     terminal.scroll(terminal.retrieveContent(widgetId)); //Print inside the scroll window
     terminal.clearContent(widgetId); //Clear the content and start again
   }

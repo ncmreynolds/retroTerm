@@ -876,7 +876,7 @@ void retroTerm::_displayLabel(const uint8_t widgetIndex)
 		}
 		if(_widgets[widgetIndex].type == _widgetTypes::checkbox || _widgets[widgetIndex].type == _widgetTypes::radioButton)
 		{
-			//xOffset++;
+			xOffset++;	//Step past the unicode character used for the checbox or radio button
 			availableWidth--;
 		}
 		clearBox(_widgets[widgetIndex].x + xOffset, _widgets[widgetIndex].y + yOffset, availableWidth, 1,  _widgets[widgetIndex].labelAttributes);
@@ -4844,6 +4844,10 @@ void retroTerm::widgetShortcutKey(uint8_t widgetId, uint8_t shortcut)		//Set a k
 			_numberOfWidgetShortcuts++;
 		}*/
 		_widgets[widgetId].shortcut = shortcut;
+		if(_widgets[widgetId].h == 1)
+		{
+			_widgets[widgetId].style = _widgets[widgetId].style | SHORTCUT_INLINE;	//Shortcuts on a height 1 widget are always inline
+		}
 		_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0004;	//Mark the widget as changed
 	}
 }
