@@ -9,13 +9,15 @@ retroTerm allows you to create clickable 'buttons', 'checkboxes', 'option lists'
 ## Table of Contents
 
 1. [About retoTerm](#about-the-project)
+   1. [Terminal control features](#terminal-control-features)
+   1. [Widget features](#widget-features)
 1. [Getting Started](#getting-started)
 	1. [Dependencies](#dependencies)
+	1. [Getting the Source](#getting-the-source)
 	1. [Installation](#installation)
 	1. [Usage](#usage)
-1. [Release Process](#release-process)
-	1. [Versioning](#versioning)
-	1. [Version history](#version-history)
+1. [Versioning](#versioning)
+  1. [Version history](#version-history)
 1. [How to Get Help](#how-to-get-help)
 1. [Further Reading](#further-reading)
 1. [Contributing](#contributing)
@@ -23,7 +25,7 @@ retroTerm allows you to create clickable 'buttons', 'checkboxes', 'option lists'
 1. [Authors](#authors)
 1. [Acknowledgements](#acknowledgements)
 
-# About retroTerm
+## About retroTerm
 
 retroTerm is an Arduino library for creating user interfaces in a terminal emulator.
 
@@ -64,7 +66,7 @@ As you might expect, this library can use a lot of working memory. There is expl
 
 **[Back to top](#table-of-contents)**
 
-# Getting Started
+## Getting Started
 
 From the project page, select 'Code' -> 'Download ZIP' and save the file somewhere appropriate.
 
@@ -80,7 +82,7 @@ Examples are found under After installation, the example will be available under
 
 [Alarm Clock](examples/Example03_alarmClock/readme.md) - a simple application
 
-## Dependencies
+### Dependencies
 
 This library has no specific dependencies, but you will need a fully featured terminal emulator that can connect to your target microcontroller over a serial or USB-serial interface. Testing is done with [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/) and it is strongly recommend you start with using this.
 
@@ -92,17 +94,17 @@ It is only fully tested on the handful of microcontrollers below and these have 
 - ESP32-S2 (Espressif Saola-1R)
 - Teensy 3.2
 
-## Getting the Source
+### Getting the Source
 
 This project is [hosted on GitHub](https://github.com/ncmreynolds/retroTerm).
 
-## Installation
+### Installation
 
 From the project page, select 'Code' -> 'Download ZIP' and save the file somewhere appropriate.
 
 You can then install in the Arduino IDE by choosing 'Sketch' -> 'Include Library' -> 'Add .ZIP Library...'.
 
-## Usage
+### Usage
 
 [Documentation for retroTerm](documentation/index.md) is included as a series of markdown files.
 
@@ -161,15 +163,11 @@ This example should look like this in a terminal.
 
 **[Back to top](#table-of-contents)**
 
-# Release Process
-
-Talk about the release process. How are releases made? What cadence? How to get new releases?
-
 ## Versioning
 
 This project uses [Semantic Versioning](http://semver.org/) to be compatible with the Arduino library standards.
 
-## Version history
+### Version history
 
 #### 0.1.0
 
@@ -177,17 +175,17 @@ First public release.
 
 For a full list of available versions, see the [repository tag list](https://github.com/ncmreynolds/retroTerm/tags).
 
-# How to Get Help
+## How to Get Help
 
 Drop me a message on retroTerm@arcanium.london, I can't promise to be super-responsive but I'll try.
 
-# Contributing
+## Contributing
 
 I'd love to get help with this work, either drop me a message here or on retroTerm@arcanium.london. I'm new to using git for collaboration so please be patient.
 
 **[Back to top](#table-of-contents)**
 
-# Further Reading
+## Further Reading
 
 Serial 'dumb' terminals got quite smart over time, I took information from a variety of sources to help write this library including the ones linked below. Broadly it uses features you would expect in a VT420.
 
@@ -201,7 +199,7 @@ Serial 'dumb' terminals got quite smart over time, I took information from a var
 
 **[Back to top](#table-of-contents)**
 
-# License
+## License
 
 Copyright (c) 2021 Nick Reynolds
 
@@ -209,13 +207,13 @@ This project is licensed under the GNU General Public License - see [LICENSE.md]
 
 **[Back to top](#table-of-contents)**
 
-# Authors
+## Authors
 
 * **[Nick Reynolds](https://github.com/ncmreynolds)** 
 
 **[Back to top](#table-of-contents)**
 
-# Acknowledgments
+## Acknowledgments
 
 This project wouldn't be useful without the excellent open source terminal emulator [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/), which I have used for what feels like decades.
 
