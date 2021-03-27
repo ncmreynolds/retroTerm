@@ -1,5 +1,5 @@
-# singleButton
+# singleCheckbox.ino
 
-This example sketch shows how to create a single button and register the clicks. As you click the button you should get output like this.
+This example sketch shows how to create a single checkbox and register the clicks. As you click the checkbox you should get output like this, which includes a value for its checked/unchecked value.
 
-![](images/singleButton.png)
+![](images/singleCheckbox.png)
