@@ -8,4 +8,4 @@ Clicking the unselected button, or using the shortcut key, selects it.
 
 Choices should print below the buttons.
 
-![](images\twoRadioButtons.png)
+![](images/twoRadioButtons.png)

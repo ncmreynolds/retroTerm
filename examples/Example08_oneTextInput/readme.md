@@ -8,4 +8,4 @@ Once selected every letter typed will cause the current contents to be printed b
 
 To clear the contents, press enter.
 
-![](images\oneTextInput.png)
+![](images/oneTextInput.png)
