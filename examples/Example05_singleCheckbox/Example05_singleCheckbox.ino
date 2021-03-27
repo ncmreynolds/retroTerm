@@ -10,7 +10,7 @@ void setup() {
   terminal.hideCursor(); //Hide the terminal cursor
   terminal.enableMouse(); //Capture the mouse so it can be used with widgets
   terminal.setScrollWindow(4,12); //Set up somewhere to show the events without disrupting the widget
-  widgetId = terminal.newCheckbox(1, 1, 20, 3, F("Widget label"), COLOUR_GREEN); //Create a green widget
+  widgetId = terminal.newCheckbox(1, 1, 20, 1, F("Widget label"), COLOUR_GREEN); //Create a green widget
   terminal.widgetShortcutKey(widgetId,f1Pressed); //Assign a shortcut key of F1
   terminal.showWidget(widgetId); //Make the widget visible, all widgets start 'invisible' for later display
 }

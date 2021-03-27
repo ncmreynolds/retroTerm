@@ -494,11 +494,13 @@ void retroTerm::_displayChanges()
 						hideCursor();																	//Hide the cursor to reduce flickery movement in the terminal
 						if(_widgets[widgetIndex].style & OUTER_BOX)
 						{
-							moveCursorTo(_widgets[widgetIndex].x + 1 + _labelLength(widgetIndex), _widgets[widgetIndex].y + 1);		//Move to widget position
+							//moveCursorTo(_widgets[widgetIndex].x + 1 + _labelLength(widgetIndex), _widgets[widgetIndex].y + 1);		//Move to widget position
+							moveCursorTo(_widgets[widgetIndex].x + 1, _widgets[widgetIndex].y + 1);		//Move to widget position
 						}
 						else
 						{
-							moveCursorTo(_widgets[widgetIndex].x + _labelLength(widgetIndex), _widgets[widgetIndex].y);				//Move to widget position
+							//moveCursorTo(_widgets[widgetIndex].x + _labelLength(widgetIndex), _widgets[widgetIndex].y);				//Move to widget position
+							moveCursorTo(_widgets[widgetIndex].x, _widgets[widgetIndex].y);				//Move to widget position
 						}
 						attributes(_widgets[widgetIndex].attributes);									//Apply widget attributes
 						if(_widgets[widgetIndex].value)													//Boolean state is true

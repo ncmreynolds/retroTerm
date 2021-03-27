@@ -4,4 +4,9 @@
 
 Keypresses not captured by textInput are all 127
 
-Mouse use causes occasional crashes 
+~~Inline shortcuts for checkboxes not formatted correctly~~
+
+~~Inline shortcuts for radioButtons not formatted correctly~~
+
+~~Mouse use causes occasional crashes~~ 
+
