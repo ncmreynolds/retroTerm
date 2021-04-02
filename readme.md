@@ -11,7 +11,7 @@ retroTerm allows you to create clickable 'buttons', 'checkboxes', 'option lists'
 1. [About retoTerm](#about-the-project)
    1. [Terminal control features](#terminal-control-features)
    1. [Widget features](#widget-features)
-1. Project status[#project-status]
+1. [Project status](#project-status)
 1. [Getting Started](#getting-started)
 	1. [Dependencies](#dependencies)
 	1. [Getting the Source](#getting-the-source)
