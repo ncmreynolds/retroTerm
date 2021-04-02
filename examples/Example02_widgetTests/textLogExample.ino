@@ -1,6 +1,6 @@
-void scrollingTextDisplayExample()
+void textLogExample()
 {
-  newPage(F("Scrolling text display window demo"));
+  newPage(F("Text log window test"));
   terminal.hideCursor();
   terminal.setScrollWindow(4,terminal.lines()/2 - 2);     //Set up somewhere to show the events without disrupting the widgets
 
@@ -49,17 +49,16 @@ void scrollingTextDisplayExample()
     if(millis() - randomContentTimer > 500)
     {
       randomContentTimer = millis();
-      //uint8_t randWindow = 
-      switch (random(1,4))
+      switch (random(4))
       {
         case 1:
-          terminal.appendWidgetContent(red,("Random red " + String(random(1,100))).c_str());
+          terminal.prependWidgetContent(red,("Random red " + String(random(1,100))).c_str());
           break;
         case 2:
           terminal.prependWidgetContent(green,("Random green " + String(random(1,100))).c_str());
           break;
         case 3:
-          terminal.appendWidgetContent(blue,("Random blue " + String(random(1,100))).c_str());
+          terminal.prependWidgetContent(blue,("Random blue " + String(random(1,100))).c_str());
           break;
       }
     }

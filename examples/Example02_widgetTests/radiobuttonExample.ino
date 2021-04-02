@@ -1,6 +1,6 @@
 void radioButtonExample()
 {
-  newPage(F("Radio button demo"));
+  newPage(F("Radio button test"));
   terminal.setScrollWindow(4,12);     //Set up somewhere to show the events without disrupting the buttons
   terminal.hideCursor();
   terminal.enableMouse();

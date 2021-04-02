@@ -1,6 +1,6 @@
 void checkboxExample()
 {
-  newPage(F("Checkbox demo"));
+  newPage(F("Checkbox test"));
   terminal.setScrollWindow(4,12);     //Set up somewhere to show the events without disrupting the buttons
   terminal.hideCursor();
   terminal.enableMouse();

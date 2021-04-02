@@ -1,6 +1,6 @@
 void textDisplayExample()
 {
-  newPage(F("Text display window demo"));
+  newPage(F("Text display window test"));
   terminal.hideCursor();
   terminal.setScrollWindow(4,terminal.lines()/2 - 2);     //Set up somewhere to show the events without disrupting the widgets
 

@@ -1,7 +1,7 @@
 void textInputExample()
 {
   
-  newPage(F("Text input field demo"));
+  newPage(F("Text input field test"));
   terminal.setScrollWindow(2,6);     //Set up somewhere to show the events without disrupting the buttons
   terminal.hideCursor();
   terminal.enableMouse();

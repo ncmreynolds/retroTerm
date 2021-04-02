@@ -1,6 +1,6 @@
 void buttonExample()
 {
-  newPage(F("Button demo"));
+  newPage(F("Button test"));
   terminal.setScrollWindow(4,12);     //Set up somewhere to show the events without disrupting the buttons
   terminal.hideCursor();
   terminal.enableMouse();
@@ -38,13 +38,13 @@ void buttonExample()
   {
     if(red) //The button was successfully created
     {
-      if(redDemoStarted == false && millis() - timeout > 1000ul && not terminal.widgetVisible(red))    //Show the button near the start of the demo
+      if(redDemoStarted == false && millis() - timeout > 1000ul && not terminal.widgetVisible(red))    //Show the button near the start of the test
       {
         terminal.scroll("Showing red button");
         redDemoStarted = true;
         terminal.showWidget(red);   //Make this button visible
       }
-      else if(terminal.widgetVisible(red) && millis() - timeout > 20000ul)  //Hide the button again near the end of the demo
+      else if(terminal.widgetVisible(red) && millis() - timeout > 20000ul)  //Hide the button again near the end of the test
       {
         terminal.scroll("Hiding red button");
         terminal.hideWidget(red);  //Make this button invisible
@@ -52,13 +52,13 @@ void buttonExample()
     }
     if(green) //The button was successfully created
     {
-      if(greenDemoStarted == false && millis() - timeout > 5000ul && not terminal.widgetVisible(green))       //Show the button near the start of the demo
+      if(greenDemoStarted == false && millis() - timeout > 5000ul && not terminal.widgetVisible(green))       //Show the button near the start of the test
       {
         terminal.scroll("Showing green button");
         greenDemoStarted = true;
         terminal.showWidget(green); //Make this button visible
       }
-      else if(terminal.widgetVisible(green) && millis() - timeout > 22000ul)    //Hide the button again near the end of the demo
+      else if(terminal.widgetVisible(green) && millis() - timeout > 22000ul)    //Hide the button again near the end of the test
       {
         terminal.scroll("Hiding green button");
         terminal.hideWidget(green);  //Make this button invisible
@@ -66,13 +66,13 @@ void buttonExample()
     }
     if(blue) //The button was successfully created
     {
-      if(blueDemoStarted == false && millis() - timeout > 10000ul && not terminal.widgetVisible(blue))      //Show the button near the start of the demo
+      if(blueDemoStarted == false && millis() - timeout > 10000ul && not terminal.widgetVisible(blue))      //Show the button near the start of the test
       {
         terminal.scroll("Showing blue button");
         blueDemoStarted = true;
         terminal.showWidget(blue);  //Make this button visible
       }
-      else if(terminal.widgetVisible(blue) && millis() - timeout > 24000ul)   //Hide the button again near the end of the demo
+      else if(terminal.widgetVisible(blue) && millis() - timeout > 24000ul)   //Hide the button again near the end of the test
       {
         terminal.scroll("Hiding blue button");
         terminal.hideWidget(blue); //Make this button invisible

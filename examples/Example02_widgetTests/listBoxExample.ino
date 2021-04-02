@@ -1,6 +1,6 @@
 void listBoxExample()
 {
-  newPage(F("List box demo"));
+  newPage(F("List box test"));
   terminal.setScrollWindow(4,10);     //Set up somewhere to show the events without disrupting the buttons
   terminal.hideCursor();
   terminal.enableMouse();

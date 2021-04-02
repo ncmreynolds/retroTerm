@@ -1,6 +1,6 @@
 void probingExample()
 {
-  newPage(F("Probing demo"));
+  newPage(F("Probing test"));
   
   terminal.print(F("Probing terminal type"));
   if(terminal.probeType())

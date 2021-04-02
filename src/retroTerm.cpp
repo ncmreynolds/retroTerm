@@ -1048,23 +1048,26 @@ void retroTerm::_displayContent(const uint8_t widgetIndex)
 				#if defined(__AVR__) || defined(ESP8266) || defined(ESP32)
 				if(_widgets[widgetIndex].currentState & 0x8000)										//Use PROGMEM variant
 				{
-					if(pgm_read_byte(_widgets[widgetIndex].content + contentIndex++) == '\n')
+					if(pgm_read_byte(_widgets[widgetIndex].content + contentIndex) == '\n' || pgm_read_byte(_widgets[widgetIndex].content + contentIndex) == '\r')
 					{
 						currentOption++;
 					}
+					contentIndex++;
 				}
 				else
 				{
-					if(_widgets[widgetIndex].content[contentIndex++] == '\n')
+					if(_widgets[widgetIndex].content[contentIndex] == '\n' || _widgets[widgetIndex].content[contentIndex] == '\r')
 					{
 						currentOption++;
 					}
+					contentIndex++;
 				}
 				#else
-				if(_widgets[widgetIndex].content[contentIndex++] == '\n')
+				if(_widgets[widgetIndex].content[contentIndex] == '\n' || _widgets[widgetIndex].content[contentIndex] == '\r')
 				{
 					currentOption++;
 				}
+				contentIndex++;
 				#endif
 			}
 		}
@@ -1080,7 +1083,7 @@ void retroTerm::_displayContent(const uint8_t widgetIndex)
 			#if defined(__AVR__) || defined(ESP8266) || defined(ESP32)
 			if(_widgets[widgetIndex].currentState & 0x8000)										//Use PROGMEM variant
 			{
-				while(pgm_read_byte(_widgets[widgetIndex].content + contentIndex) != '\n' && contentIndex < contentLength)	//Print the option
+				while(pgm_read_byte(_widgets[widgetIndex].content + contentIndex) != '\n' && pgm_read_byte(_widgets[widgetIndex].content + contentIndex) != '\r' && contentIndex < contentLength)	//Print the option
 				{
 					_terminalStream->write(pgm_read_byte(_widgets[widgetIndex].content + contentIndex++));
 					currentColumn++;
@@ -1088,14 +1091,14 @@ void retroTerm::_displayContent(const uint8_t widgetIndex)
 			}
 			else
 			{
-				while(_widgets[widgetIndex].content[contentIndex] != '\n' && contentIndex < contentLength)	//Print the option
+				while(_widgets[widgetIndex].content[contentIndex] != '\n' && _widgets[widgetIndex].content[contentIndex] != '\r' && contentIndex < contentLength)	//Print the option
 				{
 					_terminalStream->print(_widgets[widgetIndex].content[contentIndex++]);
 					currentColumn++;
 				}
 			}
 			#else
-			while(_widgets[widgetIndex].content[contentIndex] != '\n' && contentIndex < contentLength)	//Print the option
+			while(_widgets[widgetIndex].content[contentIndex] != '\n' && _widgets[widgetIndex].content[contentIndex] != '\r' && contentIndex < contentLength)	//Print the option
 			{
 				_terminalStream->print(_widgets[widgetIndex].content[contentIndex++]);
 				currentColumn++;
@@ -1968,7 +1971,7 @@ uint8_t retroTerm::_calculateNumberOfOptions(const uint8_t widgetIndex)
 		{
 			for(uint16_t arrayIterator = 0 ; arrayIterator < strlen_P((PGM_P)_widgets[widgetIndex].content) ; arrayIterator++)
 			{
-				if(pgm_read_byte(_widgets[widgetIndex].content + arrayIterator) == '\n')
+				if(pgm_read_byte(_widgets[widgetIndex].content + arrayIterator) == '\n' || pgm_read_byte(_widgets[widgetIndex].content + arrayIterator) == '\r')
 				{
 					count++;
 				}
@@ -1978,7 +1981,7 @@ uint8_t retroTerm::_calculateNumberOfOptions(const uint8_t widgetIndex)
 		{
 			for(uint16_t arrayIterator = 0 ; arrayIterator < strlen(_widgets[widgetIndex].content) ; arrayIterator++)
 			{
-				if(_widgets[widgetIndex].content[arrayIterator] == '\n')
+				if(_widgets[widgetIndex].content[arrayIterator] == '\n' || _widgets[widgetIndex].content[arrayIterator] == '\r')
 				{
 					count++;
 				}
@@ -1987,7 +1990,7 @@ uint8_t retroTerm::_calculateNumberOfOptions(const uint8_t widgetIndex)
 		#else
 		for(uint16_t arrayIterator = 0 ; arrayIterator < strlen(_widgets[widgetIndex].content) ; arrayIterator++)
 		{
-			if(_widgets[widgetIndex].content[arrayIterator] == '\n')
+			if(_widgets[widgetIndex].content[arrayIterator] == '\n' || _widgets[widgetIndex].content[arrayIterator] == '\r')
 			{
 				count++;
 			}

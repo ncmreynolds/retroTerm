@@ -76,7 +76,7 @@ You should try the first two example sketches to check it works with your termin
 
 Examples are found under After installation, the example will be available under "File" -> "Examples" -> "retroTerm" in the Arduino IDE.
 
-[Capability Test](examples/Example01_terminalCapabilityTests/readme/md) - basic terminal features
+[Capability Test](examples/Example01_terminalCapabilityTests/readme.md) - basic terminal features
 
 [Widget Test](examples/Example02_widgetTests/readme.md) - widget features
 

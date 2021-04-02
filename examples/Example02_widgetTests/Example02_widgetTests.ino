@@ -1,7 +1,7 @@
 /*
  * retroTerm widget test sketch
  * 
- * This sketch demos all the widget types, one at a time. Code for each type of widget is in a separate tab.
+ * This sketch tests all the widget types, one at a time. Code for each type of widget is in a separate tab.
  * 
  * Probing terminal size, to see what space is available. You can change terminal size between tests to check this works.
  * Button test. The buttons of different style appear and and can be clicked with mouse or keyboard shortcut.
@@ -108,14 +108,14 @@ void loop() {
   checkboxExample();            //Demo methods for creating and checking the state of checkbox widgets, see the tab 'checkboxDemo' for code
   radioButtonExample();         //Demo methods for creating and checking the state of radio button widgets, see the tab 'radiobuttonDemo' for code
   textDisplayExample();         //Demo methods for creating static content text box widgets, see the tab 'textDisplayDemo' for code
-  scrollingTextDisplayExample();//Demo methods for creating 'circular buffer' text box widgets, see the tab 'scrollingTextDisplayDemo' for code. This widget does NOT store content long term, it's intended to be a logging window etc.
+  textLogExample();             //Demo methods for creating 'logging' text box widgets, see the tab 'textLogDemo' for code. This widget does NOT store content long term, it's intended to be a logging/chat window etc.
   listBoxExample();             //Demo methods for creating list box widgets, see the tab 'listBoxExample' for code
   textInputExample();           //Demo methods for creating and retrieving input from text input fields, see the tab 'textInputDemo' for code
 }
 
 /*
  * The 'newPage' function uses some 'primitves' from the library
- * to clear the screen and show a title at the top of the page before every demo
+ * to clear the screen and show a title at the top of the page before every test
  * 
  * 
  */
@@ -131,7 +131,7 @@ void newPage(String title)
 /*
  * The 'endPage' function waits 30s or for a keypress before exiting
  * 
- * This is to keep the demo on the screen after it is finished
+ * This is to keep the test on the screen after it is finished
  * 
  */
 void endPage()
