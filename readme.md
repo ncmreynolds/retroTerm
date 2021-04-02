@@ -97,8 +97,8 @@ This library has no specific dependencies, but you will need a fully featured te
 
 It is only fully tested on the handful of microcontrollers below and these have specific code, usually related to storing strings/character arrays in flash memory to save working memory. Other microcontrollers will use working memory for all strings.
 
-- Arduino AVR (Uno/Nano/Mega 2560)
-- ESP8266 (WeMos D1 mini/WeMos D1 mini Pro)
+- Arduino AVR (Uno/Nano/Mega 2560) Note the full widget example is now overly large for an Uno
+- ESP8266 (WeMos D1 mini/WeMos D1 mini Pro) Note that the ESP8266 bootloader sends characters to the serial port on reset, which may cause the bell to sound or be seen as an 'XOFF' that prevents further input. If compiled on ESP8266 the library sends an 'XON' at initialisation.
 
 ### Getting the Source
 
