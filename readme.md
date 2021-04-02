@@ -81,13 +81,15 @@ You can then install in the Arduino IDE by choosing 'Sketch' -> 'Include Library
 
 You should try the first two example sketches to check it works with your terminal emulator, then try the 'Alarm Clock' example which is a very simple application that will work on most microcontrollers.
 
-Examples are found under After installation, the example will be available under "File" -> "Examples" -> "retroTerm" in the Arduino IDE.
+Examples are found under After installation, the examples will be available under "File" -> "Examples" -> "retroTerm" in the Arduino IDE.
 
 [Capability Test](examples/Example01_terminalCapabilityTests/readme.md) - basic terminal features
 
 [Widget Test](examples/Example02_widgetTests/readme.md) - widget features
 
 [Alarm Clock](examples/Example03_alarmClock/readme.md) - a simple application
+
+There are further examples that serve as a demonstration of how to use each type of widget.
 
 ### Dependencies
 
