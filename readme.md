@@ -11,6 +11,7 @@ retroTerm allows you to create clickable 'buttons', 'checkboxes', 'option lists'
 1. [About retoTerm](#about-the-project)
    1. [Terminal control features](#terminal-control-features)
    1. [Widget features](#widget-features)
+1. Project status[#project-status]
 1. [Getting Started](#getting-started)
 	1. [Dependencies](#dependencies)
 	1. [Getting the Source](#getting-the-source)
@@ -66,6 +67,12 @@ As you might expect, this library can use a lot of working memory. There is expl
 
 **[Back to top](#table-of-contents)**
 
+## Project Status
+
+This is the very first public release, which is working for the specific project I wrote it for. However I'm aware my naming of methods, approaches to passing arguments and so on are messy and inconsistent so some of this may change frequently.
+
+**[Back to top](#table-of-contents)**
+
 ## Getting Started
 
 From the project page, select 'Code' -> 'Download ZIP' and save the file somewhere appropriate.
@@ -86,13 +93,10 @@ Examples are found under After installation, the example will be available under
 
 This library has no specific dependencies, but you will need a fully featured terminal emulator that can connect to your target microcontroller over a serial or USB-serial interface. Testing is done with [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/) and it is strongly recommend you start with using this.
 
-It is only fully tested on the handful of microcontrollers below and these have specific code, usually related to storing strings in flash memory to save working memory. Other microcontrollers will use working memory for all strings.
+It is only fully tested on the handful of microcontrollers below and these have specific code, usually related to storing strings/character arrays in flash memory to save working memory. Other microcontrollers will use working memory for all strings.
 
 - Arduino AVR (Uno/Nano/Mega 2560)
-- ESP8266 (WeMos D1 mini/WeMos D1 mini pro)
-- ESP32
-- ESP32-S2 (Espressif Saola-1R)
-- Teensy 3.2
+- ESP8266 (WeMos D1 mini/WeMos D1 mini Pro)
 
 ### Getting the Source
 
