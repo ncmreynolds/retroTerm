@@ -52,13 +52,13 @@ void textLogExample()
       switch (random(4))
       {
         case 1:
-          terminal.prependWidgetContent(red,("Random red " + String(random(1,100))).c_str());
+          terminal.appendWidgetContent(red,("Random red " + String(random(1,100))).c_str());
           break;
         case 2:
           terminal.prependWidgetContent(green,("Random green " + String(random(1,100))).c_str());
           break;
         case 3:
-          terminal.prependWidgetContent(blue,("Random blue " + String(random(1,100))).c_str());
+          terminal.appendWidgetContent(blue,("Random blue " + String(random(1,100))).c_str());
           break;
       }
     }

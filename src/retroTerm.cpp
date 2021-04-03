@@ -4459,7 +4459,6 @@ bool ICACHE_FLASH_ATTR retroTerm::appendWidgetContent(uint8_t widgetId, const ch
 bool retroTerm::appendWidgetContent(uint8_t widgetId, const char* newContent)	//Add/change widget content string literal version
 #endif
 {
-	return(false);
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
