@@ -13,14 +13,17 @@ Documentation is broken down into three main sections, initialisation/housekeepi
 	1. [Title](#title)
 	1. [Cursor movement](#cursor-movement)
 	1. [Attributes and colours](#attributes-and-colours)
-	1. [Bell](#bell)
 1. [Output](#output)
    1. [Printing](#printing)
+   2. [Boxes](#boxes)
+   3. [Bell](#bell)
 1. [Input](#input)
    1. [Keyboard](#keyboard)
    1. [Mouse](#mouse)
 1. [Widgets](#widgets)
 	1. [Widget IDs](#widget-ids)
+	1. [Z-order](#z-order)
+	1. [Styles](#styles)
 	1. [Creating widgets](#creating-widgets)
 	1. [Deleting widgets](#deleting-widgets)
 	1. [Show & Hide](#show-hide)
@@ -137,15 +140,21 @@ void saveCursorPosition();
 void restoreCursorPosition();
 ```
 
-Most terminals also have the ability to save and restore the state of the cursor, which also includes [attributes and colours](attributes-and-colours). This allows you to save the cursor state, output whatever you want somewhere else then return. This is only 'one layer deep' so you should always save, output and restore.
+Most terminals also have the ability to save and restore the state of the cursor, which also includes [attributes and colours](#attributes-and-colours). This allows you to save the cursor state, output whatever you want somewhere else then return. This is only 'one layer deep' so you should always save, output and restore.
 
 ```c++
 void requestCursorPosition();
 ```
 
+This method refreshes the current cursor position from the terminal application. The response can take a short while so your code should wait at least a second before assuming an update has happened.
+
 ```c++
 void setScrollWindow(uint8_t, uint8_t);
 ```
+
+This method sets the scrolling region of the screen to between two specified rows (inclusive). Printing in this region that overflows will not scroll the whole terminal but just the lines specified. This is very useful for a 'logging' style window that is endlessly added to. Note it still scrolls the whole width of the screen.
+
+As this is done in the terminal application, not by the library redrawing areas it is faster and more efficient than scrolling in a widget.
 
 **[Back to top](#table-of-contents)**
 
@@ -186,6 +195,8 @@ Terminal output also has various 'attributes' which may not be settable on all t
 uint16_t attributes();
 void attributes(uint16_t);
 void resetAttributes();
+uint16_t defaultAttributes();
+void defaultAttributes(uint16_t);
 ```
 Again there are convenience shortcuts you OR together to set these attributes.
 
@@ -203,6 +214,75 @@ constexpr const uint16_t ATTRIBUTE_DOUBLE_SIZE =	0x8000;
 
 **[Back to top](#table-of-contents)**
 
+## Output
+
+When sending output to the terminal, try not to mix straightforward print methods with widgets, as the library makes no effort to maintain output that isn't a widget if it is overwritten etc. Both styles of access to the terminal work simultaneously but you will need care to ensure they do not conflict.
+
+### Printing
+
+```c++
+void print(variableContent content);
+```
+
+A good old fashioned print method, which outputs at the current cursor position, with the current [attributes](#attributes-and-colours). This method is templated so will output most types you send it as you'd expect without having to do things like `itoa()`.
+
+```c++
+void println(variableContent content);
+```
+
+Similar to `print()` this does a newline after the print, which may cause the terminal or scroll region to scroll up.
+
+```c++
+void printCentred(variableContent content);
+void printCentred(uint8_t y, variableContent content);
+```
+
+These two methods will centre printed content. The first prints at the current row, the second centred on a specific row.
+
+```c++
+void printAt(uint8_t x, uint8_t y, variableContent content);
+void printAt(uint8_t x, uint8_t y, variableContent content, uint16_t specificAttributes);
+```
+
+These two methods print at a specified column and row. The second variant will print with the specified [attributes](#colours-and-attributes).
+
+```c++
+void scroll(variableContent content);
+void scroll(variableContent content, bool centred);
+```
+
+These two methods print at the bottom of the scrolling region, after moving the existing content up one line. These are fast and efficient compared to scrolling the content of a widget as the terminal emulator handles the scrolling and the contents do not need to be redrawn by the library.
+
+This is one of the occasions where you might want to mix widgets and direct printing to the terminal.
+
+See `setScrollWindow()` to set the scrolling region.
+
+**[Back to top](#table-of-contents)**
+
+### Boxes
+
+As well as simple text, the methods for drawing boxes used by widgets are available directly.
+
+```c++
+void drawBox(uint8_t, uint8_t, uint8_t, uint8_t, uint16_t, uint8_t);
+void drawBoxWithScrollbar(uint8_t, uint8_t, uint8_t, uint8_t, uint32_t, uint32_t, uint16_t, uint8_t);
+void drawBoxWithTitle(uint8_t, uint8_t, uint8_t, uint8_t, const char *, uint16_t, uint8_t);
+void drawBoxWithTitleAndScrollbar(uint8_t, uint8_t, uint8_t, uint8_t, const char *, uint32_t, uint32_t, uint16_t, uint8_t);
+```
+
+The four methods, do as described. Each is overload so the [attributes](#attributes-and-colours), [style](#styles) or title text can be omitted. The minimum parameters are column, row, width and height.
+
+```
+void centredTextBox(String);
+void centredTextBox(String, uint16_t);
+void centredTextBox(String, uint8_t);
+void centredTextBox(String, uint16_t, uint8_t);
+```
+
+
+
+**[Back to top](#table-of-contents)**
+
 ### Bell
 
 ```c++
@@ -211,38 +291,9 @@ void disableBell();
 void soundBell();
 ```
 
-The library includes basic methods for enabling/disableing and sounding the terminal bell. This is useful for warnings.
+These are basic methods for enabling/disabling and sounding the terminal bell.
 
 **[Back to top](#table-of-contents)**
-
-## Output
-
-```c++
-void print(variableContent content)
-```
-
-```c++
-void println(variableContent content)
-```
-
-```c++
-void printCentred(variableContent content)
-void printCentred(uint8_t y, variableContent content)
-```
-
-```c++
-void printAt(uint8_t x, uint8_t y, variableContent content)
-void printAt(uint8_t x, uint8_t y, variableContent content, uint16_t specificAttributes)
-```
-
-```c++
-void scroll(variableContent content)
-void scroll(variableContent content, bool centred)
-```
-
-**[Back to top](#table-of-contents)**
-
-
 
 ## Input
 
@@ -257,7 +308,7 @@ Common non-alphanumeric keyboard presses (function keys, arrows etc.) have const
 ```c++
 bool userIsTyping();
 ```
-This method returns true if the terminal has received a keypress recently. It is a useful way to wait until somebody has 'finished typing'.
+This method returns true if the terminal has received a keypress or mouse activity recently. It is a useful to help your code to wait until somebody has 'finished typing' or using the mouse before doing something.
 
 ```c++
 bool keyPressed();
@@ -267,7 +318,9 @@ This method returns true if there is a keypress waiting to be read.
 ```c++
 uint8_t readKeypress()
 ```
-Returns the ASCII code of the keypress, plus assorted other keys mapped into 0-31. There is currently no unicode/UTF-8 support for input from the keyboard.
+Returns the ASCII code of the next keypress, plus assorted other keys mapped into 0-31. There is currently no unicode/UTF-8 support for input from the keyboard.
+
+The input buffer is limited, so if doing your own keyboard processing your code should check for this regularly.
 
 **[Back to top](#table-of-contents)**
 
@@ -305,6 +358,16 @@ These methods return true on the relevant mouse button event. They clear the but
 Widget IDs are simple 8-bit unsigned integers (uin8_t ) to allow you to store them trivially in variables, arrays and so on. An ID of 0 denotes unassigned or a failure to assign due to lack of memory. You should always check an ID is non-zero when creating a new widget.
 
 If a widget is deleted then its ID may be subsequently re-used, so you should ensure you no longer associate that ID with the deleted widget. Deleting widgets is not great for heap fragmentation if they contain large amounts of text content.
+
+**[Back to top](#table-of-contents)**
+
+### Z-order
+
+There is no Z-order, only an implicit one based on later widgets are higher. Overlapping widgets are discouraged but not impossible.
+
+### Styles
+
+Widgets have some very basic ability to 'style' them.
 
 **[Back to top](#table-of-contents)**
 
