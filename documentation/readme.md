@@ -14,6 +14,11 @@ Documentation is broken down into three main sections, initialisation/housekeepi
 	1. [Cursor movement](#cursor-movement)
 	1. [Attributes and colours](#attributes-and-colours)
 	1. [Bell](#bell)
+1. [Output](#output)
+   1. [Printing](#printing)
+1. [Input](#input)
+   1. [Keyboard](#keyboard)
+   1. [Mouse](#mouse)
 1. [Widgets](#widgets)
 	1. [Widget IDs](#widget-ids)
 	1. [Creating widgets](#creating-widgets)
@@ -110,7 +115,37 @@ Some terminal emulators allow you to set the 'title' of the window the terminal 
 
 **[Back to top](#table-of-contents)**
 
-### Cursor movement
+### Cursor control
+
+As is standard for VT style terminal, all output happens from a 'cursor' that has a specific position and state. This is reference to an origin of 1,1 which is the top left of the terminal.
+
+```c++
+void moveCursorTo(uint8_t column, uint8_t row);
+```
+
+The `moveCursorTo()` method moves the cursor directly to the specified column and row.
+
+```c++
+void hideCursor();
+void showCursor();
+```
+
+Most terminal have the facility to 'hide' the cursor, which is often a 'blob' on the terminal. If printing output in many different places on the terminal, this stops the cursor seeming the 'flicker' as it moves around.
+
+```c++
+void saveCursorPosition();
+void restoreCursorPosition();
+```
+
+Most terminals also have the ability to save and restore the state of the cursor, which also includes [attributes and colours](attributes-and-colours). This allows you to save the cursor state, output whatever you want somewhere else then return. This is only 'one layer deep' so you should always save, output and restore.
+
+```c++
+void requestCursorPosition();
+```
+
+```c++
+void setScrollWindow(uint8_t, uint8_t);
+```
 
 **[Back to top](#table-of-contents)**
 
@@ -180,11 +215,96 @@ The library includes basic methods for enabling/disableing and sounding the term
 
 **[Back to top](#table-of-contents)**
 
+## Output
+
+```c++
+void print(variableContent content)
+```
+
+```c++
+void println(variableContent content)
+```
+
+```c++
+void printCentred(variableContent content)
+void printCentred(uint8_t y, variableContent content)
+```
+
+```c++
+void printAt(uint8_t x, uint8_t y, variableContent content)
+void printAt(uint8_t x, uint8_t y, variableContent content, uint16_t specificAttributes)
+```
+
+```c++
+void scroll(variableContent content)
+void scroll(variableContent content, bool centred)
+```
+
+**[Back to top](#table-of-contents)**
+
+
+
+## Input
+
+The retroTerm library normally expects to capture all input from the terminal, rather than the rest of the application reading directly from the Stream. If you do the latter, you may get unreliable behaviour.
+
+Common non-alphanumeric keyboard presses (function keys, arrows etc.) have constants associated with them to make them easy to handle but if widgets are in use then often a widget will act on these keypresses and the application won't see them. This is particularly true of anything specified as a keyboard shortcut or keyboard navigation key (tab, back tab, arrows, page up, page down, enter etc.) that has a commonly understood meaning in a MS Windows style GUI.
+
+**[Back to top](#table-of-contents)**
+
+## Keyboard
+
+```c++
+bool userIsTyping();
+```
+This method returns true if the terminal has received a keypress recently. It is a useful way to wait until somebody has 'finished typing'.
+
+```c++
+bool keyPressed();
+```
+This method returns true if there is a keypress waiting to be read.
+
+```c++
+uint8_t readKeypress()
+```
+Returns the ASCII code of the keypress, plus assorted other keys mapped into 0-31. There is currently no unicode/UTF-8 support for input from the keyboard.
+
+**[Back to top](#table-of-contents)**
+
+## Mouse
+
+```c++
+void enableMouse();
+void disableMouse();
+```
+These two methods enable and disable mouse captue, if the terminal supports it.
+
+```c++
+uint8_t mouseX();
+uint8_t mouseY();
+```
+These return the last reported located of the mouse pointer. Depending on terminal support this is usually where it was last clicked, rather than where it currently is.
+
+```c++
+bool mouseButtonDown();
+bool mouseButtonUp();
+bool mouseWheelDown();
+bool mouseWheelUp();
+```
+These methods return true on the relevant mouse button event. They clear the button status once read.
+
+
+**[Back to top](#table-of-contents)**
+
 ## Widgets
 
 **[Back to top](#table-of-contents)**
 
 ### Widget IDs
+
+Widget IDs are simple 8-bit unsigned integers (uin8_t ) to allow you to store them trivially in variables, arrays and so on. An ID of 0 denotes unassigned or a failure to assign due to lack of memory. You should always check an ID is non-zero when creating a new widget.
+
+If a widget is deleted then its ID may be subsequently re-used, so you should ensure you no longer associate that ID with the deleted widget. Deleting widgets is not great for heap fragmentation if they contain large amounts of text content.
 
 **[Back to top](#table-of-contents)**
 
