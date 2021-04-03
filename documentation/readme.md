@@ -26,7 +26,7 @@ Documentation is broken down into three main sections, initialisation/housekeepi
 	1. [Styles](#styles)
 	1. [Creating widgets](#creating-widgets)
 	1. [Deleting widgets](#deleting-widgets)
-	1. [Show & Hide](#show-hide)
+	1. [Show and hide widgets](#show-and-hide-widgets)
 	1. [Content control](#content-control)
 1. [Memory management](#memory-management)
 1. [Known-issues](#known-issues)
@@ -160,11 +160,15 @@ As this is done in the terminal application, not by the library redrawing areas 
 
 ### Attributes and Colours
 
-```c++
-void color(uint8_t);
-void colour(uint8_t);
-```
-These synonym functions (US/English) set the foreground colour of any output sent to the terminal. The foreground and background colour are set by a bitmask, which has convenience shortcuts you can OR together. The bitmask is chosen so 'terminal default' is 0x00.
+There are two ways to set colours and attributes in the library, eight colour and 256-colour.
+
+### Eight colour attributes
+
+The default control over colour in the library is through the use of 'attributes'. These use the most basic form of colour support in the terminal emulator and are most likely to be supported.
+
+Attributes can handle eight foreground colours, eight background colours and a mix of other visual effects. Many of the library output methods like `print()` can be passed attributes and will change them for you in one method and all widgets expect to use attributes.
+
+The attributes are set by a bitmask, which has convenience shortcuts you can OR together. The bitmask is chosen so 'terminal default' is 0x00. There are synonyms with the US spelling of 'colour'.
 
 ```c++
 constexpr const uint16_t COLOUR_BLACK = 			0x0008;
@@ -183,24 +187,6 @@ constexpr const uint16_t BACKGROUND_COLOUR_BLUE = 	0x00c0;
 constexpr const uint16_t BACKGROUND_COLOUR_MAGENTA =0x00d0;
 constexpr const uint16_t BACKGROUND_COLOUR_CYAN = 	0x00e0;
 constexpr const uint16_t BACKGROUND_COLOUR_WHITE = 	0x00f0;
-```
-
-So to set the colour for later out put to 'green on a black background' you might use.
-
-`terminal.colour(COLOUR_GREEN | BACKGROUND_COLOUR_BLACK);`
-
-Terminal output also has various 'attributes' which may not be settable on all terminals.
-
-```c++
-uint16_t attributes();
-void attributes(uint16_t);
-void resetAttributes();
-uint16_t defaultAttributes();
-void defaultAttributes(uint16_t);
-```
-Again there are convenience shortcuts you OR together to set these attributes.
-
-```
 constexpr const uint16_t ATTRIBUTE_BRIGHT =			0x0100;
 constexpr const uint16_t ATTRIBUTE_BOLD =			0x0200;
 constexpr const uint16_t ATTRIBUTE_FAINT =			0x0400;
@@ -209,7 +195,37 @@ constexpr const uint16_t ATTRIBUTE_BLINK =			0x1000;
 constexpr const uint16_t ATTRIBUTE_INVERSE =		0x2000;
 constexpr const uint16_t ATTRIBUTE_DOUBLE_WIDTH =	0x4000;
 constexpr const uint16_t ATTRIBUTE_DOUBLE_SIZE =	0x8000;
+```
 
+You pass the combined attribute value to one of these methods.
+
+Beware the 'double width' and 'double size' attributes. They apply to the whole row, two rows for double size and can be hard to work with.
+
+```c++
+void attributes(uint16_t);
+void defaultAttributes(uint16_t);
+void resetAttributes();
+```
+
+So to set the colour for later output to 'green on a black background' you might use.
+
+`terminal.colour(COLOUR_GREEN | BACKGROUND_COLOUR_BLACK);`
+
+You can also retrieve the current set attributes.
+
+```
+uint16_t attributes();
+uint16_t defaultAttributes();
+```
+
+### 256-colours
+
+The other method of setting colours is from the 256-colour palette. Not all terminals will support 256-colour mode. This is not supported by widgets (yet).
+
+```c++
+void color(uint8_t);
+void colour(uint8_t); //A synonym for US users
+void clearColour();
 ```
 
 **[Back to top](#table-of-contents)**
@@ -272,14 +288,14 @@ void drawBoxWithTitleAndScrollbar(uint8_t, uint8_t, uint8_t, uint8_t, const char
 
 The four methods, do as described. Each is overload so the [attributes](#attributes-and-colours), [style](#styles) or title text can be omitted. The minimum parameters are column, row, width and height.
 
-```
+```c++
 void centredTextBox(String);
 void centredTextBox(String, uint16_t);
 void centredTextBox(String, uint8_t);
 void centredTextBox(String, uint16_t, uint8_t);
 ```
 
-
+These four methods stick a box right in the centre of the screen with some text in. They're a relic of before the library supported widgets and deprecated.
 
 **[Back to top](#table-of-contents)**
 
@@ -379,18 +395,55 @@ Widgets have some very basic ability to 'style' them.
 
 **[Back to top](#table-of-contents)**
 
-### Show & Hide
+```c++
+bool widgetExists(uint8_t);
+bool deleteWidget(uint8_t);
+uint8_t numberOfWidgets();
+```
+
+### Show and hide widgets
+
+All widget start as 'hidden' and need to be 'shown'. Ordinarily you are advised to hide widgets rather than delete them, if memory permits.
+
+```c++
+void showWidget(uint8_t widgetId);					//Set a widget visible
+void hideWidget(uint8_t widgetId);					//Set a widget invisible
+void showWidget(uint8_t widgetId, bool visible);	//Explicitly set visibility of this widget
+bool widgetVisible(uint8_t widgetId);				//Check the visibility of a specific widget
+void hideAllWidgets();								//Make all widgets invisible
+void showAllWidgets();								//Make all widgets visible
+void refreshAllWidgets();
+```
 
 **[Back to top](#table-of-contents)**
+
+### Moving and resizing
+
+```c++
+void moveWidget(uint8_t widgetId, uint8_t x, uint8_t y);
+void resizeWidget(uint8_t widgetId, uint8_t w, uint8_t h);
+```
 
 ### Content control
 
 **[Back to top](#table-of-contents)**
+
+### Widget Events
+
+```c++
+bool widgetActive(uint8_t widgetId);
+void widgetActive(uint8_t widgetId, bool);
+void widgetPassive(uint8_t widgetId);
+bool selectWidget(uint8_t widgetId);
+bool widgetClicked(uint8_t widgetId);
+```
 
 ## Memory management
 
 **[Back to top](#table-of-contents)**
 
 ## Known issues
+
+Widgets do not function properly when using the double width or double size attribute.
 
 **[Back to top](#table-of-contents)**
