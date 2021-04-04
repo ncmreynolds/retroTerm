@@ -73,7 +73,7 @@ bool probeSize();
 uint8_t columns();
 uint8_t lines();
 ```
-It should be possible to find the number of columns and number of lines the terminal has. The library tries to probe this by moving the cursor to 255,255 and then requesting the current position. The expected behaviour is it will move as far as possible and this can be used to determine the size. Once this is done, the cursor will move back to its previous position. The `probeSize()` may take a second or so to complete, this function blocks until it receives a response or times out.
+It should be possible to find the number of columns and number of lines the terminal has. The library tries to probe this by moving the cursor to 255,255 and then requesting the current position. The expected behaviour from the terminal emulator is it will move as far as possible and this can be used to determine the size. Once this is done, the cursor will move back to its previous position. The `probeSize()` may take a second or so to complete, this function blocks until it receives a response or times out.
 
 If `probeSize()` returns true, you can be fairly sure the size has been correctly probed and can use `columns()` and `lines()` to size the output you send form this. If `probeSize()` returns false, the library assumes a terminal of 80 columns x 24 lines.
 
@@ -84,13 +84,13 @@ bool probeType();
 char* type();
 ```
 
-Similar to probing the size, it is possible to probe the terminal type which is stored as a char array by the library, this is not overly useful without further work.
+Similar to probing the size, it is possible to probe the terminal type which is stored as a char array by the library, this is not overly useful without further work to map these types to something more meaningful.
 
 **[Back to top](#table-of-contents)**
 
 # Terminal control
 
-The most basic methods in retroTerm apply to the whole terminal or just its 'current state', more complicated behaviour is built from these.
+The most basic functions in retroTerm apply to the whole terminal or just its 'current state', more complicated behaviour is built from these.
 
 **[Back to top](#table-of-contents)**
 
@@ -100,13 +100,13 @@ The most basic methods in retroTerm apply to the whole terminal or just its 'cur
 void reset();
 ```
 
-This method resets all the terminal settings to default and clears the currently display contents.
+This function resets all the terminal settings to default and clears the currently display contents.
 
 ```c++
 void eraseScreen();
 ```
 
-This method clears the currently displayed terminal content. It does not change colours, attributes and so on.
+This function clears the currently displayed terminal content. It does not change colours, attributes and so on.
 
 **[Back to top](#table-of-contents)**
 
@@ -116,47 +116,45 @@ This method clears the currently displayed terminal content. It does not change 
 void setTitle(variableContent title);
 ```
 
-Some terminal emulators allow you to set the 'title' of the window the terminal emulator, you can use this method to do so. The method is templated so accepts Strings, char arrays, or any reasonable thing you'd send to a `print()`, including strings stored in Flash with an F() macro.
+Some terminal emulators allow you to set the 'title' of the window the terminal emulator, you can use this function to do so. The function is templated so accepts Strings, char arrays, or any reasonable thing you'd send to a `print()`, including strings stored in Flash with an F() macro.
 
 **[Back to top](#table-of-contents)**
 
 ## Cursor control
 
-As is standard for VT style terminal, all output happens from a 'cursor' that has a specific position and state. This is reference to an origin of 1,1 which is the top left of the terminal.
+As is standard for VT style terminal, all output happens from a 'cursor' that has a specific position and state. This is referenced to an origin of 1,1 which is the top left of the terminal.
+
+The `moveCursorTo()` function moves the cursor directly to the specified column and row.
 
 ```c++
 void moveCursorTo(uint8_t column, uint8_t row);
 ```
-
-The `moveCursorTo()` method moves the cursor directly to the specified column and row.
+Most terminal haves the facility to 'hide' the cursor, which is often a 'blob' on the terminal. If printing output in many different places on the terminal, this stops the cursor seeming the 'flicker' as it moves around.
 
 ```c++
 void hideCursor();
 void showCursor();
 ```
-
-Most terminal have the facility to 'hide' the cursor, which is often a 'blob' on the terminal. If printing output in many different places on the terminal, this stops the cursor seeming the 'flicker' as it moves around.
+Most terminals also have the ability to save and restore the state of the cursor, which also includes [attributes and colours](#attributes-and-colours). This allows you to save the cursor state, output whatever you want somewhere else then return. This is only 'one layer deep' so you should always save, output and restore.
 
 ```c++
 void saveCursorPosition();
 void restoreCursorPosition();
 ```
-
-Most terminals also have the ability to save and restore the state of the cursor, which also includes [attributes and colours](#attributes-and-colours). This allows you to save the cursor state, output whatever you want somewhere else then return. This is only 'one layer deep' so you should always save, output and restore.
+You can also request the current cursor position from the terminal application. The response can take a short while so your code should wait at least a second before assuming an update has happened.
 
 ```c++
 void requestCursorPosition();
+uint8_t currentCursorColumn();
+uint8_t currentCursorRow();
 ```
+Many terminals allow you to set the scrolling region of the screen to between two specified rows (inclusive). Any printing in this region that overflows will not scroll the whole terminal but just the lines specified. This is very useful for a 'logging' style window that is endlessly added to. Note it still scrolls the whole width of the screen, don't place anything you care about staying visible in the same region.
 
-This method refreshes the current cursor position from the terminal application. The response can take a short while so your code should wait at least a second before assuming an update has happened.
+As this is done in the terminal application, not by the library redrawing areas over the Stream connection it is faster and more efficient than scrolling in a widget.
 
 ```c++
-void setScrollWindow(uint8_t, uint8_t);
+void setScrollWindow(uint8_t topRow, uint8_t bottomRow);
 ```
-
-This method sets the scrolling region of the screen to between two specified rows (inclusive). Printing in this region that overflows will not scroll the whole terminal but just the lines specified. This is very useful for a 'logging' style window that is endlessly added to. Note it still scrolls the whole width of the screen.
-
-As this is done in the terminal application, not by the library redrawing areas it is faster and more efficient than scrolling in a widget.
 
 **[Back to top](#table-of-contents)**
 
@@ -166,11 +164,13 @@ There are two ways to set colours and attributes in the library, eight colour an
 
 ### Eight colour attributes
 
-The default control over colour in the library is through the use of 'attributes'. These use the most basic form of colour support in the terminal emulator and are most likely to be supported.
+The default control over colour in the library is through the use of 'attributes'.
 
-Attributes can handle eight foreground colours, eight background colours and a mix of other visual effects. Many of the library output methods like `print()` can be passed attributes and will change them for you in one method and all widgets expect to use attributes.
+Attributes can handle eight foreground colours, eight background colours and a mix of other visual effects.  These use the most basic form of colour support in the terminal emulator and are most likely to be supported. Many of the library output functions like `printAt()` can be passed attributes and will change them for you in one function. All [widgets](#widgets) expect to use attributes.
 
 The attributes are set by a bitmask, which has convenience shortcuts you can OR together. The bitmask is chosen so 'terminal default' is 0x00. There are synonyms with the US spelling of 'colour'.
+
+Any time you set attributes, the library compares them with the current cursor state to reduce the number of changes sent.
 
 ```c++
 constexpr const uint16_t COLOUR_BLACK = 			0x0008;
@@ -199,42 +199,45 @@ constexpr const uint16_t ATTRIBUTE_DOUBLE_WIDTH =	0x4000;
 constexpr const uint16_t ATTRIBUTE_DOUBLE_SIZE =	0x8000;
 ```
 
-You pass the combined attribute value to one of these methods.
-
 Beware the 'double width' and 'double size' attributes. They apply to the whole row, two rows for double size and can be hard to work with.
 
+You pass the combined attribute value to one of these functions and it changes any future output.
+
 ```c++
-void attributes(uint16_t);
-void defaultAttributes(uint16_t);
-void resetAttributes();
+void attributes(uint16_t attributes);
+void defaultAttributes(uint16_t attributes);
 ```
 
 So to set the colour for later output to 'green on a black background' you might use.
 
 `terminal.colour(COLOUR_GREEN | BACKGROUND_COLOUR_BLACK);`
 
-You can also retrieve the current set attributes.
+You can also retrieve the current set attributes and `resetAttributes()` will set it to the previously specified default.
 
-```
+```c++
 uint16_t attributes();
 uint16_t defaultAttributes();
+void resetAttributes();
 ```
 
 ### 256-colours
 
-The other method of setting colours is from the 256-colour palette. Not all terminals will support 256-colour mode. This is not supported by widgets (yet).
+The other way of setting foreground colours is from the 256-colour palette. Not all terminals will support 256-colour mode. This is not supported by widgets (yet). You can see the palette of colours by running the example code, it *may* vary by terminal emulator.
+
+When using the 256-colour palette, attributes no longer apply. You can switch back to outputting using attributes with `clearForegroundColour()`.
 
 ```c++
-void color(uint8_t);
-void colour(uint8_t); //A synonym for US users
-void clearColour();
+void foregroundColour(uint8_t);
+void foregroundColor(uint8_t); //A synonym for US users
+void clearForegroundColour();
+void clearForegroundColor(); //A synonym for US users
 ```
 
 **[Back to top](#table-of-contents)**
 
 # Output
 
-When sending output to the terminal, try not to mix straightforward print methods with widgets, as the library makes no effort to maintain output that isn't a widget if it is overwritten etc. Both styles of access to the terminal work simultaneously but you will need care to ensure they do not conflict.
+When sending output to the terminal, try not to mix straightforward print functions with widgets, as the library makes no effort to maintain output that isn't a widget if it is overwritten etc. Both styles of access to the terminal work simultaneously but you will need care to ensure they do not conflict.
 
 ## Printing
 
@@ -242,7 +245,7 @@ When sending output to the terminal, try not to mix straightforward print method
 void print(variableContent content);
 ```
 
-A good old fashioned print method, which outputs at the current cursor position, with the current [attributes](#attributes-and-colours). This method is templated so will output most types you send it as you'd expect without having to do things like `itoa()`.
+A good old fashioned print function, which outputs at the current cursor position, with the current [attributes](#attributes-and-colours). This function is templated so will output most types you send it as you'd expect without having to do things like `itoa()`.
 
 ```c++
 void println(variableContent content);
@@ -255,21 +258,21 @@ void printCentred(variableContent content);
 void printCentred(uint8_t y, variableContent content);
 ```
 
-These two methods will centre printed content. The first prints at the current row, the second centred on a specific row.
+These two functions will centre printed content. The first prints at the current row, the second centred on a specific row.
 
 ```c++
 void printAt(uint8_t x, uint8_t y, variableContent content);
 void printAt(uint8_t x, uint8_t y, variableContent content, uint16_t specificAttributes);
 ```
 
-These two methods print at a specified column and row. The second variant will print with the specified [attributes](#colours-and-attributes).
+These two functions print at a specified column and row. The second variant will print with the specified [attributes](#colours-and-attributes).
 
 ```c++
 void scroll(variableContent content);
 void scroll(variableContent content, bool centred);
 ```
 
-These two methods print at the bottom of the scrolling region, after moving the existing content up one line. These are fast and efficient compared to scrolling the content of a widget as the terminal emulator handles the scrolling and the contents do not need to be redrawn by the library.
+These two functions print at the bottom of the scrolling region, after moving the existing content up one line. These are fast and efficient compared to scrolling the content of a widget as the terminal emulator handles the scrolling and the contents do not need to be redrawn by the library.
 
 This is one of the occasions where you might want to mix widgets and direct printing to the terminal.
 
@@ -279,29 +282,38 @@ See `setScrollWindow()` to set the scrolling region.
 
 ## Boxes
 
-As well as simple text, the methods for drawing boxes used by widgets are available directly.
+As well as simple text, the functions for drawing boxes used by widgets are available directly.
 
 ```c++
-void drawBox(uint8_t, uint8_t, uint8_t, uint8_t, uint16_t, uint8_t);
-void drawBoxWithScrollbar(uint8_t, uint8_t, uint8_t, uint8_t, uint32_t, uint32_t, uint16_t, uint8_t);
-void drawBoxWithTitle(uint8_t, uint8_t, uint8_t, uint8_t, const char *, uint16_t, uint8_t);
-void drawBoxWithTitleAndScrollbar(uint8_t, uint8_t, uint8_t, uint8_t, const char *, uint32_t, uint32_t, uint16_t, uint8_t);
+void drawBox(uint8_t row, uint8_t column, uint8_t width, uint8_t height, uint16_t attributes, uint8_t style);
+void drawBoxWithScrollbar(uint8_t row, uint8_t column, uint8_t width, uint8_t height, uint32_t currentScrollbarPosition, uint32_t maxScrollbarPostion, uint16_t attributes, uint8_t style);
+void drawBoxWithTitle(uint8_t row, uint8_t column, uint8_t width, uint8_t height, variableContent title, uint16_t attributes, uint8_t style);
+void drawBoxWithTitleAndScrollbar(uint8_t row, uint8_t column, uint8_t width, uint8_t height, variableContent title, uint32_t currentScrollbarPosition, uint32_t maxScrollbarPosition, uint16_t attributes, uint8_t style);
 ```
 
-The four methods, do as described. Each is overload so the [attributes](#attributes-and-colours), [style](#styles) or title text can be omitted. The minimum parameters are column, row, width and height.
+The four functions, do as described. Each is overload so the [attributes](#attributes-and-colours), [style](#styles) or title text can be omitted. The minimum parameters are column, row, width and height.
 
 ```c++
-void centredTextBox(String);
-void centredTextBox(String, uint16_t);
-void centredTextBox(String, uint8_t);
-void centredTextBox(String, uint16_t, uint8_t);
+void centredTextBox(String text);
+void centredTextBox(String text, uint16_t attributes);
+void centredTextBox(String text, uint8_t style);
+void centredTextBox(String text, uint16_t attributes, uint8_t style);
 ```
 
-These four methods stick a box right in the centre of the screen with some text in. They're a relic of before the library supported widgets and deprecated.
+These four functions stick a box right in the centre of the screen with some text in. They're a relic of before the library supported widgets and deprecated.
+
+You can also clear a box with spaces in preparation for some now content, replacing it with the default [attributes](#attributes). If you specify some attributes it will fill the box with these instead.
+
+```c++
+void clearBox(uint8_t column, uint8_t row, uint8_t width, uint8_t height);
+void clearBox(uint8_t column, uint8_t row, uint8_t width, uint8_t height, uint16_t attributes);
+```
 
 **[Back to top](#table-of-contents)**
 
 ## Bell
+
+There are basic functions for enabling/disabling and sounding the terminal bell. If enabled the bell is used by some widgets to indicate an error, for example when trying to delete characters from an already empty input etc.
 
 ```c++
 void enableBell();
@@ -309,13 +321,11 @@ void disableBell();
 void soundBell();
 ```
 
-These are basic methods for enabling/disabling and sounding the terminal bell.
-
 **[Back to top](#table-of-contents)**
 
 # Input
 
-The retroTerm library normally expects to capture all input from the terminal, rather than the rest of the application reading directly from the Stream. If you do the latter, you may get unreliable behaviour.
+The library normally expects to capture all input from the terminal, rather than the rest of the application reading directly from the Stream. If you do the latter, you may get unreliable behaviour.
 
 Common non-alphanumeric keyboard presses (function keys, arrows etc.) have constants associated with them to make them easy to handle but if widgets are in use then often a widget will act on these keypresses and the application won't see them. This is particularly true of anything specified as a keyboard shortcut or keyboard navigation key (tab, back tab, arrows, page up, page down, enter etc.) that has a commonly understood meaning in a MS Windows style GUI.
 
@@ -326,21 +336,23 @@ Common non-alphanumeric keyboard presses (function keys, arrows etc.) have const
 ```c++
 bool userIsTyping();
 ```
-This method returns true if the terminal has received a keypress or mouse activity recently. It is a useful to help your code to wait until somebody has 'finished typing' or using the mouse before doing something.
+This function returns true if the terminal has received a keypress or mouse activity recently. It is a useful to help your code to wait until somebody has 'finished typing' or using the mouse before doing something.
 
 ```c++
 bool keyPressed();
 ```
-This method returns true if there is a keypress waiting to be read.
+This function returns true if there is a keypress waiting to be read.
 
 ```c++
 uint8_t readKeypress()
 ```
-Returns the ASCII code of the next keypress, plus assorted other keys mapped into 0-31. There is currently no unicode/UTF-8 support for input from the keyboard.
+Returns the ASCII code of the next keypress, plus assorted other keys mapped into 0-31. There is currently no Unicode/UTF-8 support for input from the keyboard.
 
 ### Key codes
 
-The key codes used in the library are the traditional ASCII character set with some common keys on the PC keyboard mapped over little-used entries.
+The key codes used in the library are the traditional ASCII character set with some common keys on the PC keyboard mapped over little-used entries. 
+
+Control codes for VT style terminals generally start with an escape character. As a result, if you use the Escape key in your application then the library waits a short while to see if valid control codes are sent, before passing the escape on. This delay is to be expected.
 
 ```c++
 constexpr const uint8_t escapePressed =		0;
@@ -376,25 +388,27 @@ constexpr const uint8_t enterPressed =		29;
 constexpr const uint8_t noKeyPressed =		127; //Normally you shouldn't see this, used as no key
 ```
 
-
-
-The input buffer is limited, so if doing your own keyboard processing your code should check for this regularly.
+The Stream input buffer is limited, so if doing your own keyboard processing your code rather than using [widget events](#events) you should check for input regularly.
 
 **[Back to top](#table-of-contents)**
 
 ## Mouse
 
+These two functions enable and disable mouse capture, if the terminal supports it.
+
+Once mouse support is enabled, it usually prevents the mouse doing cut/paste or bringing up the right-click menu in the terminal emulator. It may be worth having a hotkey set up to enable/disable mouse support if you want to be able to occasionally use the usual mouse functionality in the terminal emulator.
+
 ```c++
 void enableMouse();
 void disableMouse();
 ```
-These two methods enable and disable mouse captue, if the terminal supports it.
+These functions return the last reported location of the mouse pointer. Depending on terminal support this is usually where it was last clicked, rather than where it currently is.
 
 ```c++
-uint8_t mouseX();
-uint8_t mouseY();
+uint8_t mouseColumn();
+uint8_t mouseRow();
 ```
-These return the last reported located of the mouse pointer. Depending on terminal support this is usually where it was last clicked, rather than where it currently is.
+These functions return true on the relevant mouse button event. They clear the button status once read. If the click was over an active widget then a widget [event](#events) will occur instead.
 
 ```c++
 bool mouseButtonDown();
@@ -402,8 +416,6 @@ bool mouseButtonUp();
 bool mouseWheelDown();
 bool mouseWheelUp();
 ```
-These methods return true on the relevant mouse button event. They clear the button status once read.
-
 
 **[Back to top](#table-of-contents)**
 
@@ -433,7 +445,7 @@ Widget IDs are simple 8-bit unsigned integers (uin8_t) to allow you to store the
 
 If a widget is deleted then its ID may be subsequently re-used, so you should ensure you no longer associate that ID with the deleted widget. Deleting widgets is not great for [memory management](#memory-management) and heap fragmentation will occur especially if they contain large amounts of text content.
 
-You can check the current number of widgets and maximum with these two methods.
+You can check the current number of widgets and maximum with these two functions.
 
 ```c++
 uint8_t numberOfWidgets();
@@ -444,11 +456,80 @@ uint8_t maximumNumberOfWidgets();
 
 ## Z-order
 
-There is no configurable Z-order (yet), only an implicit one based on later widgets being 'higher'. Overlapping widgets are discouraged as it will cause much redrawing on the terminal but it does work.
+There is no configurable Z-order (yet), only an implicit one based on higher widget IDs being 'higher'. It is therefore considering this when creating new widgets as until IDs are re-used, they will be allocated in ascending numerical order.
+
+Overlapping widgets are discouraged as it will cause much redrawing on the terminal, but it does work.
 
 ## Styles
 
-Widgets have some very basic ability to 'style' them.
+Widgets have some very basic ability to 'style' them. To set a style, OR several constants together.
+
+The box style relies on certain Unicode characters being available in the terminal emulator application, you should try the example code to see which works. At a worst case, `BOX_ASCII` will draw a box with standard ASCII characters.
+
+Labels/titles will appear in differnt places depending on the type of widget. Where a widget is in a box, the title can be inside its own box if you use `LABEL_IN_BOX`.
+
+Labels/titles can also be left-justified (default), centred (`LABEL_CENTRED`) or right-justified (`LABEL_RIGHT_JUSTIFIED`).
+
+Shortcuts are usually displayed on the top-left border of a boxed widget, unless you use `SHORTCUT_INLINE` when it will be inline with the label/title.
+
+If you use `PASSWORD_FIELD` with a text input, it will obscure all typing with blobs. Note it does not obscure the length of the string.
+
+```
+constexpr const uint8_t BOX_SINGLE_LINE =			0x00;		//Box drawing with single line
+constexpr const uint8_t BOX_DOUBLE_LINE =			0x01;		//Box drawing with double line
+constexpr const uint8_t BOX_ASCII =					0x02;		//Box drawing with plain ASCII
+constexpr const uint8_t BOX_ASCII_2 =				0x03;		//Box drawing with plain ASCII
+constexpr const uint8_t NO_BOX =					0x00;		//Draw an outer box
+constexpr const uint8_t OUTER_BOX =					0x04;		//Draw an outer box
+constexpr const uint8_t LABEL_IN_BOX =				0x08;		//Label inside separate box
+constexpr const uint8_t LABEL_CENTRED =				0x10;		//Label centred, default is left justified
+constexpr const uint8_t LABEL_RIGHT_JUSTIFIED =		0x20;		//Label right justified, default is left justified
+constexpr const uint8_t SHORTCUT_INLINE =			0x40;		//Shortcut inline with label
+constexpr const uint8_t PASSWORD_FIELD =			0x80;		//Prints content as dots, but the arrays hold the real string
+```
+
+So for example a widget style could be.
+
+```c++
+OUTER_BOX | LABEL_IN_BOX | LABEL_CENTRED | SHORTCUT_INLINE | BOX_DOUBLE_LINE
+```
+
+When creating a widget you can set the style, but it can also be changed later with this function, which will cause it to redraw completely.
+
+```c++
+void widgetStyle(uint8_t widgetId, uint8_t style);
+```
+
+You are advised to look at the example code to see how attributes look in practice.
+
+## Widget attributes
+
+Widgets make heavy use of attributes. The legibility and aesthetic of the UI is really helped by having slight variations between the widget components, for example, the body as `ATTRIBUTE_FAINT` so the outline isn't glaring and the content as `ATTRIBUTE_BRIGHT` so it 'pops'.
+
+You can check/control the default body, label/title and content attributes separately with the following functions. this is useful for setting a general look for your UI.
+
+```
+uint16_t defaultWidgetAttributes();
+void defaultWidgetAttributes(uint16_t attributes);
+
+uint16_t defaultLabelAttributes();
+void defaultLabelAttributes(uint16_t attributes);
+
+uint16_t defaultContentAttributes();
+void defaultContentAttributes(uint16_t attributes);
+```
+
+ When creating a new widget if you set attributes they will apply to every part of it, overriding defaults.
+
+If you need to change the widget attributes can do so with these functions. They will cause the widget to redraw whichever part changed.
+
+```c++
+void widgetAttributes(uint8_t widgetId, uint16_t attributes);
+void labelAttributes(uint8_t widgetId, uint16_t attributes);
+void contentAttributes(uint8_t widgetId, uint16_t attributes);
+```
+
+You are advised to look at the example code to see how attributes look in practice.
 
 **[Back to top](#table-of-contents)**
 
@@ -463,13 +544,13 @@ Widgets have some very basic ability to 'style' them.
 
 You are advised to hide and show widgets as necessary rather than deleting them unless your device is short on memory or you are very clear they will not be used again.
 
-To check a specific widget ID is valid and in use you can check it the following method.
+To check a specific widget ID is valid and in use you can check it the following function.
 
 ```c++
 bool widgetExists(uint8_t widgetId);
 ```
 
-If you're certain you would like to delete a widget, use the following method.
+If you're certain you would like to delete a widget, use the following function.
 
 ```c++
 bool deleteWidget(uint8_t widgetId);
@@ -487,18 +568,23 @@ void hideWidget(uint8_t widgetId);
 void showWidget(uint8_t widgetId, bool visible);
 ```
 
-If you need to check the visibility of a specific widget you can use this method.
+If you need to check the visibility of a specific widget you can use this function.
 
 ```c++
 bool widgetVisible(uint8_t widgetId);
 ```
 
-These next methods are pretty self explanatory. Normally the library manages which widget are likely to need refreshing based on content changes, moves, resizes and any overlaps. The `refreshAllWidgets()` method forces a complete redraw from lowest to highest visible widget ID and may be visibly slow.
+These next functions are pretty self explanatory. Normally the library manages which widget are likely to need refreshing based on content changes, moves, resizes and any overlaps.
+
+The `refreshAllWidgets()` function forces a complete redraw from lowest to highest visible widget ID and may be visibly slow.
+
+The `clearWidget(uint8_t widgetId)` function clears the space occupied by a widget and **does not** flag it to redraw. This is mostly used internally by the library but might be occasionally useful.
 
 ```c++
 void hideAllWidgets();
 void showAllWidgets();
 void refreshAllWidgets();
+void clearWidget(uint8_t widgetId);
 ```
 
 **[Back to top](#table-of-contents)**
@@ -510,13 +596,15 @@ void moveWidget(uint8_t widgetId, uint8_t column, uint8_t row);
 void resizeWidget(uint8_t widgetId, uint8_t width, uint8_t height);
 ```
 
-These methods allow you to move or resize a widget after creation. Both cause a refresh of the widget in the terminal and potentially clipping of existing content or a blank space on the right hand side of a scrolling text widget where previously text was clipped.
+These functions allow you to move or resize a widget after creation. Both cause a refresh of the widget in the terminal and potentially clipping of existing content or a blank space on the right hand side of a scrolling text widget where previously text was clipped.
 
 **[Back to top](#table-of-contents)**
 
 ## Labels
 
-Every widget can have a 'label' attached. Its appearance varies by widget and is affected by its [style](#styles) it is recommended you try the example code to see how they look in use. To help with [memory management](#memory-management) it is strongly advised you use the F() macro to set the label.
+Every widget can have a 'label' attached. Its appearance varies by widget and is affected by its [style](#styles). For larger widgets generally it looks like a 'title' but on a button/checkbox it works like a 'label'.
+
+It is recommended you try the example code to see how they look in use. To help with [memory management](#memory-management) it is strongly advised you use the F() macro to set the label and don't change or delete it unless absolutely necessary. If you want to draw attention to a field, change its [attributes](#attributes) or [style](#styles) instead.
 
 If you set the label further times, it will replace the previous one, freeing storage on heap if it was used.
 
@@ -526,7 +614,7 @@ bool setWidgetLabel(uint8_t widgetId, String label);
 bool setWidgetLabel(uint8_t widgetId, const __FlashStringHelper* label);
 ```
 
-Once set, if you really want, you can also delete the label with the following method.
+Once set, if necessary, you can also delete the label with the following function.
 
 ```c++
 bool deleteWidgetLabel(const uint8_t widgetId);
@@ -561,7 +649,7 @@ bool contentOffset(uint8_t widgetId, uint32_t);								//Set current content off
 
 The library can attach a keyboard shortcut to a widget that allows it to be selected or 'clicked' with the keyboard. The placement and look of the shortcut is affected by the widget's [style](#styles). It is recommended you try the example code to see how they look.
 
-The shortcut key is set using the same [key codes](#key-codes) as other [keyboard](#keyboard) methods. The commonly expected shortcuts are the 'F1' to 'F12' keys but others are possible.
+The shortcut key is set using the same [key codes](#key-codes) as other [keyboard](#keyboard) functions. The commonly expected shortcuts are the 'F1' to 'F12' keys but others are possible.
 
 ```c++
 void widgetShortcutKey(uint8_t widgetId, uint8_t shortcutKey);
@@ -585,9 +673,9 @@ uint8_t numberOfOptions(uint8_t widgetId);
 
 If a widget is intrinsically 'binary' like a checkbox, use state() to read it. Widgets with more values, for example a list box, are read with `widgetValue()`.
 
-When you need to set the state or value of a widget, pass that value (either boolean or 0-255 uint8_t) to the same method.
+When you need to set the state or value of a widget, pass that value (either boolean or 0-255 uint8_t) to the same function.
 
-Ordinarily you should know the number of options in a list box but the method `numberOfOptions` can report them back.
+Ordinarily you should know the number of options in a list box but the function `numberOfOptions` can report them back.
 
 **[Back to top](#table-of-contents)**
 
