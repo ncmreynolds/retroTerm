@@ -5,7 +5,7 @@ void twoHundredAndFiftySixColourDemo()
   {
     for(uint8_t row = 0 ; row < 16 ; row++)
     {
-      terminal.colour(column + 16*row);                       //Set 256-colour mode
+      terminal.foregroundColour(column + 16*row);                  //Set 256-colour mode
       terminal.printAt(column * 4 + 3, row + 3, column + 16*row);  //Print the colour
     }
   }

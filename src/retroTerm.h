@@ -387,9 +387,10 @@ class retroTerm
 		void defaultAttributes(uint16_t);			//Set the default attributes, useful at the start of a sketch if you want everything green etc.
 
 		//Set foreground colour in 256-colour mode for non-widget printing. These override foreground attributes if set until all attributes are reset
-		void color(uint8_t);
-		void colour(uint8_t);
-		void clearColour();
+		void foregroundColour(uint8_t);
+		void foregroundColor(uint8_t);
+		void clearForegroundColour();
+		void clearForegroundColor();
 
 		//Get/set widget printing attributes
 		uint16_t defaultWidgetAttributes();			//Get the default attributes for widgets

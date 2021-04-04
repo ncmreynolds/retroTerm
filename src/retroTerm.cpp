@@ -2714,17 +2714,17 @@ void retroTerm::defaultWidgetStyle(uint16_t style)
 
 //Foreground colour in 256-colour mode
 #if defined(ESP8266) || defined(ESP32)
-void ICACHE_FLASH_ATTR retroTerm::color(uint8_t newColour)
+void ICACHE_FLASH_ATTR retroTerm::foregroundColor(uint8_t newColour)
 #else
-void retroTerm::color(uint8_t newColour)
+void retroTerm::foregroundColor(uint8_t newColour)
 #endif
 {
-	colour(newColour);
+	foregroundColour(newColour);
 }
 #if defined(ESP8266) || defined(ESP32)
-void ICACHE_FLASH_ATTR retroTerm::colour(uint8_t newColour)
+void ICACHE_FLASH_ATTR retroTerm::foregroundColour(uint8_t newColour)
 #else
-void retroTerm::colour(uint8_t newColour)
+void retroTerm::foregroundColour(uint8_t newColour)
 #endif
 {
 	if(_256colourSet && newColour != _256colour)
@@ -2743,6 +2743,24 @@ void retroTerm::colour(uint8_t newColour)
 		_256colourSet = true;
 		_currentAttributes = _currentAttributes & 0xfff0;	//Strip the foreground colour from the current attributes so it is not applied when printing
 	}
+}
+
+#if defined(ESP8266) || defined(ESP32)
+void ICACHE_FLASH_ATTR retroTerm::clearForegroundColour()
+#else
+void retroTerm::clearForegroundColour()
+#endif
+{
+	_256colourSet = false;
+}
+
+#if defined(ESP8266) || defined(ESP32)
+void ICACHE_FLASH_ATTR retroTerm::clearForegroundColor()
+#else
+void retroTerm::clearForegroundColor()
+#endif
+{
+	clearForegroundColour();
 }
 
 //24-bit colour
