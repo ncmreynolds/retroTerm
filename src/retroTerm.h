@@ -352,6 +352,8 @@ class retroTerm
 		void saveCursorPosition();			//Useful when printing outside the current area, also stores and restores attributes NEVER nest this with a printAt or printing to an object which does this internally
 		void restoreCursorPosition();		//Useful when printing outside the current area
 		void requestCursorPosition();		//Request the current cursor position from the terminal, this will take ~100ms to be sent by the terminal
+		uint8_t currentCursorColumn();		//Current cursor position
+		uint8_t currentCursorRow();			//Current cursor position
 
 		//Screen/line control
 		void reset();						//Resets the terminal and clears the screen, then applies the default printing attributes and enables the mouse if previously enabled

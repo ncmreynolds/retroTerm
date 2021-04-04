@@ -2494,6 +2494,23 @@ void retroTerm::requestCursorPosition()
 	_cursorPositionReceived = false;
 }
 
+#if defined(ESP8266) || defined(ESP32)
+uint8_t ICACHE_FLASH_ATTR retroTerm::currentCursorColumn()		//Current cursor position
+#else
+uint8_t retroTerm::currentCursorColumn()		//Current cursor position
+#endif
+{
+	return(_cursorX);
+}
+#if defined(ESP8266) || defined(ESP32)
+uint8_t ICACHE_FLASH_ATTR retroTerm::currentCursorRow()			//Current cursor position
+#else
+uint8_t retroTerm::currentCursorRow()			//Current cursor position
+#endif
+{
+	return(_cursorY);
+}
+
 //Screen/line control
 #if defined(ESP8266) || defined(ESP32)
 void ICACHE_FLASH_ATTR retroTerm::reset()
