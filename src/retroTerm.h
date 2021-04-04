@@ -534,6 +534,7 @@ class retroTerm
 		void widgetAttributes(uint8_t, uint16_t);	//Set widget attributes
 		void labelAttributes(uint8_t, uint16_t);	//Set widget label attributes
 		void contentAttributes(uint8_t, uint16_t);	//Set widget content attributes
+		void widgetStyle(uint8_t, uint8_t);			//Set widget style
 		
 		uint8_t columnsAvailable(uint8_t widgetId)
 		{

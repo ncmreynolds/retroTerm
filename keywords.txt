@@ -78,6 +78,7 @@ newScrollingTextDisplay	KEYWORD2
 widgetAttributes	KEYWORD2
 labelAttributes	KEYWORD2
 contentAttributes	KEYWORD2
+widgetStyle	KEYWORD2
 defaultWidgetAttributes	KEYWORD2
 defaultLabelAttributes	KEYWORD2
 defaultContentAttributes	KEYWORD2

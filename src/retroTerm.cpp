@@ -4099,6 +4099,21 @@ void retroTerm::contentAttributes(uint8_t widgetId, uint16_t newAttributes)
 	}
 }
 
+#if defined(ESP8266) || defined(ESP32)
+void ICACHE_FLASH_ATTR retroTerm::widgetStyle(uint8_t widgetId, uint8_t newStyle)
+#else
+void retroTerm::widgetStyle(uint8_t widgetId, uint8_t newStyle)
+#endif
+{
+	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	if(_widgetExists(widgetId) && _widgets[widgetId].style != newStyle)
+	{
+		_widgets[widgetId].style = newStyle;
+		_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x001c;		//Mark widget as completely changed
+	}
+}
+
+
 //Label methods
 #if defined(ESP8266) || defined(ESP32)
 bool ICACHE_FLASH_ATTR retroTerm::setWidgetLabel(uint8_t widgetId, char* label) //Add or change label for existing widget
