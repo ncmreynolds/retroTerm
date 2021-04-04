@@ -413,10 +413,11 @@ class retroTerm
 		void hideWidget(uint8_t widgetId);					//Set a widget invisible
 		void showWidget(uint8_t widgetId, bool visible);	//Explicitly set visibility of this widget
 		bool widgetVisible(uint8_t widgetId);				//Check the visibility of a specific widget
+		
 		void hideAllWidgets();								//Make all widgets invisible
 		void showAllWidgets();								//Make all widgets visible
-		bool widgetActive(uint8_t widgetId);				//Is this widget active, ie. can it accept input
-		void widgetActive(uint8_t widgetId, bool);			//Control if this widget is active
+		
+		void widgetActive(uint8_t widgetId);				//Make this widget active, ie. it can be clicked etc.
 		void widgetPassive(uint8_t widgetId);				//Make this widget passive, ie. it cannot be clicked on and is skipped over in keyboard navigation
 								
 		template <class variableContent>

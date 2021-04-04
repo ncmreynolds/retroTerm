@@ -65,15 +65,15 @@ void textInputExample()
   //Make the widgets inactive so they don't accept any more keypresses
   if(red)
   {
-    terminal.widgetActive(red, false);
+    terminal.widgetPassive(red);
   }
   if(green)
   {
-    terminal.widgetActive(green, false);
+    terminal.widgetPassive(green);
   }
   if(blue)
   {
-    terminal.widgetActive(blue, false);
+    terminal.widgetPassive(blue);
   }
   terminal.readKeypress();  //Gobble up the keypress so the script will wait to show the strings
   timeout = millis();

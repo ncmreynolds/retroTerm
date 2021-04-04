@@ -4005,7 +4005,7 @@ void retroTerm::showAllWidgets()					//Make all widgets visible
 		}
 	}
 }
-#if defined(ESP8266) || defined(ESP32)
+/*#if defined(ESP8266) || defined(ESP32)
 bool ICACHE_FLASH_ATTR retroTerm::widgetActive(uint8_t widgetId)	//Is this widget active
 #else
 bool retroTerm::widgetActive(uint8_t widgetId)						//Is this widget active
@@ -4042,7 +4042,39 @@ void retroTerm::widgetActive(uint8_t widgetId, bool newState)	//Control if this 
 			showCursor();
 		}
 	}
+}*/
+
+#if defined(ESP8266) || defined(ESP32)
+void ICACHE_FLASH_ATTR retroTerm::widgetActive(const uint8_t widgetId)	//Make this widget active
+#else
+void retroTerm::widgetActive(const uint8_t widgetId)	//Make this widget active
+#endif
+{
+	if(_widgetExists(widgetId - 1))
+	{
+		_widgets[widgetId - 1].currentState = _widgets[widgetId - 1].currentState | 0x0100;	//Change active state
+		if(widgetId == _selectedWidget && _widgets[widgetId - 1].type == _widgetTypes::textInput)
+		{
+			showCursor();
+		}
+	}
 }
+#if defined(ESP8266) || defined(ESP32)
+void ICACHE_FLASH_ATTR retroTerm::widgetPassive(const uint8_t widgetId)		//Make this widget passive, ie. it cannot be clicked on
+#else
+void retroTerm::widgetPassive(const uint8_t widgetId)		//Make this widget passive, ie. it cannot be clicked on
+#endif
+{
+	if(_widgetExists(widgetId - 1))
+	{
+		_widgets[widgetId - 1].currentState = _widgets[widgetId - 1].currentState & 0xFEFF;	//Mark widget as passive
+		if(widgetId == _selectedWidget && _widgets[widgetId - 1].type == _widgetTypes::textInput)
+		{
+			hideCursor();
+		}
+	}
+}
+
 #if defined(ESP8266) || defined(ESP32)
 bool ICACHE_FLASH_ATTR retroTerm::widgetClicked(uint8_t widgetId)					//Is this widget clicked, resets on read
 #else
@@ -5742,17 +5774,6 @@ void retroTerm::resizeWidget(uint8_t widgetId, const uint8_t w, const uint8_t h)
 			_widgets[widgetId].h = h;
 		}
 		_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x000C;	//Mark widget and content as changed
-	}
-}
-#if defined(ESP8266) || defined(ESP32)
-void ICACHE_FLASH_ATTR retroTerm::widgetPassive(const uint8_t widgetId)		//Make this widget passive, ie. it cannot be clicked on
-#else
-void retroTerm::widgetPassive(const uint8_t widgetId)		//Make this widget passive, ie. it cannot be clicked on
-#endif
-{
-	if(_widgetExists(widgetId - 1))
-	{
-		_widgets[widgetId - 1].currentState = _widgets[widgetId - 1].currentState & 0xFEFF;	//Mark widget as passive
 	}
 }
 
