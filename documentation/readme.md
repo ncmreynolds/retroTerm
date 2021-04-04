@@ -9,26 +9,36 @@ Documentation is broken down into three main sections, initialisation/housekeepi
    1. [Housekeeping](#housekeeping)
    1. [Probing the terminal](#probing-the-terminal)
 1. [Terminal control](#terminal-control)
-	1. [Reset/clear](#reset-clear)
+	1. [Reset and clear](#reset-and-clear)
 	1. [Title](#title)
-	1. [Cursor movement](#cursor-movement)
+	1. [Cursor control](#cursor-control)
 	1. [Attributes and colours](#attributes-and-colours)
+	   1. [Eight colours](#eight-colour-attributes)
+	   1. [256 colours](#256-colours)
 1. [Output](#output)
    1. [Printing](#printing)
    2. [Boxes](#boxes)
    3. [Bell](#bell)
 1. [Input](#input)
    1. [Keyboard](#keyboard)
+      1. [Key codes](#key-codes)
    1. [Mouse](#mouse)
 1. [Widgets](#widgets)
 	1. [Widget IDs](#widget-ids)
 	1. [Z-order](#z-order)
 	1. [Styles](#styles)
+	1. [Attributes](#widget-attributes)
 	1. [Creating widgets](#creating-widgets)
 	1. [Deleting widgets](#deleting-widgets)
 	1. [Show and hide widgets](#show-and-hide-widgets)
-	1. [Content control](#content-control)
+	1. [Moving and resizing](#moving-and-resizing)
+	1. [Content](#content)
+	1. [Shortcuts](#shortcuts)
+	1. [Values](#values)
+	1. [Events](#values)
 1. [Memory management](#memory-management)
+   1. [Storing text](#storing-text)
+   1. [Widget limits](#widget-limits)
 1. [Known-issues](#known-issues)
 
 # Initialisation and housekeeping
@@ -94,7 +104,7 @@ The most basic functions in retroTerm apply to the whole terminal or just its 'c
 
 **[Back to top](#table-of-contents)**
 
-## Reset/clear
+## Reset and clear
 
 ```c++
 void reset();
@@ -429,13 +439,19 @@ Due to the limited memory of most microcontrollers, text widgets should be used 
 
 - Button
 - Checkbox
-- Radio button
+- Radio button (all visible ones for one group)
 - List box
 - Text input (A single line editing field for free form text entry)
 - Text display (Display of static unchanging text information. This widget handles basic MarkDown for styling the content)
 - Text log (Regularly updating text information like a 'log' or 'chat' window. New text can be added at the top or bottom, scrolling the existing text)
 
+You should try the example code on your hardware to see how each type of widget behaves.
 
+The widgets have been written to behave how you 'expect', for example a large amount text in a text display that does not fit inside the box has a 'scroll bar'. The text and can be paged through with the arrow keys on the keyboard, scroll wheel on the mouse or by clicking at the top/bottom of the scroll bar. It will not be as responsive as a real GUI, but it does behave broadly how people have come to expect.
+
+Likewise, buttons can be clicked, checkboxes checked and so on.
+
+When using a text input, the cursor is visible and can be moved with the arrow keys, home/end and you can do in place editing of the text with delete/backspace. There is not yet any support for cut/paste in a text input though.
 
 **[Back to top](#table-of-contents)**
 
@@ -456,7 +472,7 @@ uint8_t maximumNumberOfWidgets();
 
 ## Z-order
 
-There is no configurable Z-order (yet), only an implicit one based on higher widget IDs being 'higher'. It is therefore considering this when creating new widgets as until IDs are re-used, they will be allocated in ascending numerical order.
+There is no configurable Z-order (yet), only an implicit one based on higher widget IDs being 'higher'. You should consider this when creating new widgets as until IDs are re-used, they will be allocated in ascending numerical order.
 
 Overlapping widgets are discouraged as it will cause much redrawing on the terminal, but it does work.
 
@@ -466,7 +482,7 @@ Widgets have some very basic ability to 'style' them. To set a style, OR several
 
 The box style relies on certain Unicode characters being available in the terminal emulator application, you should try the example code to see which works. At a worst case, `BOX_ASCII` will draw a box with standard ASCII characters.
 
-Labels/titles will appear in differnt places depending on the type of widget. Where a widget is in a box, the title can be inside its own box if you use `LABEL_IN_BOX`.
+Labels/titles will appear in different places depending on the type of widget. Where a widget is in a box, the title can be inside its own box if you use `LABEL_IN_BOX`.
 
 Labels/titles can also be left-justified (default), centred (`LABEL_CENTRED`) or right-justified (`LABEL_RIGHT_JUSTIFIED`).
 
@@ -504,7 +520,7 @@ You are advised to look at the example code to see how attributes look in practi
 
 ## Widget attributes
 
-Widgets make heavy use of attributes. The legibility and aesthetic of the UI is really helped by having slight variations between the widget components, for example, the body as `ATTRIBUTE_FAINT` so the outline isn't glaring and the content as `ATTRIBUTE_BRIGHT` so it 'pops'.
+Widgets make heavy use of attributes. The legibility and aesthetic of the UI is really helped by having slight variations between the widget components, for example, the body as `ATTRIBUTE_FAINT` so the outline box isn't glaring and the content as `ATTRIBUTE_BRIGHT` so it 'pops'.
 
 You can check/control the default body, label/title and content attributes separately with the following functions. this is useful for setting a general look for your UI.
 
@@ -521,7 +537,7 @@ void defaultContentAttributes(uint16_t attributes);
 
  When creating a new widget if you set attributes they will apply to every part of it, overriding defaults.
 
-If you need to change the widget attributes can do so with these functions. They will cause the widget to redraw whichever part changed.
+If you need to change the widget attributes, you can do so with these functions. They will cause the widget to redraw whichever part changed.
 
 ```c++
 void widgetAttributes(uint8_t widgetId, uint16_t attributes);
@@ -529,14 +545,35 @@ void labelAttributes(uint8_t widgetId, uint16_t attributes);
 void contentAttributes(uint8_t widgetId, uint16_t attributes);
 ```
 
-You are advised to look at the example code to see how attributes look in practice.
+You are advised to look at the example code running in your terminal emulator to see how attributes look in practice.
 
 **[Back to top](#table-of-contents)**
 
 ## Creating widgets
 
+There's a function for creation of each type of widget that returns the newly created widget ID, or 0 if the creation failed. Your code should check the returned ID, not assume the widget was created succesfully.
+
+These functions are templated so you can omit the label, attributes or style. The label can be a char array or ideally defined with the `F()` macro to store it in flash.
+
+```c++
+uint8_t newButton(uint8_t column, uint8_t row, uint8_t width, uint8_t height, variableType label, uint16_t attributes, uint8_t style);
+
+uint8_t newCheckbox(uint8_t column, uint8_t row, uint8_t width, uint8_t height, variableType label, uint16_t attributes, uint8_t style);
+
+uint8_t newRadioButton(uint8_t column, uint8_t row, uint8_t width, uint8_t height, variableType label, uint16_t attributes, uint8_t style);
+
+uint8_t newListBox(uint8_t column, uint8_t row, uint8_t width, uint8_t height, variableType label, uint16_t attributes, uint8_t style);
+
+uint8_t newTextInput(uint8_t column, uint8_t row, uint8_t width, uint8_t height, variableType label, uint16_t attributes, uint8_t style);
+
+uint8_t newTextDisplay(uint8_t column, uint8_t row, uint8_t width, uint8_t height, variableType label, uint16_t attributes, uint8_t style);
+
+uint8_t newScrollingTextDisplay(uint8_t column, uint8_t row, uint8_t width, uint8_t height, variableType label, uint16_t attributes, uint8_t style);
 
 
+```
+
+Widget IDs are allocated sequentially from 1 and once a widget is deleted may be re-used, starting at the lowest available ID.
 
 **[Back to top](#table-of-contents)**
 
@@ -550,7 +587,7 @@ To check a specific widget ID is valid and in use you can check it the following
 bool widgetExists(uint8_t widgetId);
 ```
 
-If you're certain you would like to delete a widget, use the following function.
+If you're certain you would like to delete a widget, use the following function. This returns true if the widget existed and was deleted.
 
 ```c++
 bool deleteWidget(uint8_t widgetId);
@@ -560,7 +597,7 @@ bool deleteWidget(uint8_t widgetId);
 
 ## Show and hide widgets
 
-All widget starts as 'hidden' and need to be 'shown'. Ordinarily you are advised to hide widgets rather than delete them, if memory permits.
+All widgets start as 'hidden' and need to be 'shown'. Ordinarily you are advised to hide widgets rather than delete them, if memory permits.
 
 ```c++
 void showWidget(uint8_t widgetId);
@@ -624,24 +661,39 @@ bool deleteWidgetLabel(const uint8_t widgetId);
 
 ## Content
 
-```c++
-bool setWidgetContent(uint8_t widgetId, char*);								//Add/change widget content char array
-bool setWidgetContent(uint8_t widgetId, String);							//Add/change widget content String version
-bool setWidgetContent(uint8_t widgetId, const char*);						//Add/change widget content string literal version
-bool setWidgetContent(uint8_t widgetId, const __FlashStringHelper*);		//Add/change widget content PROGMEM version
-bool deleteWidgetContent(uint8_t widgetId);									//Delete the widget content, returns true if there was one to delete
-bool appendWidgetContent(uint8_t widgetId, char*);							//Add/change widget content char array
-bool appendWidgetContent(uint8_t widgetId, String);							//Add/change widget content String version
-bool appendWidgetContent(uint8_t widgetId, const char*);					//Add/change widget content string literal version
-bool appendWidgetContent(uint8_t widgetId, const __FlashStringHelper*);		//Add/change widget content PROGMEM version
-bool prependWidgetContent(uint8_t widgetId, char*);							//Add/change widget content char array
-bool prependWidgetContent(uint8_t widgetId, String);						//Add/change widget content String version
-bool prependWidgetContent(uint8_t widgetId, const char*);					//Add/change widget content string literal version
-bool prependWidgetContent(uint8_t widgetId, const __FlashStringHelper*);	//Add/change widget content PROGMEM version
-uint32_t contentOffset(uint8_t widgetId);									//Current content offset (0 if invalid widget)
-bool contentOffset(uint8_t widgetId, uint32_t);								//Set current content offset
+The text widgets usually show content as well as the title/label. This is set with the functions below, which will accept most text types.
 
+Content in a `textDisplay` is not expected to change often, if at all. If the content will not change you are strongly advised to use the `F()` macro so it is stored in flash memory.
+
+Content in a `textInput` is expected to change and be read once the user is 'finished editing' and any content you supply will be copied into heap memory and expected to change. The maximum length of the edited text is the space visible onscreen.
+
+Content in a `textLog` is expected to change constantly. Any content you supply will be lost once it scrolls off the top or bottom of the widget, which reserves just enough heap memory for what is currently visible. This can still be quite a lot of memory so in many cases it is worth considering careful use of `setScrollWindow()` and `scroll()` although this requires careful placement of widgets around it.
+
+```c++
+bool setWidgetContent(uint8_t widgetId, variableType content);
 ```
+
+For the `textLog` widget **only**, you can append and prepend content at the top/bottom of the widget scrolling the existing content.
+
+```c++
+bool appendWidgetContent(uint8_t widgetId, variableType content);
+bool prependWidgetContent(uint8_t widgetId, variableType content);
+```
+
+If you need to clear the content and free up memory you can use this function. If the widget ID exists and had content to delete it returns true.
+
+```c++
+bool deleteWidgetContent(uint8_t widgetId);
+```
+
+As a `textDisplay` will often have a chunk of text too big to display in the widget you can set and retrieve the current 'top' of what is displayed in the widget. This is changed by the scrollbar as a user pages through the text.
+
+```c++
+uint32_t contentOffset(uint8_t widgetId);
+bool contentOffset(uint8_t widgetId, uint32_t offset);
+```
+
+
 
 **[Back to top](#table-of-contents)**
 
@@ -663,31 +715,63 @@ Any time the widget is shown and the key is pressed it 'clicks' the relevant wid
 
 Many widgets can return a numeric value that tells you something about their state.
 
+If a widget is intrinsically 'binary' like a `checkbox`, use `state()` to read it. Widgets with more values, for example a list box, are read with `widgetValue()`. Ordinarily you should know the number of options in a list box but the function `numberOfOptions` can report them back.
+
 ```c++
 bool state(uint8_t widgetId);
-void state(uint8_t widgetId, bool);
 uint8_t widgetValue(uint8_t widgetId);
-void widgetValue(uint8_t widgetId, uint8_t);
 uint8_t numberOfOptions(uint8_t widgetId);
 ```
 
-If a widget is intrinsically 'binary' like a checkbox, use state() to read it. Widgets with more values, for example a list box, are read with `widgetValue()`.
+When you need to set the state or value of a widget, pass that value (either boolean or 0-255 uint8_t) to the same function. This will cause the widget to refresh.
 
-When you need to set the state or value of a widget, pass that value (either boolean or 0-255 uint8_t) to the same function.
+```c++
+void state(uint8_t widgetId, bool newState);
+void widgetValue(uint8_t widgetId, uint8_t newValue);
+```
 
-Ordinarily you should know the number of options in a list box but the function `numberOfOptions` can report them back.
+For the `textInput` widget there are a separate set of functions for managing and retrieving the text. The widget traps most keyboard input but you can tell if the text in the field has been edited with `contentChanged()`, which clears the flag once read. This is helpful to avoid unnecessary handling of the input in your code.
+
+```
+bool contentChanged(uint8_t widgetId);
+```
+
+Your code can retrieve a pointer to the char array used to store the text in the `textInput` with `retrieveContent`. It is up to the application to allocate memory on heap and copy the text out (or not) for further processing of the contents of the `textInput`.
+
+```c++
+char* retrieveContent(uint8_t widgetId);
+```
+
+It is entirely possible to leave the text stored as part of the widget object and hide the widget. The space allocated on the heap for the text will not be freed unless you actively do so with the following function. This also clears it in the widget if it is shown.
+
+```c++
+void clearContent(uint8_t widgetId);
+```
 
 **[Back to top](#table-of-contents)**
 
 ## Events
 
+Most widgets are capable of generating 'events' that show they've been interacted with in the terminal. To do they must be 'active', all widgets are 'active' by default, but this can be changed.
+
 ```c++
-bool widgetActive(uint8_t widgetId);
-void widgetActive(uint8_t widgetId, bool);
+void widgetActive(uint8_t widgetId);
 void widgetPassive(uint8_t widgetId);
-bool selectWidget(uint8_t widgetId);
+```
+
+The default event is 'clicked', which you can test with the following function. This resets the flag on reading. Typically you would check a widget has been 'clicked' and if it has read its new [value](#values). Shortcut keys and keyboard navigation also generates 'clicks'.
+
+```c++
 bool widgetClicked(uint8_t widgetId);
 ```
+
+At any one time one visible widget will be the 'selected' widget. Clicking an active widget or using its shortcut key makes it the selected one. There might be occasions when you want to select the widget without causing a 'click' and you can use the following function for this.
+
+```c++
+bool selectWidget(uint8_t widgetId);
+```
+
+Reasons to do this are to shift focus to a specific widget to accept keyboard inputs that aren't defined as a shortcut, for example arrow keys scrolling a text display.
 
 **[Back to top](#table-of-contents)**
 
@@ -709,7 +793,7 @@ On other architectures, all text will be stored in heap memory.
 
 **[Back to top](#table-of-contents)**
 
-# Widget count
+## Widget limits
 
 Different architectures have a different default maximum number of widgets.
 
