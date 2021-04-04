@@ -72,7 +72,7 @@ newRadioButton	KEYWORD2
 newListBox	KEYWORD2
 newTextInput	KEYWORD2
 newTextDisplay	KEYWORD2
-newScrollingTextDisplay	KEYWORD2
+newTextLog	KEYWORD2
 
 //Widget attributes/style
 widgetAttributes	KEYWORD2

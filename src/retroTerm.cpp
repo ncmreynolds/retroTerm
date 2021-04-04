@@ -5263,74 +5263,74 @@ uint8_t retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w,
 //'Scrolling' text windows, which have a scrolling buffer of text in them, you can add to the top or bottom to 'scroll' it
 
 #if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newScrollingTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 #else
-uint8_t retroTerm::newScrollingTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+uint8_t retroTerm::newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 #endif
 {
 	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, _defaultAttributes, _defaultStyle));
 }
 #if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newScrollingTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
+uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
 #else
-uint8_t retroTerm::newScrollingTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
+uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
 #endif
 {
 	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, attributes, _defaultStyle));
 }
 #if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newScrollingTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
+uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
 #else
-uint8_t retroTerm::newScrollingTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
+uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
 #endif
 {
 	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, attributes, style));
 }
 #if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newScrollingTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
+uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
 #else
-uint8_t retroTerm::newScrollingTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
+uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
 #endif
 {
 	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, _defaultAttributes, _defaultStyle));
 }
 #if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newScrollingTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
+uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
 #else
-uint8_t retroTerm::newScrollingTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
+uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
 #endif
 {
 	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, attributes, _defaultStyle));
 }
 #if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newScrollingTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
+uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
 #else
-uint8_t retroTerm::newScrollingTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
+uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
 #endif
 {
 	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, attributes, style));
 }
 //AVR PROGMEM variants
 #if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newScrollingTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
+uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
 #else
-uint8_t retroTerm::newScrollingTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
+uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
 #endif
 {
 	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, _defaultAttributes, _defaultStyle));
 }
 #if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newScrollingTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
+uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
 #else
-uint8_t retroTerm::newScrollingTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
+uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
 #endif
 {
 	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, attributes, _defaultStyle));
 }
 #if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newScrollingTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
+uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
 #else
-uint8_t retroTerm::newScrollingTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
+uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
 #endif
 {
 	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, attributes, style));

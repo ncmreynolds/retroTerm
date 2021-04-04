@@ -5,19 +5,19 @@ void textLogExample()
   terminal.setScrollWindow(4,terminal.lines()/2 - 2);     //Set up somewhere to show the events without disrupting the widgets
 
   terminal.enableMouse();
-  uint8_t red = terminal.newScrollingTextDisplay(1,terminal.lines()/2,terminal.columns()/3, (terminal.lines()-2)/2, F("Window 1"),   COLOUR_RED, OUTER_BOX);    //Create a window to display the text
+  uint8_t red = terminal.newTextLog(1,terminal.lines()/2,terminal.columns()/3, (terminal.lines()-2)/2, F("Window 1"),   COLOUR_RED, OUTER_BOX);    //Create a window to display the text
   terminal.labelAttributes(red, COLOUR_RED);
   terminal.contentAttributes(red, COLOUR_RED | ATTRIBUTE_BRIGHT);
   terminal.widgetShortcutKey(red,f10Pressed);
   terminal.showWidget(red);        //All widgets starts as invisible, so change this to show it
 
-  uint8_t green = terminal.newScrollingTextDisplay(terminal.columns()/3 + 1,terminal.lines()/2,terminal.columns()/3, (terminal.lines()-2)/2, F("Window 2"),   COLOUR_GREEN | ATTRIBUTE_FAINT, OUTER_BOX | LABEL_IN_BOX | LABEL_CENTRED | SHORTCUT_INLINE | BOX_DOUBLE_LINE);    //Create a window to display the text
+  uint8_t green = terminal.newTextLog(terminal.columns()/3 + 1,terminal.lines()/2,terminal.columns()/3, (terminal.lines()-2)/2, F("Window 2"),   COLOUR_GREEN | ATTRIBUTE_FAINT, OUTER_BOX | LABEL_IN_BOX | LABEL_CENTRED | SHORTCUT_INLINE | BOX_DOUBLE_LINE);    //Create a window to display the text
   terminal.labelAttributes(green, COLOUR_GREEN);
   terminal.contentAttributes(green, COLOUR_GREEN | ATTRIBUTE_BRIGHT);
   terminal.widgetShortcutKey(green,f11Pressed);
   terminal.showWidget(green);        //All widgets starts as invisible, so change this to show it
 
-  uint8_t blue = terminal.newScrollingTextDisplay(terminal.columns()*2/3 + 1,terminal.lines()/2,terminal.columns()/3, (terminal.lines()-2)/2, F("Window 3"), COLOUR_BLUE | ATTRIBUTE_FAINT, OUTER_BOX | BOX_ASCII);    //Create a window to display the text
+  uint8_t blue = terminal.newTextLog(terminal.columns()*2/3 + 1,terminal.lines()/2,terminal.columns()/3, (terminal.lines()-2)/2, F("Window 3"), COLOUR_BLUE | ATTRIBUTE_FAINT, OUTER_BOX | BOX_ASCII);    //Create a window to display the text
   terminal.contentAttributes(blue, COLOUR_BLUE | ATTRIBUTE_BRIGHT);
   terminal.showWidget(blue);        //All widgets starts as invisible, so change this to show it
 

@@ -510,7 +510,8 @@ class retroTerm
 		 *
 		 */
 
-		enum class _widgetTypes {button, checkbox, radioButton, textInput, staticTextDisplay, scrollingTextDisplay, listBox, label, tab, slider};				//Enum for Widget types
+		//enum class _widgetTypes {button, checkbox, radioButton, textInput, staticTextDisplay, scrollingTextDisplay, listBox, label, tab, slider};				//Enum for Widget types
+		enum class _widgetTypes {button, checkbox, radioButton, listBox, textInput, staticTextDisplay, scrollingTextDisplay};				//Enum for Widget types
 		 
 		//Widget methods common to all types
 		uint8_t newWidget(_widgetTypes type, uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t attributes, uint8_t style);									//Add unlabelled widget
@@ -631,15 +632,15 @@ class retroTerm
 		
 		//Circular text displays, which are for scrolling 'log' type windows where you can items to top and bottom. They DO NOT store the content long term. Use appendWidgetContent, rather than setWidgetContent
 
-		uint8_t newScrollingTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h);
-		uint8_t newScrollingTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t attributes);
-		uint8_t newScrollingTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t attributes, uint8_t style);
-		uint8_t newScrollingTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label);
-		uint8_t newScrollingTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label, uint16_t attributes);
-		uint8_t newScrollingTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label, uint16_t attributes, uint8_t style);
-		uint8_t newScrollingTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label);
-		uint8_t newScrollingTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes);
-		uint8_t newScrollingTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes, uint8_t style);
+		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h);
+		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t attributes);
+		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t attributes, uint8_t style);
+		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label);
+		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label, uint16_t attributes);
+		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label, uint16_t attributes, uint8_t style);
+		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label);
+		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes);
+		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes, uint8_t style);
 		
 		//List boxes, a 'select' with all options in a single text string separated by \r
 
