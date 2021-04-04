@@ -462,8 +462,8 @@ class retroTerm
 		
 		void enableMouse();						//Enables mouse capture, if supported by the terminal application
 		void disableMouse();					//Disables mouse input
-		uint8_t mouseX();						//Returns last reported mouse X
-		uint8_t mouseY();						//Returns last reported mouse Y
+		uint8_t mouseColumn();					//Returns last reported mouse X
+		uint8_t mouseRow();						//Returns last reported mouse Y
 		bool mouseButtonDown();					//Mouse button down event. Resets on read
 		bool mouseButtonUp();					//Mouse button up event. Resets on read
 		bool mouseWheelDown();					//Mouse wheel down. Resets on read

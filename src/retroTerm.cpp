@@ -3869,18 +3869,18 @@ void retroTerm::disableMouse()
 	}
 }
 #if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::mouseX()
+uint8_t ICACHE_FLASH_ATTR retroTerm::mouseColumn()
 #else
-uint8_t retroTerm::mouseX()
+uint8_t retroTerm::mouseColumn()
 #endif
 {
 	return(_mouseX);
 }
 
 #if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::mouseY()
+uint8_t ICACHE_FLASH_ATTR retroTerm::mouseRow()
 #else
-uint8_t retroTerm::mouseY()
+uint8_t retroTerm::mouseRow()
 #endif
 {
 	return(_mouseY);

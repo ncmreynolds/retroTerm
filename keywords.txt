@@ -49,8 +49,8 @@ readKeypress	KEYWORD2
 
 enableMouse	KEYWORD2
 disableMouse	KEYWORD2
-mouseX	KEYWORD2
-mouseY	KEYWORD2
+mouseColumn	KEYWORD2
+mouseRow	KEYWORD2
 mouseButtonDown	KEYWORD2
 mouseButtonUp	KEYWORD2
 mouseWheelDown	KEYWORD2
@@ -118,6 +118,12 @@ deleteWidgetLabel	KEYWORD2
 //Widget numeric/state values
 state	KEYWORD2
 widgetValue	KEYWORD2
+
+//256-colour palette
+foregroundColour	KEYWORD2
+foregroundColor	KEYWORD2
+clearForegroundColour	KEYWORD2
+clearForegroundColor	KEYWORD2
 
 //Literals
 COLOR_BLACK	LITERAL1

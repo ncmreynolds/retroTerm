@@ -11,19 +11,19 @@ void mouseDemo()
     terminal.houseKeeping();
     if(terminal.mouseButtonDown())
     {
-      terminal.printAt(terminal.mouseX(),terminal.mouseY(),"D");
+      terminal.printAt(terminal.mouseColumn(),terminal.mouseRow(),"D");
     }
     if(terminal.mouseButtonUp())
     {
-      terminal.printAt(terminal.mouseX(),terminal.mouseY(),"U");
+      terminal.printAt(terminal.mouseColumn(),terminal.mouseRow(),"U");
     }
     if(terminal.mouseWheelDown())
     {
-      terminal.printAt(terminal.mouseX(),terminal.mouseY(),"N");
+      terminal.printAt(terminal.mouseColumn(),terminal.mouseRow(),"N");
     }
     if(terminal.mouseWheelUp())
     {
-      terminal.printAt(terminal.mouseX(),terminal.mouseY(),"S");
+      terminal.printAt(terminal.mouseColumn(),terminal.mouseRow(),"S");
     }
   }
   terminal.readKeypress();
