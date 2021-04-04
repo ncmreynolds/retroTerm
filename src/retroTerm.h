@@ -407,8 +407,8 @@ class retroTerm
 		
 		//Widget control
 		void showWidget(uint8_t widgetId);					//Set a widget visible
-		void showWidget(uint8_t widgetId, bool visible);	//Explicitly set visibility of this widget
 		void hideWidget(uint8_t widgetId);					//Set a widget invisible
+		void showWidget(uint8_t widgetId, bool visible);	//Explicitly set visibility of this widget
 		bool widgetVisible(uint8_t widgetId);				//Check the visibility of a specific widget
 		void hideAllWidgets();								//Make all widgets invisible
 		void showAllWidgets();								//Make all widgets visible
@@ -517,6 +517,7 @@ class retroTerm
 		bool widgetExists(uint8_t);					//Does a widget ID exist, useful to see if too many have been made
 		bool deleteWidget(uint8_t);					//Delete a widget (if it exists, which is checked first)
 		uint8_t numberOfWidgets();					//How many widgets are defined, useful for choosing if to destroy things to save memory
+		uint8_t maximumNumberOfWidgets();			//Maximum number of widgets, useful for choosing if to destroy things to save memory
 		
 		void moveWidget(uint8_t widgetId, uint8_t x, uint8_t y);	//Move a widget
 		void resizeWidget(uint8_t widgetId, uint8_t w, uint8_t h);	//Resize a widget

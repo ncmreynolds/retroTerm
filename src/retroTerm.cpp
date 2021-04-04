@@ -4203,6 +4203,16 @@ uint8_t retroTerm::numberOfWidgets()					//How many widgets are defined, useful 
 }
 
 #if defined(ESP8266) || defined(ESP32)
+uint8_t ICACHE_FLASH_ATTR retroTerm::maximumNumberOfWidgets()	//Maximum number of widgets
+#else
+uint8_t retroTerm::maximumNumberOfWidgets()					//Maximum number of widgets
+#endif
+{
+	return(_widgetObjectLimit);
+}
+
+
+#if defined(ESP8266) || defined(ESP32)
 bool ICACHE_FLASH_ATTR retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
 #else
 bool retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
