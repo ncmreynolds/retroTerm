@@ -223,4 +223,6 @@ This project is licensed under the GNU General Public License - see [LICENSE.md]
 
 This project wouldn't be useful without the excellent open source terminal emulator [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/), which I have used for what feels like decades.
 
+Markdown documentation mostly written in [Typora](https://typora.io/).
+
 **[Back to top](#table-of-contents)**
