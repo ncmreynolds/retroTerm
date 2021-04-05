@@ -460,10 +460,7 @@ void retroTerm::_displayChanges()
 		{
 			if((_widgets[widgetIndex].currentState & 0x0003) == 0x0001)									//Widget is visible but not displayed
 			{
-				if(_widgets[widgetIndex].attributes & 0x00F0 != _defaultAttributes & 0x00F0)			//If the BACKGROUND widget colour is not the default colour, clear the space and fill with widget attributes
-				{
-					clearBox(_widgets[widgetIndex].x, _widgets[widgetIndex].y, _widgets[widgetIndex].w, _widgets[widgetIndex].h, _widgets[widgetIndex].attributes);
-				}
+				clearBox(_widgets[widgetIndex].x, _widgets[widgetIndex].y, _widgets[widgetIndex].w, _widgets[widgetIndex].h, _widgets[widgetIndex].attributes);	//Clear the space the widget will occupy
 				_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState | 0x001F;		//Mark as displayed, but all the elements changed so they get displayed in the next step
 			}
 			if((_widgets[widgetIndex].currentState & 0x0003) == 0x0003)									//Handle display of separate parts of the widget only if the widget is currently visible
