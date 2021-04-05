@@ -382,10 +382,10 @@ class retroTerm
 
 		//Scrolling region control
 		void setScrollWindow(uint8_t, uint8_t);						//Sets the scolling window between two lines, inclusive. The whole width of the screen will scroll!
-		void setScrollWindow(uint8_t, uint8_t, uint8_t, uint8_t);	//Sets the scolling window between two lines, inclusive. The whole width of the screen will scroll!
+		//void setScrollWindow(uint8_t, uint8_t, uint8_t, uint8_t);	//Sets the scolling window to a square region. DOES NOT WORK!
 
 		//Window/margin/origin commands
-		void setOriginMode();										//What is this for? Who knows
+		//void setOriginMode();										//What is this for? Who knows
 
 		//Get/set non-widget printing attributes
 		uint16_t attributes();						//Get all the current character attributes for non-widget printing

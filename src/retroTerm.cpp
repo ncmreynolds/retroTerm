@@ -3320,7 +3320,7 @@ void retroTerm::setScrollWindow(uint8_t top,uint8_t bottom)
 	_scrollWindowBottom = bottom;
 }
 
-#if defined(ESP8266) || defined(ESP32)
+/*#if defined(ESP8266) || defined(ESP32)
 void ICACHE_FLASH_ATTR retroTerm::setScrollWindow(uint8_t x,uint8_t y, uint8_t w,uint8_t h)
 #else
 void retroTerm::setScrollWindow(uint8_t x,uint8_t y, uint8_t w,uint8_t h)
@@ -3347,7 +3347,7 @@ void retroTerm::setScrollWindow(uint8_t x,uint8_t y, uint8_t w,uint8_t h)
 	_scrollWindowSet = true;
 	_scrollWindowTop = y;
 	_scrollWindowBottom = y + h - 1;
-}
+}*/
 
 
 //Single key inputs
@@ -3730,7 +3730,7 @@ void retroTerm::_readInput()
 			{
 				//_terminalStream->print(F("Unknown character - "));
 				//_terminalStream->print(typedCharacter, HEX);
-				_lastKeypress = unknownKeyPressed;
+				//_lastKeypress = unknownKeyPressed;
 			}
 		}
 	}
