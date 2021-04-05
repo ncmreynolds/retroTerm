@@ -38,14 +38,13 @@ constexpr const uint8_t _widgetObjectLimit = 20;
 #elif defined(ESP8266)
 constexpr const uint8_t _widgetObjectLimit = 50;
 #elif defined(ESP32)
-constexpr const uint8_t _widgetObjectLimit = 50;
+constexpr const uint8_t _widgetObjectLimit = 75;
 #elif defined(CORE_TEENSY)
 constexpr const uint8_t _widgetObjectLimit = 50;
 #elif defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_GENERIC_RP2040) || defined(ARDUINO_ADAFRUIT_FEATHER_RP2040)
 constexpr const uint8_t _widgetObjectLimit = 50;
 #else
-//#warning Board not specifically supported by retroTerm
-//constexpr const uint8_t _widgetObjectLimit = 30;
+constexpr const uint8_t _widgetObjectLimit = 30;
 #endif
 
 //#define retroTerm_DYNAMIC_OBJECT_ALLOCATION			//Uncomment to allow dynamic object storage allocation, which saves memory but may cause heap fragmentation

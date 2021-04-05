@@ -2308,36 +2308,20 @@ bool ICACHE_FLASH_ATTR retroTerm::probeType()	//Warning, this is blocking for up
 bool retroTerm::probeType()	//Warning, this is blocking for up to 3s so do it sparingly
 #endif
 {
-	_terminalStream->print(F("\033[c"));
-	_terminalTypeReceived = false;
-	uint32_t timeout = millis();
-	while(_terminalTypeReceived == false && millis() - timeout < 1000ul)
-	{
-		_readInput();
-	}
-	if(_terminalTypeReceived)
-	{
-		return(true);
-	}
-	_terminalStream->print(F("\033[0c"));
-	timeout = millis();
-	while(_terminalTypeReceived == false && millis() - timeout < 1000ul)
-	{
-		_readInput();
-	}
-	if(_terminalTypeReceived)
-	{
-		return(true);
-	}
+	//_terminalStream->print(F("\033[c"));
 	_terminalStream->print(F("\033Z"));
-	timeout = millis();
-	while(_terminalTypeReceived == false && millis() - timeout < 1000ul)
+	_terminalTypeReceived = false;
+	for(uint8_t attempt = 0; attempt < 3;attempt++)
 	{
-		_readInput();
-	}
-	if(_terminalTypeReceived)
-	{
-		return(true);
+		uint32_t timeout = millis();
+		while(_terminalTypeReceived == false && millis() - timeout < 1000ul)
+		{
+			_readInput();
+		}
+		if(_terminalTypeReceived)
+		{
+			return(true);
+		}
 	}
 	return(false);
 }
@@ -4621,7 +4605,7 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, const __FlashStringHelper*
 			#elif defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_GENERIC_RP2040) || defined(ARDUINO_ADAFRUIT_FEATHER_RP2040)
 			uint8_t newContentLength = strlen_P((PGM_P)newContent);
 			#else
-			uint8_t newContentLength = strlen(newContent);
+			uint8_t newContentLength = strlen_P((PGM_P)newContent);
 			#endif
 			if(newContentLength > columns)	//Limit the length of what can be added
 			{
@@ -4767,7 +4751,7 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, const __FlashStringHelper
 			#elif defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_GENERIC_RP2040) || defined(ARDUINO_ADAFRUIT_FEATHER_RP2040)
 			uint8_t newContentLength = strlen_P((PGM_P)newContent);
 			#else
-			uint8_t newContentLength = strlen(newContent);
+			uint8_t newContentLength = strlen_P((PGM_P)newContent);
 			#endif
 			if(newContentLength > columns)	//Limit the length of what can be added
 			{
