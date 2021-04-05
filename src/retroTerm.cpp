@@ -3401,9 +3401,16 @@ uint8_t ICACHE_FLASH_ATTR retroTerm::readKeypress()
 uint8_t retroTerm::readKeypress()
 #endif
 {
-	uint8_t pressedKey = _lastKeypress;
-	_lastKeypress = noKeyPressed;
-	return(pressedKey);
+	if(_lastKeypress != noKeyPressed)
+	{
+		uint8_t pressedKey = _lastKeypress;
+		_lastKeypress = noKeyPressed;
+		return(pressedKey);
+	}
+	else
+	{
+		return(noKeyPressed);
+	}
 }
 
 
@@ -3741,8 +3748,9 @@ void retroTerm::_readInput()
 			}
 			else												//Unknown
 			{
-				_terminalStream->print(F("Unknown character - "));
-				_terminalStream->print(typedCharacter, HEX);
+				//_terminalStream->print(F("Unknown character - "));
+				//_terminalStream->print(typedCharacter, HEX);
+				_lastKeypress = unknownKeyPressed;
 			}
 		}
 	}
@@ -4924,6 +4932,19 @@ bool retroTerm::selectWidget(const uint8_t widgetId)									//Select a widget
 }
 
 #if defined(ESP8266) || defined(ESP32)
+void ICACHE_FLASH_ATTR retroTerm::deselectWidget()				//Deselect all widgets
+#else
+void retroTerm::deselectWidget()								//Deselect all widgets
+#endif
+{
+	if(_widgets[_selectedWidget].type == _widgetTypes::textInput)
+	{
+		hideCursor();
+	}
+	_selectedWidget = _widgetObjectLimit;
+}
+
+#if defined(ESP8266) || defined(ESP32)
 void ICACHE_FLASH_ATTR retroTerm::widgetShortcutKey(uint8_t widgetId, uint8_t shortcut)		//Set a keyboard shortcut on a widget
 #else
 void retroTerm::widgetShortcutKey(uint8_t widgetId, uint8_t shortcut)		//Set a keyboard shortcut on a widget
@@ -5008,21 +5029,29 @@ bool retroTerm::deleteWidget(uint8_t widgetId)
 		_widgets[widgetId].y = 0;
 		_widgets[widgetId].w = 0;
 		_widgets[widgetId].h = 0;
-
-		_widgets[widgetId].currentState = 0x0000;						//Set to no usable status
 		_widgets[widgetId].value = 0;
 		_widgets[widgetId].shortcut = noKeyPressed;						//Shortcut ket, start as nothing, causes a 'click' when used
-
+		//Handle removal of the label from the widget
 		if(_widgets[widgetId].label != nullptr)							//Delete the label, if it is set
 		{
-			if(not _widgets[widgetId].currentState & 0x4000)				//Widget is stored in the heap, so release the memory
+			if((_widgets[widgetId].currentState & 0x4000) != 0x4000)	//Widget label is stored in the heap, so release the memory
 			{
 				delete[] _widgets[widgetId].label;
 			}
 			_widgets[widgetId].label = nullptr;
 		}
 		//Handle removal of content from the widget
-		if(_widgets[widgetId].type == _widgetTypes::staticTextDisplay)
+		if(_widgets[widgetId].content != nullptr)						//Delete the content, if it is set
+		{
+			if((_widgets[widgetId].currentState & 0x8000) != 0x8000)	//Widget content is stored in the heap, so release the memory
+			{
+				delete[] _widgets[widgetId].content;
+			}
+			_widgets[widgetId].content = nullptr;
+			_widgets[widgetId].contentOffset = 0;						//Clear content offset
+			_widgets[widgetId].contentLength = 0;						//Clear content length
+		}
+		/*if(_widgets[widgetId].type == _widgetTypes::staticTextDisplay)
 		{
 			_widgets[widgetId].content = nullptr;						//Remove address of any content
 		}
@@ -5035,8 +5064,8 @@ bool retroTerm::deleteWidget(uint8_t widgetId)
 		{
 			delete[] _widgets[widgetId].content;						//De-allocate typing buffer memory
 			_widgets[widgetId].content = nullptr;
-		}
-		_widgets[widgetId].contentOffset = 0;							//Clear content offset
+		}*/
+		_widgets[widgetId].currentState = 0x0000;						//Set to no usable status
 		#endif
 		_numberOfWidgets--;
 		return(true);

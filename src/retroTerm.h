@@ -118,8 +118,9 @@ constexpr const uint8_t downPressed =		24;
 constexpr const uint8_t rightPressed =		25;
 constexpr const uint8_t breakPressed =		26;
 constexpr const uint8_t returnPressed =		27;
-constexpr const uint8_t fsPressed =			28;
+constexpr const uint8_t fsPressed =			28;	//The ` key on the keyboard
 constexpr const uint8_t enterPressed =		29;
+constexpr const uint8_t unknownKeyPressed =	31;
 constexpr const uint8_t noKeyPressed =		127; //Normally you shouldn't see this, used as no key
 
 //Used to provide keyboard shortcut labels
@@ -529,6 +530,7 @@ class retroTerm
 		void refreshAllWidgets();									//Set all widgets to redraw completely
 		
 		bool selectWidget(uint8_t widgetId);				//Select a widget
+		void deselectWidget();								//Deselect the current widget and ensure nothing is selected
 		void widgetShortcutKey(uint8_t widgetId, uint8_t);	//Set a keyboard shortcut on a widget
 				
 		bool widgetClicked(uint8_t widgetId);				//Is this widget clicked, resets on read
