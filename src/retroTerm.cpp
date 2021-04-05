@@ -1427,7 +1427,7 @@ uint8_t retroTerm::_displayLineOfContent(const uint8_t widgetIndex, const uint32
 	bool bold = false;
 	bool italic = false;
 	bool boldItalic = false;
-	//bool blockquote = false;
+	bool blockquote = false;
 	uint8_t headingLevel = 0;
 	uint8_t wordLength = 0;
 	uint8_t whitespaceLength = 0;
@@ -4305,9 +4305,22 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::textInput && strlen(newContent) > _typingBufferMaxLength(widgetId)) //Text inputs need to check the length
+		if(_widgets[widgetId].type == _widgetTypes::textInput)
 		{
-			return(false);
+			if(strlen(newContent) > _typingBufferMaxLength(widgetId)) //Text inputs need to check the length
+			{
+				return(false);
+			}
+			else
+			{
+				_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];		//Allocate the memory in heap
+				memcpy(_widgets[widgetId].content, newContent, strlen(newContent) + 1);				//Copy in the content
+				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0x7fff;			//Mark as stored in heap
+				_calculateContentLength(widgetId);													//Calculate the number of lines of content, for scrolling
+				return(true);
+			}
 		}
 		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
 		{
@@ -4315,14 +4328,11 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
 		}
 		else
 		{
-			_widgets[widgetId].content = new char[strlen(newContent) + 1];				//Allocate the memory in heap
-			memcpy(_widgets[widgetId].content, newContent, strlen(newContent) + 1);		//Copy in the content
-			if(_widgets[widgetId].type == _widgetTypes::textInput)
-			{
-				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);	//Place the cursor at the end of the content
-			}
-			_calculateContentLength(widgetId);											//Calculate the number of lines of content, for scrolling
-			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			_widgets[widgetId].content = new char[strlen(newContent) + 1];					//Allocate the memory in heap
+			memcpy(_widgets[widgetId].content, newContent, strlen(newContent) + 1);			//Copy in the content
+			_calculateContentLength(widgetId);												//Calculate the number of lines of content, for scrolling
+			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;		//Mark content as changed
+			_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0x7fff;		//Mark as stored in heap
 			return(true);
 		}
 	}
@@ -4341,9 +4351,22 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::textInput && newContent.length() > _typingBufferMaxLength(widgetId))
+		if(_widgets[widgetId].type == _widgetTypes::textInput) //Text inputs need to check the length
 		{
-			return(false);
+			if(newContent.length() > _typingBufferMaxLength(widgetId))
+			{
+				return(false);
+			}
+			else
+			{
+				_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];		//Allocate the memory in heap
+				memcpy(_widgets[widgetId].content, (newContent).c_str(), newContent.length() + 1);	//Copy in the content
+				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0x7fff;			//Mark as stored in heap
+				_calculateContentLength(widgetId);													//Calculate the number of lines of content, for scrolling
+				return(true);
+			}
 		}
 		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
 		{
@@ -4353,12 +4376,9 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 		{
 			_widgets[widgetId].content = new char[newContent.length() + 1];						//Allocate the memory in heap
 			memcpy(_widgets[widgetId].content, (newContent).c_str(), newContent.length() + 1);	//Copy in the content
-			if(_widgets[widgetId].type == _widgetTypes::textInput)
-			{
-				_widgets[widgetId].contentOffset = newContent.length();					//Place the cursor at the end of the content
-			}
-			_calculateContentLength(widgetId);											//Calculate the number of lines of content, for scrolling
-			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			_calculateContentLength(widgetId);													//Calculate the number of lines of content, for scrolling
+			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark content as changed
+			_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0x7fff;			//Mark as stored in heap
 			return(true);
 		}
 	}
@@ -4386,10 +4406,11 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, const __FlashStringHelper* ne
 			}
 			else
 			{
-				_widgets[widgetId].content = new char[strlen_P((PGM_P) newContent) + 1];			//Allocate the memory in heap
+				_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];		//Allocate the memory in heap
 				memcpy_P(_widgets[widgetId].content, newContent, strlen_P((PGM_P) newContent) + 1);	//Copy in the content
 				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0x7fff;			//Mark as stored in heap
 				_calculateContentLength(widgetId);													//Calculate the number of lines of content, for scrolling
 				return(true);
 			}
@@ -4429,10 +4450,11 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, const char* newContent)
 			}
 			else
 			{
-				_widgets[widgetId].content = new char[strlen_P((PGM_P) newContent) + 1];			//Allocate the memory in heap
+				_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];		//Allocate the memory in heap
 				memcpy_P(_widgets[widgetId].content, newContent, strlen_P((PGM_P) newContent) + 1);	//Copy in the content
 				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Move the cursor to the end
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0x7fff;			//Mark as stored in heap
 				_calculateContentLength(widgetId);													//Calculate the number of lines of content, for scrolling
 				return(true);
 			}
