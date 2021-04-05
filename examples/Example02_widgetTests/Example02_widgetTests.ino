@@ -95,6 +95,12 @@ The fair Ophelia! -- Nymph, in thy orisons \
 Be all my sins remembered.";
 #endif
 
+//Global variables for the widgets
+
+uint8_t red = 0;
+uint8_t green = 0;
+uint8_t blue = 0;
+
 void setup() {
   Serial.begin(115200);   //Initialise the Serial stream
   terminal.begin(Serial); //Initialise the library
@@ -116,32 +122,28 @@ void loop() {
 /*
  * The 'newPage' function uses some 'primitves' from the library
  * to clear the screen and show a title at the top of the page before every test
- * 
- * 
  */
 
-void newPage(String title)
-{
+void newPage(String title) {
   terminal.reset();             //Resets the terminal, clearing colours etc.
   terminal.hideCursor();        //Hide the cursor
-  terminal.printAt(1,1,title);  //Print the title at the top of the page
-  terminal.println();                                                   //Print a blank line
+  terminal.printAt(1,1,title + ", press a key or wait 30s to finish");  //Print the title at the top of the page
+  terminal.println();           //Print a blank line
+  terminal.setScrollWindow(3,terminal.lines()/2 - 4);     //Set up somewhere to show the events without disrupting the widgets
+  terminal.enableMouse();       //Enable the mouse
 }
 
 /*
- * The 'endPage' function waits 30s or for a keypress before exiting
- * 
- * This is to keep the test on the screen after it is finished
- * 
+ * The 'endPage' function tidies up after the test
  */
-void endPage()
-{
-  terminal.moveCursorTo(1,terminal.lines());                            //Move the cursor to the bottom of the screen
-  terminal.println(F("Press any key to continue, or wait 30s"));        //Print a message
-  uint32_t timeout = millis();                                          //Use this variable to track
-  while(millis() - timeout < 30000ul && terminal.keyPressed() == false) //Wait 30s or for a key to be pressed 
+void endPage() {
+  terminal.houseKeeping();
+  if(terminal.keyPressed())
   {
-    terminal.houseKeeping();                                            //The 'houseKeeping' method is needed for the library to process inputs and display changes on the terminal
+    terminal.readKeypress();
   }
-  terminal.readKeypress();                                              //Read and discard the keypress
+  terminal.deleteWidget(red);     //It is safe to try and delete a non-existent widget, the method will check before attempting to de-allocate memory etc.
+  terminal.deleteWidget(green);
+  terminal.deleteWidget(blue);
+  terminal.houseKeeping();
 }

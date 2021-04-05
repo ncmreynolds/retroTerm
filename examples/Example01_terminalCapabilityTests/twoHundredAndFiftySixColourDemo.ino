@@ -9,5 +9,10 @@ void twoHundredAndFiftySixColourDemo()
       terminal.printAt(column * 4 + 3, row + 3, column + 16*row);  //Print the colour
     }
   }
+  uint32_t timeout = millis();
+  while(millis() - timeout < 30000ul && not terminal.keyPressed())
+  {
+    terminal.houseKeeping();
+  }  
   endPage();
 }

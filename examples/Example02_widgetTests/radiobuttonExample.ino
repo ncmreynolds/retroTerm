@@ -1,12 +1,9 @@
 void radioButtonExample()
 {
   newPage(F("Radio button test"));
-  terminal.setScrollWindow(4,12);     //Set up somewhere to show the events without disrupting the buttons
-  terminal.hideCursor();
-  terminal.enableMouse();
-  uint8_t red =   terminal.newRadioButton(terminal.columns()/3 - 1, 15, 16, 5, F("Red"),   COLOUR_WHITE, OUTER_BOX | SHORTCUT_INLINE);    //Create three new widgets and record the IDs
-  uint8_t green = terminal.newRadioButton(terminal.columns()/3,     17, 14, 1, F("Green"), COLOUR_WHITE, SHORTCUT_INLINE);  //The method returns 0 if it fails
-  uint8_t blue =  terminal.newRadioButton(terminal.columns()/3,     18, 14, 1, F("Blue"),  COLOUR_WHITE, SHORTCUT_INLINE);   //Colour is the colour of the frame, lettering can be different
+  red = terminal.newRadioButton(terminal.columns()/3 - 1, 15, 16, 5, F("Red"),   COLOUR_WHITE, OUTER_BOX | SHORTCUT_INLINE);    //Create three new widgets and record the IDs
+  green = terminal.newRadioButton(terminal.columns()/3,     17, 14, 1, F("Green"), COLOUR_WHITE, SHORTCUT_INLINE);  //The method returns 0 if it fails
+  blue = terminal.newRadioButton(terminal.columns()/3,     18, 14, 1, F("Blue"),  COLOUR_WHITE, SHORTCUT_INLINE);   //Colour is the colour of the frame, lettering can be different
   if(red)
   {
     terminal.labelAttributes(red, COLOUR_RED | ATTRIBUTE_BRIGHT);     //Make the label text more emphasised, for better contrast
@@ -55,10 +52,5 @@ void radioButtonExample()
     }
     terminal.houseKeeping();  //You MUST run housekeeping to show any changes!
   }
-  terminal.deleteWidget(red);     //It is safe to try and delete a non-existent widget, the method will check before attempting to de-allocate memory etc.
-  terminal.deleteWidget(green);
-  terminal.deleteWidget(blue);
-  terminal.houseKeeping();
-  terminal.readKeypress();
-  terminal.disableMouse();
+  endPage();
 }

@@ -2,6 +2,7 @@ void eightColourDemo()
 {
   newPage(F("8-colour test"));
   
+  terminal.moveCursorTo(1,3);
   terminal.print(F("Testing black text - "));
   terminal.attributes(COLOUR_BLACK);
   terminal.print(F("Black Text"));
@@ -97,6 +98,10 @@ void eightColourDemo()
   terminal.print(F("White Background"));
   terminal.resetAttributes();
   terminal.println();
-
+  uint32_t timeout = millis();
+  while(millis() - timeout < 30000ul && not terminal.keyPressed())
+  {
+    terminal.houseKeeping();
+  }  
   endPage();  
 }

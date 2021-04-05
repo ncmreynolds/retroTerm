@@ -1,7 +1,8 @@
 void attributeDemo()
 {
   newPage(F("Character attributes test"));
-  
+
+  terminal.moveCursorTo(1,3);
   terminal.print(F("Testing bold text - "));
   terminal.attributes(ATTRIBUTE_BOLD);
   terminal.print(F("Bold Text"));
@@ -31,6 +32,10 @@ void attributeDemo()
   terminal.print(F("Inverse Text"));
   terminal.resetAttributes();
   terminal.println();
-  
+  uint32_t timeout = millis();
+  while(millis() - timeout < 30000ul && not terminal.keyPressed())
+  {
+    terminal.houseKeeping();
+  }  
   endPage();
 }

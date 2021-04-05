@@ -1,14 +1,9 @@
 void buttonExample()
 {
   newPage(F("Button test"));
-  terminal.setScrollWindow(4,12);     //Set up somewhere to show the events without disrupting the buttons
-  terminal.hideCursor();
-  terminal.enableMouse();
-  terminal.scroll("Click on the buttons once they appear, or use the shortcut keys");
-  //          ID                                      X                  Y   W  H  Label           Attributes
-  uint8_t red =   terminal.newButton(1                         , 16, terminal.columns()/3, 3, F("Red button"),   COLOUR_WHITE | ATTRIBUTE_BRIGHT | BACKGROUND_COLOUR_RED, SHORTCUT_INLINE | LABEL_CENTRED);    //Create three new buttons and record the IDs
-  uint8_t green = terminal.newButton(terminal.columns()/3 +1   , 16, terminal.columns()/3, 3, F("Green button"), COLOUR_GREEN, OUTER_BOX | BOX_SINGLE_LINE | SHORTCUT_INLINE);  //The method returns 0 if it fails
-  uint8_t blue =  terminal.newButton(terminal.columns()*2/3 + 1, 16, terminal.columns()/3, 3, F("Blue button"),  COLOUR_BLUE,  OUTER_BOX | BOX_DOUBLE_LINE | LABEL_CENTRED);   //Colour is the colour of the frame, lettering can be different
+  red = terminal.newButton(1                         , 16, terminal.columns()/3, 3, F("Red button"),   COLOUR_WHITE | ATTRIBUTE_BRIGHT | BACKGROUND_COLOUR_RED, SHORTCUT_INLINE | LABEL_CENTRED);    //Create three new buttons and record the IDs
+  green = terminal.newButton(terminal.columns()/3 +1   , 16, terminal.columns()/3, 3, F("Green button"), COLOUR_GREEN, OUTER_BOX | BOX_SINGLE_LINE | SHORTCUT_INLINE);  //The method returns 0 if it fails
+  blue = terminal.newButton(terminal.columns()*2/3 + 1, 16, terminal.columns()/3, 3, F("Blue button"),  COLOUR_BLUE,  OUTER_BOX | BOX_DOUBLE_LINE | LABEL_CENTRED);   //Colour is the colour of the frame, lettering can be different
   if(red)
   {
     terminal.labelAttributes(red, COLOUR_WHITE | ATTRIBUTE_BRIGHT | BACKGROUND_COLOUR_RED);    //Make the button text more emphasised, for better contrast
@@ -30,6 +25,7 @@ void buttonExample()
     terminal.scroll("Blue button created ID=" + String(blue) +" in background, displaying in 10s");
     terminal.scroll("Blue button keyboard shortcut F3");
   }
+  terminal.scroll("Click on the buttons once they appear, or use the shortcut keys");
   bool redDemoStarted = false;
   bool greenDemoStarted = false;
   bool blueDemoStarted = false;
@@ -92,9 +88,5 @@ void buttonExample()
     }
     terminal.houseKeeping();  //You MUST run housekeeping to show any changes!
   }
-  terminal.deleteWidget(red);     //It is safe to try and delete a non-existent widget, the method will check before attempting to de-allocate memory etc.
-  terminal.deleteWidget(green);
-  terminal.deleteWidget(blue);
-  terminal.readKeypress();
-  terminal.disableMouse();
+  endPage();
 }

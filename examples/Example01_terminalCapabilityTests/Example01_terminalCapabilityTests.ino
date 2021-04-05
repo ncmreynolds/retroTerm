@@ -38,24 +38,26 @@ void loop() {
   mouseDemo();
 }
 
-void newPage(String title)
-{
-  terminal.reset();
-  terminal.probeSize();
-  terminal.hideCursor();
-  terminal.print(title);
-  terminal.println();
-  terminal.println();
+/*
+ * The 'newPage' function uses some 'primitves' from the library
+ * to clear the screen and show a title at the top of the page before every test
+ */
+
+void newPage(String title) {
+  terminal.reset();             //Resets the terminal, clearing colours etc.
+  terminal.hideCursor();        //Hide the cursor
+  terminal.printAt(1,1,title + ", press a key or wait 30s to finish");  //Print the title at the top of the page
+  terminal.println();           //Print a blank line
 }
-void endPage()
-{
-  terminal.moveCursorTo(1,terminal.lines());
-  terminal.print(F("Press any key to continue, or wait 30s"));
-  uint32_t timeout = millis();
-  while(millis() - timeout < 30000ul && not terminal.keyPressed())
+
+/*
+ * The 'endPage' function tidies up after the test
+ */
+void endPage() {
+  terminal.houseKeeping();
+  if(terminal.keyPressed())
   {
-    terminal.houseKeeping();
-    //delay(100);
+    terminal.readKeypress();
   }
-  terminal.readKeypress();
+  terminal.houseKeeping();
 }

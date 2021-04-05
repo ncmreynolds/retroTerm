@@ -9,5 +9,10 @@ void scrollingWindowDemo()
     terminal.scroll("Scrolling whole line " + String(scroll+1) + " of " + String(terminal.lines()-6));
     delay(100);
   }
+  uint32_t timeout = millis();
+  while(millis() - timeout < 30000ul && not terminal.keyPressed())
+  {
+    terminal.houseKeeping();
+  }  
   endPage();
 }

@@ -1,12 +1,9 @@
 void checkboxExample()
 {
   newPage(F("Checkbox test"));
-  terminal.setScrollWindow(4,12);     //Set up somewhere to show the events without disrupting the buttons
-  terminal.hideCursor();
-  terminal.enableMouse();
-  uint8_t red =   terminal.newCheckbox(terminal.columns()/3, 16, 14, 1, F("Red"),   COLOUR_RED, SHORTCUT_INLINE);    //Create three new widgets and record the IDs
-  uint8_t green = terminal.newCheckbox(terminal.columns()/3, 17, 14, 1, F("Green"), COLOUR_GREEN, SHORTCUT_INLINE);  //The method returns 0 if it fails
-  uint8_t blue =  terminal.newCheckbox(terminal.columns()/3, 18, 14, 1, F("Blue"),  COLOUR_BLUE, SHORTCUT_INLINE);   //Colour is the colour of the frame, lettering can be different
+  red = terminal.newCheckbox(terminal.columns()/3, 16, 14, 1, F("Red"),   COLOUR_RED, SHORTCUT_INLINE);    //Create three new widgets and record the IDs
+  green = terminal.newCheckbox(terminal.columns()/3, 17, 14, 1, F("Green"), COLOUR_GREEN, SHORTCUT_INLINE);  //The method returns 0 if it fails
+  blue = terminal.newCheckbox(terminal.columns()/3, 18, 14, 1, F("Blue"),  COLOUR_BLUE, SHORTCUT_INLINE);   //Colour is the colour of the frame, lettering can be different
   if(red)
   {
     terminal.labelAttributes(red, COLOUR_RED | ATTRIBUTE_BRIGHT);     //Make the label text more emphasised, for better contrast
@@ -66,9 +63,5 @@ void checkboxExample()
     }
     terminal.houseKeeping();  //You MUST run housekeeping to show any changes!
   }
-  terminal.deleteWidget(red);     //It is safe to try and delete a non-existent widget, the method will check before attempting to de-allocate memory etc.
-  terminal.deleteWidget(green);
-  terminal.deleteWidget(blue);
-  terminal.readKeypress();
-  terminal.disableMouse();
+  endPage();
 }

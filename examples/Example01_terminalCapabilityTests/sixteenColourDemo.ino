@@ -2,6 +2,7 @@ void sixteenColourDemo()
 {
   newPage(F("16-colour test"));
   
+  terminal.moveCursorTo(1,3);
   terminal.print(F("Testing bright black text - "));
   terminal.attributes(ATTRIBUTE_BRIGHT | COLOUR_BLACK);
   terminal.print(F("Bright Black Text"));
@@ -49,6 +50,10 @@ void sixteenColourDemo()
   terminal.print(F("Bright White Text"));
   terminal.resetAttributes();
   terminal.println();
-  
+  uint32_t timeout = millis();
+  while(millis() - timeout < 30000ul && not terminal.keyPressed())
+  {
+    terminal.houseKeeping();
+  }  
   endPage();
 }

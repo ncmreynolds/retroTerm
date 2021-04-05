@@ -13,6 +13,10 @@ void boxDrawingDemo()
   terminal.drawBoxWithTitle(boxWidth + 1, 2 + boxHeight, boxWidth, boxHeight, "Double", COLOUR_GREEN, BOX_DOUBLE_LINE);                                      //Title, colour and style
   terminal.drawBoxWithScrollbar(boxWidth * 2 + 1, 2 + boxHeight, boxWidth, boxHeight, 128, 256, COLOUR_BLUE, BOX_DOUBLE_LINE);                               //Scrollbar at middle (128/256)
   terminal.drawBoxWithTitleAndScrollbar(boxWidth * 3 + 1, 2 + boxHeight, boxWidth, boxHeight, "Double w/scroll", 256, 256, COLOUR_MAGENTA, BOX_DOUBLE_LINE); //Scrollbar at end (256/256)
-
+  uint32_t timeout = millis();
+  while(millis() - timeout < 30000ul && not terminal.keyPressed())
+  {
+    terminal.houseKeeping();
+  }  
   endPage();
 }

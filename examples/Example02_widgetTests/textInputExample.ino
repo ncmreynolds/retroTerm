@@ -1,12 +1,9 @@
 void textInputExample()
 {
   newPage(F("Text input field test"));
-  terminal.setScrollWindow(2,6);     //Set up somewhere to show the events without disrupting the buttons
-  terminal.hideCursor();
-  terminal.enableMouse();
-  uint8_t red =   terminal.newTextInput(terminal.columns()/4,  9, terminal.columns()/2, 1, F("Red:"),   COLOUR_WHITE | BACKGROUND_COLOUR_RED, SHORTCUT_INLINE);    //Create three new widgets and record the IDs
-  uint8_t green = terminal.newTextInput(terminal.columns()/4, 11, terminal.columns()/2, 4, F("Green"), COLOUR_GREEN, OUTER_BOX);  //The method returns 0 if it fails
-  uint8_t blue =  terminal.newTextInput(terminal.columns()/4, 15, terminal.columns()/2, 5, F("Blue (Password)"),  COLOUR_BLUE, OUTER_BOX | BOX_DOUBLE_LINE | LABEL_IN_BOX | LABEL_CENTRED | SHORTCUT_INLINE | PASSWORD_FIELD);   //Colour is the colour of the frame, lettering can be different
+  red = terminal.newTextInput(terminal.columns()/4,  terminal.lines()/2 - 2, terminal.columns()/2, 1, F("Red:"),   COLOUR_WHITE | BACKGROUND_COLOUR_RED, SHORTCUT_INLINE);    //Create three new widgets and record the IDs
+  green = terminal.newTextInput(terminal.columns()/4, terminal.lines()/2, terminal.columns()/2, 4, F("Green"), COLOUR_GREEN, OUTER_BOX);  //The method returns 0 if it fails
+  blue = terminal.newTextInput(terminal.columns()/4, terminal.lines()/2 + 4, terminal.columns()/2, 5, F("Blue (Password)"),  COLOUR_BLUE, OUTER_BOX | BOX_DOUBLE_LINE | LABEL_IN_BOX | LABEL_CENTRED | SHORTCUT_INLINE | PASSWORD_FIELD);   //Colour is the colour of the frame, lettering can be different
   if(red)
   {
     terminal.labelAttributes(red, COLOUR_WHITE | ATTRIBUTE_BRIGHT | BACKGROUND_COLOUR_RED);     //Make the label text more emphasised, for better contrast
@@ -29,7 +26,7 @@ void textInputExample()
     terminal.scroll(F("Blue text input field created"));
     terminal.showWidget(blue);                                         //Make this widget visible
     terminal.widgetShortcutKey(blue,f12Pressed);
-    terminal.setWidgetContent(blue,F("Blue text input"));              //Populate the field at the start
+    terminal.setWidgetContent(blue,F("Blue password input"));          //Populate the field at the start
   }
   terminal.scroll(F("Press enter when finished to see the inputs"));   //It is for the application to decide what to do with everything that isn't a line editing key
   uint32_t timeout = millis();
@@ -61,29 +58,32 @@ void textInputExample()
   {
     terminal.scroll("Blue string changed - " + String(terminal.retrieveContent(blue)));
   }
-  //Make the widgets inactive so they don't accept any more keypresses
+  terminal.deselectWidget();  //Deselect the currently typed in widget, to prevent more typing
   if(red)
   {
-    terminal.widgetPassive(red);
+    terminal.widgetPassive(red);  //Stop the widget being clicked on again
   }
   if(green)
   {
-    terminal.widgetPassive(green);
+    terminal.widgetPassive(green);  //Stop the widget being clicked on again
   }
   if(blue)
   {
-    terminal.widgetPassive(blue);
+    terminal.widgetPassive(blue);  //Stop the widget being clicked on again
   }
-  terminal.readKeypress();  //Gobble up the keypress so the script will wait to show the strings
+  terminal.houseKeeping();  //You MUST run housekeeping to show any changes!
+  if(terminal.keyPressed())
+  {
+    terminal.readKeypress();    //Gobble up the enter key so the script will wait to show the strings
+  }
   timeout = millis();
   while(millis() - timeout < 30000ul && not terminal.keyPressed())
   {
     terminal.houseKeeping();  //You MUST run housekeeping to show any changes!
   }
-  //Delete the widgets for finishing
-  terminal.deleteWidget(red);     //It is safe to try and delete a non-existent widget, the method will check before attempting to de-allocate memory etc.
-  terminal.deleteWidget(green);
-  terminal.deleteWidget(blue);
-  terminal.readKeypress();        //Gobble up the keypress before running the next example
-  terminal.disableMouse();
+  if(terminal.keyPressed())
+  {
+    terminal.readKeypress();  //Gobble up the keypress so the script will wait for the next page
+  }
+  endPage();
 }
