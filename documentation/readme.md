@@ -1,6 +1,6 @@
-# retroTerm Documentation
+# Table of Contents
 
-Documentation is broken down into three main sections, initialisation/housekeeping, terminal control/interaction and widget creation/control. There are also some notes on memory management and known issues.
+[TOC]
 
 # Table of Contents
 
@@ -358,6 +358,8 @@ uint8_t readKeypress()
 ```
 Returns the ASCII code of the next keypress, plus assorted other keys mapped into 0-31. There is currently no Unicode/UTF-8 support for input from the keyboard.
 
+**[Back to top](#table-of-contents)**
+
 ### Key codes
 
 The key codes used in the library are the traditional ASCII character set with some common keys on the PC keyboard mapped over little-used entries. 
@@ -476,6 +478,8 @@ There is no configurable Z-order (yet), only an implicit one based on higher wid
 
 Overlapping widgets are discouraged as it will cause much redrawing on the terminal, but it does work.
 
+**[Back to top](#table-of-contents)**
+
 ## Styles
 
 Widgets have some very basic ability to 'style' them. To set a style, OR several constants together.
@@ -516,7 +520,9 @@ When creating a widget you can set the style, but it can also be changed later w
 void widgetStyle(uint8_t widgetId, uint8_t style);
 ```
 
-You are advised to look at the example code to see how attributes look in practice.
+You are advised to look at the example code to see how styles look in practice.
+
+**[Back to top](#table-of-contents)**
 
 ## Widget attributes
 
@@ -641,7 +647,7 @@ These functions allow you to move or resize a widget after creation. Both cause 
 
 Every widget can have a 'label' attached. Its appearance varies by widget and is affected by its [style](#styles). For larger widgets generally it looks like a 'title' but on a button/checkbox it works like a 'label'.
 
-It is recommended you try the example code to see how they look in use. To help with [memory management](#memory-management) it is strongly advised you use the F() macro to set the label and don't change or delete it unless absolutely necessary. If you want to draw attention to a field, change its [attributes](#attributes) or [style](#styles) instead.
+It is recommended you try the example code to see how they look in use. To help with [memory management](#memory-management) it is strongly advised you use the `F()` macro to set the label and don't change or delete it unless absolutely necessary. If you want to draw attention to a field, change its [attributes](#attributes) or [style](#styles) instead.
 
 If you set the label further times, it will replace the previous one, freeing storage on heap if it was used.
 
@@ -654,7 +660,7 @@ bool setWidgetLabel(uint8_t widgetId, const __FlashStringHelper* label);
 Once set, if necessary, you can also delete the label with the following function.
 
 ```c++
-bool deleteWidgetLabel(const uint8_t widgetId);
+bool deleteWidgetLabel(uint8_t widgetId);
 ```
 
 **[Back to top](#table-of-contents)**
@@ -692,8 +698,6 @@ As a `textDisplay` will often have a chunk of text too big to display in the wid
 uint32_t contentOffset(uint8_t widgetId);
 bool contentOffset(uint8_t widgetId, uint32_t offset);
 ```
-
-
 
 **[Back to top](#table-of-contents)**
 
@@ -783,13 +787,15 @@ As a library that handles large chunks of text, whenever possible assign widget 
 
 If you use a String or character array, the widget will store a copy of the text in heap memory leaving less free working memory for your other code. If a chunk of text is something that naturally changes frequently this is unavoidable but will eventually lead to heap fragmentation. Try to restrict this to things that really need it, for example user input fields.
 
-Use of the F() macro is supported and tested on the following architectures.
+Use of the `F()` macro is supported and tested on the following architectures.
 
 - AVR
 - ESP8266
 - ESP32
 
 On other architectures, all text will be stored in heap memory.
+
+Beware a `textLog` widget always reserves enough memory on heap for its usable printable area. This can add up quickly and large `textLog` widgets will be slow to update, careful use of `setScrollregion` and `scroll` should be considered.
 
 **[Back to top](#table-of-contents)**
 
