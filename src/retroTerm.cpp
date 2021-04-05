@@ -991,12 +991,6 @@ void retroTerm::_displayContent(const uint8_t widgetIndex)
 {
 	if(_widgets[widgetIndex].type == _widgetTypes::staticTextDisplay)
 	{
-		uint16_t textCapacity = _textCapacity(widgetIndex);							//Determine how much space is in the box
-		uint16_t contentLength = _contentSize(widgetIndex);
-		uint8_t columnsAvailable = _columnsAvailable(widgetIndex);
-		uint8_t column = 1;
-		char characterToPrint;
-		//moveCursorTo(_contentXorigin(widgetIndex), _contentYorigin(widgetIndex));
 		attributes(_widgets[widgetIndex].contentAttributes);
 		uint32_t contentPosition = _widgets[widgetIndex].contentOffset;
 		uint8_t lineSize = 0;												//Store first line size for later scroll down use
@@ -1429,15 +1423,17 @@ uint8_t retroTerm::_displayLineOfContent(const uint8_t widgetIndex, const uint32
 	uint8_t column = 1;
 	uint8_t contentProcessed = 0;
 	char currentCharacter = _currentCharacter(widgetIndex, offset);
+	#if defined(PROCESS_MARKDOWN)
 	bool bold = false;
 	bool italic = false;
 	bool boldItalic = false;
+	//bool blockquote = false;
 	uint8_t headingLevel = 0;
-	bool blockquote = false;
 	uint8_t wordLength = 0;
 	uint8_t whitespaceLength = 0;
 	uint8_t runLength = 0;
 	bool preceededOnlyByWhiteSpace = true;
+	#endif
 	while(column <= _columnsAvailable(widgetIndex) && offset + contentProcessed < _contentSize(widgetIndex))
 	{
 		if(currentCharacter == '\r' && _currentCharacter(widgetIndex, offset + contentProcessed + 1) == '\n')	//Forced line break, windows style
@@ -2215,7 +2211,7 @@ char retroTerm::_currentCharacter(const uint8_t widgetIndex, const uint32_t offs
 			return(_widgets[widgetIndex].content[offset]);
 		}
 		#else
-		return(currentChar = _widgets[widgetIndex].content[offset]);
+		return(_widgets[widgetIndex].content[offset]);
 		#endif
 	}
 	else
@@ -4598,6 +4594,10 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, const __FlashStringHelper*
 			uint8_t newContentLength = strlen_P((PGM_P)newContent);
 			#elif defined(ESP8266) || defined(ESP32)
 			uint8_t newContentLength = strlen_P((PGM_P)newContent);
+			#elif defined(CORE_TEENSY)
+			uint8_t newContentLength = strlen_P((PGM_P)newContent);
+			#elif defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_GENERIC_RP2040) || defined(ARDUINO_ADAFRUIT_FEATHER_RP2040)
+			uint8_t newContentLength = strlen_P((PGM_P)newContent);
 			#else
 			uint8_t newContentLength = strlen(newContent);
 			#endif
@@ -4739,6 +4739,10 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, const __FlashStringHelper
 			#if defined(__AVR__)
 			uint8_t newContentLength = strlen_P((PGM_P)newContent);
 			#elif defined(ESP8266) || defined(ESP32)
+			uint8_t newContentLength = strlen_P((PGM_P)newContent);
+			#elif defined(CORE_TEENSY)
+			uint8_t newContentLength = strlen_P((PGM_P)newContent);
+			#elif defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_GENERIC_RP2040) || defined(ARDUINO_ADAFRUIT_FEATHER_RP2040)
 			uint8_t newContentLength = strlen_P((PGM_P)newContent);
 			#else
 			uint8_t newContentLength = strlen(newContent);
@@ -5157,7 +5161,7 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 		_widgets[widgetId].h = h;
 		_widgets[widgetId].currentState = 0x011C;						//New widgets and the label are considered changed and active
 		_widgets[widgetId].value = 0;									//New widgets have a value of zero or false
-		if(label != "")
+		if(strlen(label) > 0)
 		{
 			_widgets[widgetId].label = new char[strlen(label) + 1];		//Assign some memory for the label
 			memcpy(_widgets[widgetId].label, label, strlen(label) + 1);	//Copy in the label
