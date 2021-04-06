@@ -83,11 +83,11 @@ After installation, the retroTerm examples will be available under "File" -> "Ex
 
 You should try the first two example sketches to check it works with your terminal emulator, then try the 'Alarm Clock' example which is a very simple application that will work on most microcontrollers.
 
-[Capability Test](examples/Example01_terminalCapabilityTests/readme.md) - basic terminal features
+[Capability Test](examples/Example01_terminalCapabilityTests/README.md) - basic terminal features
 
-[Widget Test](examples/Example02_widgetTests/readme.md) - widget features
+[Widget Test](examples/Example02_widgetTests/README.md) - widget features
 
-[Alarm Clock](examples/Example03_alarmClock/readme.md) - a simple interactive application
+[Alarm Clock](examples/Example03_alarmClock/README.md) - a simple interactive application
 
 There are then further examples that serve as a demonstration of how to use each individual type of widget.
 
@@ -119,7 +119,7 @@ You can then install in the Arduino IDE by choosing 'Sketch' -> 'Include Library
 
 ### Usage
 
-[Documentation](documentation/readme.md) for retroTerm is included as markdown in the 'documentation' directory.
+[Documentation](documentation/README.md) for retroTerm is included as markdown in the 'documentation' directory.
 
 Broadly to create widgets you need something along lines of the code below. This will create a single button at co-ordinates 1,1 that detects mouse clicks and prints below when it happens.
 
@@ -172,7 +172,7 @@ Once in the loop all it does is.
 
 This example should look like this in a terminal.
 
-![](examples\Example04_singleButton\images\singleButton.png)
+![](examples/Example04_singleButton/images/singleButton.png)
 
 **[Back to top](#table-of-contents)**
 
@@ -186,7 +186,7 @@ This project uses [Semantic Versioning](http://semver.org/) to be compatible wit
 
 First public release.
 
-For a full list of available versions, see the [repository tag list](https://github.com/ncmreynolds/retroTerm/tags).
+For a full list of available versions, see the [repository tag list](https://github.com/ncmreynolds/retroTerm/tags). There is also a [change log](documentation/CHANGELOG.md) included in the documentation.
 
 ## How to Get Help
 
