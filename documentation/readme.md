@@ -1,6 +1,8 @@
-# Table of Contents
+# retroTerm documentation
 
-[TOC]
+The example code provided with the library should be enough to get you started with writing user interfaces using retroTerm, but here is a more detailed reference to the library.
+
+This documentation is not absolutely complete, there are a lot of legacy or very niche functions in the library, this documentation is for the things you will need to know to make something usable.
 
 # Table of Contents
 
@@ -41,7 +43,36 @@
    1. [Widget limits](#widget-limits)
 1. [Known-issues](#known-issues)
 
-# Initialisation and housekeeping
+# Supported Terminal emulators
+
+The only currently supported terminal emulator is [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/), against which all testing is done. Other terminal emulators may work with a subset of features.
+
+**The Arduino IDE Serial monitor is not suitable** for accessing user interfaces created with this library, it supports no VT-style escape/control sequences.
+
+# Supported Architectures
+
+This library has been actively tested on the following architectures.
+
+- AVR (Arduino "Uno" and "Mega2560" tested)
+- ESP8266 ("Wemos D1 mini" tested)
+- ESP32 ("Espressif ESP32-S2-Saola-1R" and "WeMos WiFi&Bluetooth Battery" tested)
+
+In principle this library could be usable on any architecture as it only sends output to a Stream. However support for the Arduino `F()` macro (and similar methods for storing text in flash memory) is intrinsic to making it usable on architectures with low working memory. There is architecture-specific code to make this work.
+
+Note that the ESP8266 bootloader sends characters to the serial port on reset, which may cause the bell to sound or be seen as an 'XOFF' that prevents further input. If compiled on ESP8266 the library sends an 'XON' at initialisation.
+
+Some basic testing has been done on the following architectures.
+
+- RP2040 (Raspberry Pi Pico tested with this [unofficial Arduino support](https://github.com/earlephilhower/arduino-pico))
+- ARM Cortex-M4 (Teensy 3.1 tested)
+
+On these architectures, the library will work but may not have been worked on to reduce memory footprint etc. On Teensy 3.1/3.2, the compiler automatically places many string literals in flash memory.
+
+Any device that does its own USB support (eg. Raspberry Pi Pico and Teensy) rather than having a separate USB to UART device **will** lose some initial output to the terminal at start up. You should take this into account by perhaps delaying output, waiting for a keypress etc. before starting your retroTerm UI.
+
+**[Back to top](#table-of-contents)**
+
+## Initialisation and housekeeping
 
 With no dependencies beyond usual internal libraries of the Arduino core, all you need to include the library is a standard #include. You should then declare an instance of the class, here it is called 'terminal' but it can be whatever you wish.
 
@@ -106,17 +137,29 @@ The most basic functions in retroTerm apply to the whole terminal or just its 'c
 
 ## Reset and clear
 
+This function resets all the terminal settings to default and clears the currently display contents.
+
 ```c++
 void reset();
 ```
 
-This function resets all the terminal settings to default and clears the currently display contents.
+This function clears the currently displayed terminal content. It does not change colours, attributes and so on.
 
 ```c++
 void eraseScreen();
 ```
 
-This function clears the currently displayed terminal content. It does not change colours, attributes and so on.
+This function clears to the end of the current line.
+
+```c++
+void eraseLine();
+```
+
+This function deletes the current line, scrolling content up to fill the space.
+
+```c++
+void deleteLine();
+```
 
 **[Back to top](#table-of-contents)**
 
@@ -287,6 +330,12 @@ These two functions print at the bottom of the scrolling region, after moving th
 This is one of the occasions where you might want to mix widgets and direct printing to the terminal.
 
 See `setScrollWindow()` to set the scrolling region.
+
+Finally, this function inserts a line, scrolling the lines below down.
+
+```c++
+void insertLine();
+```
 
 **[Back to top](#table-of-contents)**
 
@@ -769,10 +818,11 @@ The default event is 'clicked', which you can test with the following function. 
 bool widgetClicked(uint8_t widgetId);
 ```
 
-At any one time one visible widget will be the 'selected' widget. Clicking an active widget or using its shortcut key makes it the selected one. There might be occasions when you want to select the widget without causing a 'click' and you can use the following function for this.
+At any one time one visible widget will be the 'selected' widget. Clicking an active widget or using its shortcut key makes it the selected one. There might be occasions when you want to select the widget without causing a 'click' and you can use the following functions for this. You can also make sure no widget is selected with `deselectWidget()`.
 
 ```c++
 bool selectWidget(uint8_t widgetId);
+void deselectWidget();
 ```
 
 Reasons to do this are to shift focus to a specific widget to accept keyboard inputs that aren't defined as a shortcut, for example arrow keys scrolling a text display.
@@ -813,8 +863,9 @@ Different architectures have a different default maximum number of widgets.
 
 - Widgets do not function properly when using the double width or double size attribute.
 - Serial speeds of 230400 and above are unreliable and cause 'phantom typing'.
-- Use with a Stream class over TCP/IP causes immediate watchdog errors on ESP8266.
+- Use with a Stream class over TCP/IP causes immediate watchdog errors on ESP8266/ESP32. This requires investigation.
 - No explicit support for unicode/UTF-8 input, only ASCII. This is not an insurmountable problem it just needs more work.
 - Input in text input widgets is restricted to the visible width. This is not an insurmountable problem it just needs more work.
+- Scrolling Markdown in a textDisplay works going 'down' but not 'up'.
 
 **[Back to top](#table-of-contents)**
