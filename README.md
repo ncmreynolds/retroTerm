@@ -4,7 +4,9 @@ retroTerm is an Arduino library for creating user interfaces in a terminal emula
 
 Now that many microcontrollers have Bluetooth or Wi-Fi it might seem superfluous but there are also many that do not and occasions when you want to configure or interact with them without having a network available.
 
-retroTerm allows you to create clickable 'buttons', 'checkboxes', 'list boxes' and so on and simple line editing of text.
+retroTerm allows you to create clickable 'buttons', 'checkboxes', 'list boxes' and so on and simple line editing of text. The name comes from being able to create 'retro terminal' interfaces like this, which can be interacted freely with using the mouse and keyboard, within the fundamental limitations of them running on a microcontroller.
+
+![](chatTerminal.png)
 
 ## Table of Contents
 
