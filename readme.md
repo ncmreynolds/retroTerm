@@ -97,8 +97,15 @@ This library has no specific dependencies, but you will need a fully featured te
 
 It is only fully tested on the handful of microcontrollers below and these have specific code, usually related to storing strings/character arrays in flash memory to save working memory. Other microcontrollers will use working memory for all strings.
 
-- Arduino AVR (Uno/Nano/Mega 2560) Note the full widget example is now overly large for an Uno
-- ESP8266 (WeMos D1 mini/WeMos D1 mini Pro) Note that the ESP8266 bootloader sends characters to the serial port on reset, which may cause the bell to sound or be seen as an 'XOFF' that prevents further input. If compiled on ESP8266 the library sends an 'XON' at initialisation.
+- Arduino AVR (Arduino "Uno" and "Mega2560" tested) Note the full widget example is now overly large for an Uno.
+- ESP8266 (WeMos D1 mini tested).
+- ESP32 ("Espressif ESP32-S2-Saola-1R" and "WeMos WiFi&Bluetooth Battery" tested).
+- RP2040 (Raspberry Pi Pico tested with this [unofficial Arduino support](https://github.com/earlephilhower/arduino-pico)).
+- ARM Cortex-M4 (Teensy 3.1 tested).
+
+Note that the Espressif ESP8266/ESP32 bootloader sends characters to the serial port on reset, which may cause the bell to sound or be seen as an 'XOFF' that prevents further input. If compiled on ESP8266/ESP32 the library sends an 'XON' at initialisation.
+
+Any device that does its own USB support (eg. Raspberry Pi Pico and Teensy) rather than having a separate USB to UART device **will** lose some initial output to the terminal at start up. You should take this into account by perhaps delaying output, waiting for a keypress etc. before starting your retroTerm UI.
 
 ### Getting the Source
 
@@ -112,7 +119,7 @@ You can then install in the Arduino IDE by choosing 'Sketch' -> 'Include Library
 
 ### Usage
 
-[Documentation for retroTerm](documentation/index.md) is included as a series of markdown files.
+[Documentation](documentation/readme.md) for retroTerm is included as markdown in the 'documentation' directory.
 
 Broadly to create widgets you need something along lines of the code below. This will create a single button at co-ordinates 1,1 that detects mouse clicks and prints below when it happens.
 
