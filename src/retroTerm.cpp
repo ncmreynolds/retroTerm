@@ -763,6 +763,10 @@ bool ICACHE_FLASH_ATTR retroTerm::_scrollbarNeeded(const uint8_t widgetIndex)
 bool retroTerm::_scrollbarNeeded(const uint8_t widgetIndex)
 #endif
 {
+	if(_linesAvailable(widgetIndex) < 5)
+	{
+		return(false);
+	}
 	if(_widgets[widgetIndex].type == _widgetTypes::staticTextDisplay && _widgets[widgetIndex].contentLength > _linesAvailable(widgetIndex))
 	{
 		return(true);
