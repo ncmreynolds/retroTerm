@@ -1,10 +1,10 @@
 # retroTerm
 
-retroTerm is an Arduino library for creating user interfaces in a terminal emulator for a microcontroller.
+retroTerm is an Arduino library for creating user interfaces in a terminal emulator with a microcontroller.
 
 Now that many microcontrollers have Bluetooth or Wi-Fi it might seem superfluous but there are also many that do not and occasions when you want to configure or interact with them without having a network available.
 
-retroTerm allows you to create clickable 'buttons', 'checkboxes', 'option lists' and so on plus also simple line editing of text.
+retroTerm allows you to create clickable 'buttons', 'checkboxes', 'list boxes' and so on and simple line editing of text.
 
 ## Table of Contents
 
@@ -28,13 +28,13 @@ retroTerm allows you to create clickable 'buttons', 'checkboxes', 'option lists'
 
 ## About retroTerm
 
-retroTerm is an Arduino library for creating user interfaces in a terminal emulator.
+retroTerm is an Arduino library for creating user interfaces in a terminal emulator with a microcontroller.
 
-By default this is expected to be the Serial interface, but it could also be any Stream. Testing is done with the popular terminal emulator [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/) as it is open source, available across several platforms and supports many terminal features others do not. Please use PuTTY first before reporting issues. The Arduino IDE terminal is not usable, it supports almost no ANSI/VT terminal features.
+By default this is expected to be the Serial interface, but it could also be any Stream. Testing is done with the popular terminal emulator [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/) as it is open source, available across several platforms and supports many terminal features others do not. Please use PuTTY first before reporting issues. The Arduino IDE terminal is **not** usable with retroTerm, it supports almost no ANSI/VT terminal features.
 
 Both direct control of the terminal and the use of 'widgets' that allow for an almost-GUI are possible, but mixing the two requires care. It tracks the current cursor state and tries to reduce the number of state changes sent to improve performance over the serial connection.
 
-This project was originally created to help with making a fake 'mainframe' that somebody can interact with on an ESP8266.
+This project was originally created to help with making a fake 'mainframe' that somebody can interact with running on an ESP8266.
 
 ### Terminal control features
 
@@ -56,20 +56,20 @@ Creation and management of GUI-esque objects
 * Buttons
 * Checkboxes
 * Radio buttons
-* Option lists
+* List boxes
 * Text boxes (editable text) single line editing of text, with support for 'expected' behaviour like home/end/insert/delete and the arrow keys
 * Text boxes (fixed text) with scrollbars, word wrapping and basic markdown support
 * Text boxes (changing text) for 'logging' windows that scroll content
 * Keyboard shortcuts for use without a mouse
 * Basic styling for widget outlines/labels
 
-As you might expect, this library can use a lot of working memory. There is explicit support for storing strings in flash memory using the F() macro. You should use this whenever possible for things like labels on buttons that will not change.
+As you might expect, this library can use a lot of working memory. There is explicit support for storing strings in flash memory using the `F()` macro on several architectures. You should use flash storage whenever possible for things like labels on buttons that will not change.
 
 **[Back to top](#table-of-contents)**
 
 ## Project Status
 
-This is the very first public release, which is working for the specific project I wrote it for. However I'm aware my naming of methods, approaches to passing arguments and so on are messy and inconsistent so some of this may change frequently.
+This is the very first public release, which is working for the specific project I wrote it for. However I'm aware my naming of methods, approaches to passing arguments and so on are messy and inconsistent so some of this may change frequently. This is reflected in the version numbering, which is currently 0.1.0.
 
 **[Back to top](#table-of-contents)**
 
@@ -79,23 +79,23 @@ From the project page, select 'Code' -> 'Download ZIP' and save the file somewhe
 
 You can then install in the Arduino IDE by choosing 'Sketch' -> 'Include Library' -> 'Add .ZIP Library...'.
 
-You should try the first two example sketches to check it works with your terminal emulator, then try the 'Alarm Clock' example which is a very simple application that will work on most microcontrollers.
+After installation, the retroTerm examples will be available under "File" -> "Examples" -> "retroTerm" in the Arduino IDE.
 
-Examples are found under After installation, the examples will be available under "File" -> "Examples" -> "retroTerm" in the Arduino IDE.
+You should try the first two example sketches to check it works with your terminal emulator, then try the 'Alarm Clock' example which is a very simple application that will work on most microcontrollers.
 
 [Capability Test](examples/Example01_terminalCapabilityTests/readme.md) - basic terminal features
 
 [Widget Test](examples/Example02_widgetTests/readme.md) - widget features
 
-[Alarm Clock](examples/Example03_alarmClock/readme.md) - a simple application
+[Alarm Clock](examples/Example03_alarmClock/readme.md) - a simple interactive application
 
-There are further examples that serve as a demonstration of how to use each type of widget.
+There are then further examples that serve as a demonstration of how to use each individual type of widget.
 
 ### Dependencies
 
 This library has no specific dependencies, but you will need a fully featured terminal emulator that can connect to your target microcontroller over a serial or USB-serial interface. Testing is done with [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/) and it is strongly recommend you start with using this.
 
-It is only fully tested on the handful of microcontrollers below and these have specific code, usually related to storing strings/character arrays in flash memory to save working memory. Other microcontrollers will use working memory for all strings.
+It is only fully tested on the handful of microcontrollers below and some of these have specific code, usually related to storing strings/character arrays in flash memory to save working memory. Other microcontrollers may use working memory for all strings.
 
 - Arduino AVR (Arduino "Uno" and "Mega2560" tested) Note the full widget example is now overly large for an Uno.
 - ESP8266 (WeMos D1 mini tested).
@@ -105,7 +105,7 @@ It is only fully tested on the handful of microcontrollers below and these have 
 
 Note that the Espressif ESP8266/ESP32 bootloader sends characters to the serial port on reset, which may cause the bell to sound or be seen as an 'XOFF' that prevents further input. If compiled on ESP8266/ESP32 the library sends an 'XON' at initialisation.
 
-Any device that does its own USB support (eg. Raspberry Pi Pico and Teensy) rather than having a separate USB to UART device **will** lose some initial output to the terminal at start up. You should take this into account by perhaps delaying output, waiting for a keypress etc. before starting your retroTerm UI.
+Any device that does its own USB support (eg. Raspberry Pi Pico and Teensy) rather than having a separate USB to UART device **will** lose some initial output to the terminal at start up. You should take this into account by perhaps delaying output, waiting for a keypress etc. before starting your retroTerm UI. If tried immediately on these, probing the terminal size, enabling the mouse and so on will fail.
 
 ### Getting the Source
 
@@ -152,17 +152,17 @@ void loop() {
 }
 ```
 
-It includes the library then assigns a global variable for the widget. Widgets have simple numeric IDs from 1-255, 0 is considered invalid. If you delete a button its ID may be re-used.
+The code includes the library then assigns a global variable for the widget. Widgets have simple numeric IDs from 1-255, 0 is considered invalid. If you delete a button its ID may be re-used.
 
 Effective setup for displaying widgets needs quite a few steps, but is then simpler to interact with.
 
-- Pass the library the Stream used for display. Normally this is 'Serial' but it could be another Stream, for example Serial2.
+- Pass the library the Stream used for display in `begin()`. Normally this is 'Serial' but it could be another Stream, for example Serial2.
 - Erase the screen to clear any mess from startup. Not necessary on all microcontrollers but ESP8266 & ESP32 output boot messages.
 - Hide the cursor, for tidiness. If you use a widget that allows text editing it will make the cursor visible while editing.
 - Enable the mouse, otherwise you will have to rely on keyboard shortcuts for interaction.
 - Set a scroll window. This is not a widget, but reduces the scrolling region of the terminal, making for trivial diagnostic/logging output.
 - Create the widget.
-- Assign a shortcut key to the widget. If you press the shortcut key it registers as a 'click'.
+- Assign a shortcut key to the widget. If you press the shortcut key it registers as a 'click' as if clicked with the mouse.
 - Make the widget visible.
 
 Once in the loop all it does is.
@@ -216,7 +216,7 @@ Serial 'dumb' terminals got quite smart over time, I took information from a var
 
 Copyright (c) 2021 Nick Reynolds
 
-This project is licensed under the GNU General Public License - see [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the GNU Lesser General Public License - see [LICENSE.md](LICENSE.md) file for details.
 
 **[Back to top](#table-of-contents)**
 
