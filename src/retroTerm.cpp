@@ -1543,7 +1543,7 @@ uint8_t retroTerm::_displayLineOfContent(const uint8_t widgetIndex, const uint32
 		else	//A word, which needs checking for wrap
 		{
 			wordLength = _wordLength(widgetIndex, offset + contentProcessed);
-			if(column + wordLength <= _columnsAvailable(widgetIndex))	//Print the word, including markdown formatting
+			if(column + wordLength - 1 <= _columnsAvailable(widgetIndex))	//Print the word, including markdown formatting
 			{
 				for (uint8_t c = 0; c < wordLength; c++)
 				{
