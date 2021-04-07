@@ -815,13 +815,20 @@ uint16_t ICACHE_FLASH_ATTR retroTerm::_shortcutLength(const uint8_t widgetIndex)
 uint16_t retroTerm::_shortcutLength(const uint8_t widgetIndex)
 #endif
 {
-	#if defined(__AVR__)
-	return(strlen_P((const char *) pgm_read_word (&keyLabels[_widgets[widgetIndex].shortcut])));
-	#elif defined(ESP8266) || defined(ESP32)
-	return(strlen_P(keyLabels[_widgets[widgetIndex].shortcut]));
-	#else
-	return(strlen(keyLabels[_widgets[widgetIndex].shortcut]));
-	#endif
+	if(_widgets[widgetIndex].shortcut > 31)	//It's a single character
+	{
+		return(1);
+	}
+	else
+	{
+		#if defined(__AVR__)
+		return(strlen_P((const char *) pgm_read_word (&keyLabels[_widgets[widgetIndex].shortcut])));
+		#elif defined(ESP8266) || defined(ESP32)
+		return(strlen_P(keyLabels[_widgets[widgetIndex].shortcut]));
+		#else
+		return(strlen(keyLabels[_widgets[widgetIndex].shortcut]));
+		#endif
+	}
 }
 
 #if defined(ESP8266) || defined(ESP32)
@@ -977,13 +984,20 @@ void retroTerm::_printKeyboardShortcut(const uint8_t widgetIndex)
 {
 	attributes(_widgets[widgetIndex].attributes);	//Set the right attributes
 	_terminalStream->print(F("["));
-	#if defined(__AVR__)
-	_printProgStr((const char *) pgm_read_word (&keyLabels[_widgets[widgetIndex].shortcut]));
-	#elif defined(ESP8266) || defined(ESP32)
-	_terminalStream->print(keyLabels[_widgets[widgetIndex].shortcut]);
-	#else
-	_terminalStream->print(keyLabels[_widgets[widgetIndex].shortcut]);
-	#endif
+	if(_widgets[widgetIndex].shortcut > 31)
+	{
+		_terminalStream->print(char(_widgets[widgetIndex].shortcut));
+	}
+	else
+	{
+		#if defined(__AVR__)
+		_printProgStr((const char *) pgm_read_word (&keyLabels[_widgets[widgetIndex].shortcut]));
+		#elif defined(ESP8266) || defined(ESP32)
+		_terminalStream->print(keyLabels[_widgets[widgetIndex].shortcut]);
+		#else
+		_terminalStream->print(keyLabels[_widgets[widgetIndex].shortcut]);
+		#endif
+	}
 	_terminalStream->print(F("]"));
 }
 
