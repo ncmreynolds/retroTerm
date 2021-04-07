@@ -939,6 +939,7 @@ class retroTerm
 
 		void _displayKeyboardShortcut(uint8_t);			//Show keyboard shortcut on a widget, doing all the lifting of centering etc.
 		void _printKeyboardShortcut(uint8_t);			//Does the actual print. Uses appropriate method if shortcut is in a PROGMEM
+		bool _shortcutMatches(uint8_t);					//Does case insensitive matching of keyboard shortcuts
 
 		void _displayLabel(uint8_t widgetId);			//Show the label on a widget (will include shortcut if inline)
 		void _printLabel(uint8_t);						//Does the actual print. Uses appropriate method if label is in a PROGMEM
