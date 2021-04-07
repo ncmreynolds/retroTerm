@@ -198,7 +198,7 @@ Drop me a message on retroTerm@arcanium.london, I can't promise to be super-resp
 
 ## Contributing
 
-I'd love to get help with this work, either drop me a message here or on retroTerm@arcanium.london. I'm new to using git for collaboration so please be patient.
+I'd love to get help with this work, either drop me a message here or on retroTerm@arcanium.london. I'm new to using git for collaboration so please be patient. Ongoing work is happening in the 'dev' branch for a later release.
 
 **[Back to top](#table-of-contents)**
 
