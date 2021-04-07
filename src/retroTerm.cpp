@@ -93,7 +93,7 @@ void retroTerm::_processInput()
 				_mouseStatus = _mouseStatus & 0xEF;	//Gobble the mouse event
 				inputEventCaught = true;			//Stop looking for more events
 			}
-			if(_widgets[widgetId].shortcut != noKeyPressed && _widgets[widgetId].shortcut == _lastKeypress)	//Search for used keyboard shortcuts, which appear as 'clicks' of an object for simplicity. This gobbles up the keypress so the application doesn't see it
+			if(_widgets[widgetId].shortcut != noKeyPressed && _shortcutMatches(widgetId))	//Search for used keyboard shortcuts, which appear as 'clicks' of an object for simplicity. This gobbles up the keypress so the application doesn't see it
 			{
 				_clickWidget(widgetId);				//Do per-widget-type click handling, only if clickable
 				_lastKeypress = noKeyPressed;		//Gobble the keypress and stop looking for more shortcuts
@@ -287,6 +287,26 @@ void retroTerm::_processInput()
 				_lastKeypress = noKeyPressed;								//Gobble up the keypress as line editing is occuring
 			}
 		}
+	}
+}
+
+#if defined(ESP8266) || defined(ESP32)
+bool ICACHE_FLASH_ATTR retroTerm::_shortcutMatches(const uint8_t widgetId)
+#else
+bool retroTerm::_shortcutMatches(const uint8_t widgetId)
+#endif
+{
+	if(_widgets[widgetId].shortcut == _lastKeypress)
+	{
+		return(true);
+	}
+	else if(_widgets[widgetId].shortcut > 31 && _lastKeypress > 31 && toupper(_widgets[widgetId].shortcut) == toupper(_lastKeypress))
+	{
+		return(true);
+	}
+	else
+	{
+		return(false);
 	}
 }
 
