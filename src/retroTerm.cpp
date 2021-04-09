@@ -103,7 +103,7 @@ void retroTerm::_processInput()
 	}
 	if(inputEventCaught == false && _selectedWidget < _widgetObjectLimit && _widgets[_selectedWidget].currentState & 0x0100)	//Process input from the keyboard to the currently selected widget
 	{
-		if(_widgets[_selectedWidget].type ==_widgetTypes::staticTextDisplay || _widgets[_selectedWidget].type ==_widgetTypes::scrollingTextDisplay)	//Handle keyboard input to a scrolling text display
+		if(_widgets[_selectedWidget].type ==_widgetTypes::staticTextDisplay || _widgets[_selectedWidget].type ==_widgetTypes::textLog)	//Handle keyboard input to a scrolling text display
 		{
 			if(_lastKeypress == downPressed)
 			{
@@ -568,7 +568,7 @@ void retroTerm::_displayChanges()
 							_displayContent(widgetIndex);			//Show the content
 						}
 					}
-					else if(_widgets[widgetIndex].type == _widgetTypes::scrollingTextDisplay)
+					else if(_widgets[widgetIndex].type == _widgetTypes::textLog)
 					{
 						if(_widgets[widgetIndex].content == nullptr)	//Clear the content area
 						{
@@ -791,7 +791,7 @@ bool retroTerm::_scrollbarNeeded(const uint8_t widgetIndex)
 	{
 		return(true);
 	}
-	else if(_widgets[widgetIndex].type == _widgetTypes::scrollingTextDisplay && _widgets[widgetIndex].contentLength > _linesAvailable(widgetIndex))
+	else if(_widgets[widgetIndex].type == _widgetTypes::textLog && _widgets[widgetIndex].contentLength > _linesAvailable(widgetIndex))
 	{
 		return(true);
 	}
@@ -1048,7 +1048,7 @@ void retroTerm::_displayContent(const uint8_t widgetIndex)
 		}
 		attributes(_defaultAttributes);
 	}
-	else if(_widgets[widgetIndex].type == _widgetTypes::scrollingTextDisplay)
+	else if(_widgets[widgetIndex].type == _widgetTypes::textLog)
 	{
 		uint16_t textCapacity = _textCapacity(widgetIndex);							//Determine how much space is in the box
 		moveCursorTo(_contentXorigin(widgetIndex), _contentYorigin(widgetIndex));
@@ -2145,7 +2145,7 @@ void retroTerm::_clickWidget(const uint8_t widgetIndex)
 		}
 		_handleScrollbarClicks(widgetIndex);
 	}
-	else if(_widgets[widgetIndex].type == _widgetTypes::scrollingTextDisplay)
+	else if(_widgets[widgetIndex].type == _widgetTypes::textLog)
 	{
 		if(_selectedWidget != widgetIndex)														//Only select if not previously selected
 		{
@@ -4374,7 +4374,7 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
 				return(true);
 			}
 		}
-		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			return(false);
 		}
@@ -4420,7 +4420,7 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 				return(true);
 			}
 		}
-		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			return(false);
 		}
@@ -4467,7 +4467,7 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, const __FlashStringHelper* ne
 				return(true);
 			}
 		}
-		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			return(false);
 		}
@@ -4511,7 +4511,7 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, const char* newContent)
 				return(true);
 			}
 		}
-		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			return(false);
 		}
@@ -4564,7 +4564,7 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, char* newContent)		//Add/c
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint8_t columns = _columnsAvailable(widgetId);
 			uint8_t lines = _linesAvailable(widgetId);
@@ -4609,7 +4609,7 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, String newContent)		//Add/
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint8_t columns = _columnsAvailable(widgetId);
 			uint8_t lines = _linesAvailable(widgetId);
@@ -4659,7 +4659,7 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, const char* newContent)	//
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint8_t columns = _columnsAvailable(widgetId);
 			uint8_t lines = _linesAvailable(widgetId);
@@ -4705,7 +4705,7 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, const __FlashStringHelper*
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint8_t columns = _columnsAvailable(widgetId);
 			uint8_t lines = _linesAvailable(widgetId);
@@ -4773,7 +4773,7 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, char* newContent)		//Add/
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint8_t columns = _columnsAvailable(widgetId);
 			uint8_t lines = _linesAvailable(widgetId);
@@ -4816,7 +4816,7 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, String newContent)		//Add
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint8_t columns = _columnsAvailable(widgetId);
 			uint8_t lines = _linesAvailable(widgetId);
@@ -4860,7 +4860,7 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, const char* newContent)	/
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint8_t columns = _columnsAvailable(widgetId);
 			uint8_t lines = _linesAvailable(widgetId);
@@ -4904,7 +4904,7 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, const __FlashStringHelper
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint8_t columns = _columnsAvailable(widgetId);
 			uint8_t lines = _linesAvailable(widgetId);
@@ -4964,7 +4964,7 @@ bool retroTerm::deleteWidgetContent(uint8_t widgetId)
 	if(_widgetExists(widgetId))
 	{
 		_widgets[widgetId].contentOffset = 0;											//Reset the content offset
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			memset(_widgets[widgetId].content, ' ',_textCapacity(widgetId));			//Clear the scrolling content
 		}
@@ -5240,7 +5240,7 @@ bool retroTerm::deleteWidget(uint8_t widgetId)
 		{
 			_widgets[widgetId].content = nullptr;						//Remove address of any content
 		}
-		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			delete[] _widgets[widgetId].content;						//De-allocate scrolling buffer memory
 			_widgets[widgetId].content = nullptr;						//Remove address of any content
@@ -5299,7 +5299,7 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 			_widgets[widgetId].content = new char[w-1];					//Allocate space for the typing buffer
 			_widgets[widgetId].content[0] = 0;							//Null terminate the string
 		}
-		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint16_t bufferSize = _textCapacity(widgetId);
 			_widgets[widgetId].content = new char[bufferSize];			//Allocate space for the scrolling text buffer
@@ -5361,7 +5361,7 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 			_widgets[widgetId].content = new char[w-1];					//Allocate space for the typing buffer
 			_widgets[widgetId].content[0] = 0;							//Null terminate the string
 		}
-		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint16_t bufferSize = _textCapacity(widgetId);
 			_widgets[widgetId].content = new char[bufferSize];			//Allocate space for the scrolling text buffer
@@ -5422,7 +5422,7 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 			_widgets[widgetId].content = new char[w-1];					//Allocate space for the typing buffer
 			_widgets[widgetId].content[0] = 0;							//Null terminate the string
 		}
-		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint16_t bufferSize = _textCapacity(widgetId);
 			_widgets[widgetId].content = new char[bufferSize];			//Allocate space for the scrolling text buffer
@@ -5483,7 +5483,7 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 			_widgets[widgetId].content = new char[w-1];					//Allocate space for the typing buffer
 			_widgets[widgetId].content[0] = 0;							//Null terminate the string
 		}
-		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint16_t bufferSize = _textCapacity(widgetId);
 			_widgets[widgetId].content = new char[bufferSize];			//Allocate space for the scrolling text buffer
@@ -5565,7 +5565,7 @@ void retroTerm::resizeWidget(uint8_t widgetId, const uint8_t w, const uint8_t h)
 	widgetId--;																		//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId) && (_widgets[widgetId].w != w || _widgets[widgetId].h != h))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)//A resize of the content needs to occur
+		if(_widgets[widgetId].type == _widgetTypes::textLog)//A resize of the content needs to occur
 		{
 			uint8_t oldWidth = _columnsAvailable(widgetId);				//Record info about the previous content
 			uint8_t oldHeight = _linesAvailable(widgetId);
