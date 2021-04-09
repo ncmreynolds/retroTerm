@@ -518,8 +518,8 @@ class retroTerm
 		 *
 		 */
 
-		//enum class _widgetTypes {button, checkbox, radioButton, textInput, staticTextDisplay, textLog, listBox, label, tab, slider};				//Enum for Widget types
-		enum class _widgetTypes {button, checkbox, radioButton, listBox, textInput, staticTextDisplay, textLog};				//Enum for Widget types
+		//enum class _widgetTypes {button, checkbox, radioButton, textInput, textDisplay, textLog, listBox, label, tab, slider};				//Enum for Widget types
+		enum class _widgetTypes {button, checkbox, radioButton, listBox, textInput, textDisplay, textLog};				//Enum for Widget types
 		 
 		//Widget methods common to all types
 		uint8_t newWidget(_widgetTypes type, uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t attributes, uint8_t style);									//Add unlabelled widget
@@ -813,7 +813,7 @@ class retroTerm
 		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 		#endif
 		{
-			return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::textDisplay, x, y, w, h, _defaultAttributes, _defaultStyle));
 		}
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
@@ -821,7 +821,7 @@ class retroTerm
 		uint8_t newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
 		#endif
 		{
-			return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, attributes, _defaultStyle));
+			return(newWidget(_widgetTypes::textDisplay, x, y, w, h, attributes, _defaultStyle));
 		}
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
@@ -829,7 +829,7 @@ class retroTerm
 		uint8_t newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
 		#endif
 		{
-			return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, attributes, style));
+			return(newWidget(_widgetTypes::textDisplay, x, y, w, h, attributes, style));
 		}
 		template <typename labelType>
 		#if defined(ESP8266) || defined(ESP32)
@@ -838,7 +838,7 @@ class retroTerm
 		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
 		#endif
 		{
-			return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::textDisplay, x, y, w, h, label, _defaultAttributes, _defaultStyle));
 		}
 		template <typename labelType>
 		#if defined(ESP8266) || defined(ESP32)
@@ -847,7 +847,7 @@ class retroTerm
 		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes)
 		#endif
 		{
-			return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, label, attributes, _defaultStyle));
+			return(newWidget(_widgetTypes::textDisplay, x, y, w, h, label, attributes, _defaultStyle));
 		}
 		template <typename labelType>
 		#if defined(ESP8266) || defined(ESP32)
@@ -856,7 +856,7 @@ class retroTerm
 		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes, uint8_t style)
 		#endif
 		{
-			return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, label, attributes, style));
+			return(newWidget(_widgetTypes::textDisplay, x, y, w, h, label, attributes, style));
 		}
 		
 		//Text logs, which are for scrolling 'log' type windows where you can items to top and bottom. They DO NOT store the content long term. Use appendWidgetContent and prependWidget, rather than setWidgetContent

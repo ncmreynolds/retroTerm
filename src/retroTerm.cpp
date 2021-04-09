@@ -103,7 +103,7 @@ void retroTerm::_processInput()
 	}
 	if(inputEventCaught == false && _selectedWidget < _widgetObjectLimit && _widgets[_selectedWidget].currentState & 0x0100)	//Process input from the keyboard to the currently selected widget
 	{
-		if(_widgets[_selectedWidget].type ==_widgetTypes::staticTextDisplay || _widgets[_selectedWidget].type ==_widgetTypes::textLog)	//Handle keyboard input to a scrolling text display
+		if(_widgets[_selectedWidget].type ==_widgetTypes::textDisplay || _widgets[_selectedWidget].type ==_widgetTypes::textLog)	//Handle keyboard input to a scrolling text display
 		{
 			if(_lastKeypress == downPressed)
 			{
@@ -553,7 +553,7 @@ void retroTerm::_displayChanges()
 						}
 						restoreCursorPosition();														//Restore the cursor
 					}
-					else if(_widgets[widgetIndex].type == _widgetTypes::staticTextDisplay)
+					else if(_widgets[widgetIndex].type == _widgetTypes::textDisplay)
 					{
 						if(_widgets[widgetIndex].content == nullptr)	//Clear the content area
 						{
@@ -787,7 +787,7 @@ bool retroTerm::_scrollbarNeeded(const uint8_t widgetIndex)
 	{
 		return(false);
 	}
-	else if(_widgets[widgetIndex].type == _widgetTypes::staticTextDisplay && _widgets[widgetIndex].contentLength > _linesAvailable(widgetIndex))
+	else if(_widgets[widgetIndex].type == _widgetTypes::textDisplay && _widgets[widgetIndex].contentLength > _linesAvailable(widgetIndex))
 	{
 		return(true);
 	}
@@ -1031,7 +1031,7 @@ void ICACHE_FLASH_ATTR retroTerm::_displayContent(const uint8_t widgetIndex)
 void retroTerm::_displayContent(const uint8_t widgetIndex)
 #endif
 {
-	if(_widgets[widgetIndex].type == _widgetTypes::staticTextDisplay)
+	if(_widgets[widgetIndex].type == _widgetTypes::textDisplay)
 	{
 		attributes(_widgets[widgetIndex].contentAttributes);
 		uint32_t contentPosition = _widgets[widgetIndex].contentOffset;
@@ -2136,7 +2136,7 @@ void retroTerm::_clickWidget(const uint8_t widgetIndex)
 			_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState | 0x0210;	//Mark the widget clicked
 		}
 	}
-	else if(_widgets[widgetIndex].type == _widgetTypes::staticTextDisplay)
+	else if(_widgets[widgetIndex].type == _widgetTypes::textDisplay)
 	{
 		if(_selectedWidget != widgetIndex)														//Only select if not previously selected
 		{
@@ -2220,7 +2220,7 @@ void ICACHE_FLASH_ATTR retroTerm::_scrollDown(const uint8_t widgetIndex)
 void retroTerm::_scrollDown(const uint8_t widgetIndex)
 #endif
 {
-	if(_widgets[widgetIndex].type == _widgetTypes::staticTextDisplay)
+	if(_widgets[widgetIndex].type == _widgetTypes::textDisplay)
 	{
 		if(_widgets[widgetIndex].contentOffset + _widgets[widgetIndex].value < _contentSize(widgetIndex))	//Don't overflow
 		{
@@ -2268,7 +2268,7 @@ void ICACHE_FLASH_ATTR retroTerm::_scrollUp(const uint8_t widgetIndex)
 void retroTerm::_scrollUp(const uint8_t widgetIndex)
 #endif
 {
-	if(_widgets[widgetIndex].type == _widgetTypes::staticTextDisplay)
+	if(_widgets[widgetIndex].type == _widgetTypes::textDisplay)
 	{
 		/*if(_widgets[widgetIndex].contentOffset > _previousLineOffset(widgetIndex, _widgets[widgetIndex].contentOffset))
 		{
@@ -4539,7 +4539,7 @@ void retroTerm::_calculateContentLength(uint8_t widgetIndex)						//Calculate co
 	{
 		_widgets[widgetIndex].contentLength = _calculateNumberOfOptions(widgetIndex);	//Calculate the number of options
 	}
-	else if(_widgets[widgetIndex].type == _widgetTypes::staticTextDisplay)
+	else if(_widgets[widgetIndex].type == _widgetTypes::textDisplay)
 	{
 		_widgets[widgetIndex].contentLength = _calculateNumberOfLines(widgetIndex);		//Calculate the number of lines of FORMATTED text. This is time consuming!
 	}
@@ -5236,7 +5236,7 @@ bool retroTerm::deleteWidget(uint8_t widgetId)
 			_widgets[widgetId].contentOffset = 0;						//Clear content offset
 			_widgets[widgetId].contentLength = 0;						//Clear content length
 		}
-		/*if(_widgets[widgetId].type == _widgetTypes::staticTextDisplay)
+		/*if(_widgets[widgetId].type == _widgetTypes::textDisplay)
 		{
 			_widgets[widgetId].content = nullptr;						//Remove address of any content
 		}
