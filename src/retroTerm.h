@@ -999,7 +999,7 @@ class retroTerm
 													//0x0004 signifies 'widget changed and needs redisplaying'
 													//0x0008 signifies 'label changed and needs redisplaying'
 													//0x0010 signifies 'content changed needs redisplaying'
-													//0x0020 signifies
+													//0x0020 signifies 'scrollbar/tracker changed and needs redisplaying'
 													//0x0040 signifies 
 													//0x0080 signifies 
 													//0x0100 signifies 'active' ie. can it be interacted with using keyboard or mouse. Inactive widgets are visible but unresponsive

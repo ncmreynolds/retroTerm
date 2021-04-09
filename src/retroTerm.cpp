@@ -787,7 +787,11 @@ bool retroTerm::_scrollbarNeeded(const uint8_t widgetIndex)
 	{
 		return(false);
 	}
-	if(_widgets[widgetIndex].type == _widgetTypes::staticTextDisplay && _widgets[widgetIndex].contentLength > _linesAvailable(widgetIndex))
+	else if(_widgets[widgetIndex].type == _widgetTypes::staticTextDisplay && _widgets[widgetIndex].contentLength > _linesAvailable(widgetIndex))
+	{
+		return(true);
+	}
+	else if(_widgets[widgetIndex].type == _widgetTypes::scrollingTextDisplay && _widgets[widgetIndex].contentLength > _linesAvailable(widgetIndex))
 	{
 		return(true);
 	}
@@ -1052,7 +1056,7 @@ void retroTerm::_displayContent(const uint8_t widgetIndex)
 		uint8_t line = 0;
 		for(uint16_t characterPosition = 0 ; characterPosition < textCapacity ; characterPosition++)
 		{
-			_terminalStream->print(_widgets[widgetIndex].content[characterPosition + _widgets[widgetIndex].contentOffset]);	//Print the content
+			_terminalStream->print(_widgets[widgetIndex].content[characterPosition]);	//Print the content
 			if((_widgets[widgetIndex].style & OUTER_BOX && (characterPosition % (_widgets[widgetIndex].w - 2) == (_widgets[widgetIndex].w - 3)))
 				|| ((_widgets[widgetIndex].style & OUTER_BOX) == 0x00 && (characterPosition % (_widgets[widgetIndex].w - 1) == (_widgets[widgetIndex].w - 2))))//Move down and back, staying inside the box
 			{
@@ -4571,7 +4575,22 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, char* newContent)		//Add/c
 			{
 				memset(_widgets[widgetId].content + columns * (lines - 1) + strlen(newContent), ' ', columns - newContentLength);
 			}
-			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			bool scrollBarNeeded = _scrollbarNeeded(widgetId);							//See if this has tripped it into needing a scrollbar
+			_widgets[widgetId].contentLength++;											//Add a line to the content length
+			if(_scrollbarNeeded(widgetId) != scrollBarNeeded)
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0014;	//Mark content & widget as changed
+				_widgets[widgetId].contentOffset = _widgets[widgetId].contentLength;		//Place the scrollbar marker at the end
+			}
+			else
+			{
+				if(_widgets[widgetId].contentOffset == _widgets[widgetId].contentLength - 1)
+				{
+					_widgets[widgetId].contentOffset = _widgets[widgetId].contentLength;		//Follow the end if already at the end
+					_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0020;	//Mark content as changed
+				}
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			}
 			return(true);
 		}
 		else
@@ -4605,7 +4624,22 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, String newContent)		//Add/
 			{
 				memset(_widgets[widgetId].content + columns * (lines - 1) + newContentLength, ' ', columns - newContentLength);
 			}
-			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			bool scrollBarNeeded = _scrollbarNeeded(widgetId);							//See if this has tripped it into needing a scrollbar
+			_widgets[widgetId].contentLength++;											//Add a line to the content length
+			if(_scrollbarNeeded(widgetId) != scrollBarNeeded)
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0014;	//Mark content & widget as changed
+				_widgets[widgetId].contentOffset = _widgets[widgetId].contentLength;		//Place the scrollbar marker at the end
+			}
+			else
+			{
+				if(_widgets[widgetId].contentOffset == _widgets[widgetId].contentLength - 1)
+				{
+					_widgets[widgetId].contentOffset = _widgets[widgetId].contentLength;		//Follow the end if already at the end
+					_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0020;	//Mark content as changed
+				}
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			}
 			return(true);
 		}
 		else
@@ -4636,7 +4670,22 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, const char* newContent)	//
 			{
 				memset(_widgets[widgetId].content + columns * (lines - 1) + strlen(newContent), ' ', columns - newContentLength);
 			}
-			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			bool scrollBarNeeded = _scrollbarNeeded(widgetId);							//See if this has tripped it into needing a scrollbar
+			_widgets[widgetId].contentLength++;											//Add a line to the content length
+			if(_scrollbarNeeded(widgetId) != scrollBarNeeded)
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0014;	//Mark content & widget as changed
+				_widgets[widgetId].contentOffset = _widgets[widgetId].contentLength;		//Place the scrollbar marker at the end
+			}
+			else
+			{
+				if(_widgets[widgetId].contentOffset == _widgets[widgetId].contentLength - 1)
+				{
+					_widgets[widgetId].contentOffset = _widgets[widgetId].contentLength;		//Follow the end if already at the end
+					_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0020;	//Mark content as changed
+				}
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			}
 			return(true);
 		}
 		else
@@ -4687,7 +4736,22 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, const __FlashStringHelper*
 			{
 				memset(_widgets[widgetId].content + columns * (lines - 1) + newContentLength, ' ', columns - newContentLength);
 			}
-			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			bool scrollBarNeeded = _scrollbarNeeded(widgetId);							//See if this has tripped it into needing a scrollbar
+			_widgets[widgetId].contentLength++;											//Add a line to the content length
+			if(_scrollbarNeeded(widgetId) != scrollBarNeeded)
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0014;	//Mark content & widget as changed
+				_widgets[widgetId].contentOffset = _widgets[widgetId].contentLength;		//Place the scrollbar marker at the end
+			}
+			else
+			{
+				if(_widgets[widgetId].contentOffset == _widgets[widgetId].contentLength - 1)
+				{
+					_widgets[widgetId].contentOffset = _widgets[widgetId].contentLength;		//Follow the end if already at the end
+					_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0020;	//Mark content as changed
+				}
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			}
 			return(true);
 		}
 		else
@@ -4695,7 +4759,6 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, const __FlashStringHelper*
 			return(false);
 		}
 	}
-	//_terminalStream->print("__FlashStringHelper*");
 	return(false);
 }
 
@@ -4712,8 +4775,29 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, char* newContent)		//Add/
 	{
 		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
 		{
-			_terminalStream->print("char*");
-			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			uint8_t columns = _columnsAvailable(widgetId);
+			uint8_t lines = _linesAvailable(widgetId);
+			uint8_t newContentLength = strlen(newContent);
+			if(newContentLength > columns)	//Limit the length of what can be added
+			{
+				newContentLength = columns;
+			}
+			memmove (_widgets[widgetId].content + columns, _widgets[widgetId].content , columns * (lines - 1) );	//Scroll the existing content up
+			memcpy(_widgets[widgetId].content, &newContent, newContentLength);			//Copy in the new content at the end
+			if(newContentLength < columns)
+			{
+				memset(_widgets[widgetId].content + newContentLength, ' ', columns - newContentLength);
+			}
+			bool scrollBarNeeded = _scrollbarNeeded(widgetId);							//See if this has tripped it into needing a scrollbar
+			_widgets[widgetId].contentLength++;											//Add a line to the content length
+			if(_scrollbarNeeded(widgetId) != scrollBarNeeded)
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0014;	//Mark content & widget as changed
+			}
+			else
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			}
 			return(true);
 		}
 		else
@@ -4747,7 +4831,16 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, String newContent)		//Add
 			{
 				memset(_widgets[widgetId].content + newContentLength, ' ', columns - newContentLength);
 			}
-			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			bool scrollBarNeeded = _scrollbarNeeded(widgetId);							//See if this has tripped it into needing a scrollbar
+			_widgets[widgetId].contentLength++;											//Add a line to the content length
+			if(_scrollbarNeeded(widgetId) != scrollBarNeeded)
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0014;	//Mark content & widget as changed
+			}
+			else
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			}
 			return(true);
 		}
 		else
@@ -4782,7 +4875,16 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, const char* newContent)	/
 			{
 				memset(_widgets[widgetId].content + strlen(newContent), ' ', columns - newContentLength);
 			}
-			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			bool scrollBarNeeded = _scrollbarNeeded(widgetId);							//See if this has tripped it into needing a scrollbar
+			_widgets[widgetId].contentLength++;											//Add a line to the content length
+			if(_scrollbarNeeded(widgetId) != scrollBarNeeded)
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0014;	//Mark content & widget as changed
+			}
+			else
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			}
 			return(true);
 		}
 		else
@@ -4829,7 +4931,16 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, const __FlashStringHelper
 			#else
 			memcpy_P(_widgets[widgetId].content, newContent, newContentLength);	//Copy the content to the widget, limited by the width
 			#endif
-			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			bool scrollBarNeeded = _scrollbarNeeded(widgetId);							//See if this has tripped it into needing a scrollbar
+			_widgets[widgetId].contentLength++;											//Add a line to the content length
+			if(_scrollbarNeeded(widgetId) != scrollBarNeeded)
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0014;	//Mark content & widget as changed
+			}
+			else
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			}
 			return(true);
 		}
 		else
