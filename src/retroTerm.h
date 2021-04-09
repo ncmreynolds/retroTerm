@@ -524,6 +524,7 @@ class retroTerm
 		//Widget methods common to all types
 		uint8_t newWidget(_widgetTypes type, uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t attributes, uint8_t style);									//Add unlabelled widget
 		uint8_t newWidget(_widgetTypes type, uint8_t x, uint8_t y, uint8_t w, uint8_t h, char* label, uint16_t attributes, uint8_t style);						//Add labelled widget
+		uint8_t newWidget(_widgetTypes type, uint8_t x, uint8_t y, uint8_t w, uint8_t h, const char* label, uint16_t attributes, uint8_t style);				//Add labelled widget PROGMEM variant
 		uint8_t newWidget(_widgetTypes type, uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes, uint8_t style);	//Add labelled widget PROGMEM variant
 
 		bool widgetExists(uint8_t);					//Does a widget ID exist, useful to see if too many have been made
@@ -554,6 +555,7 @@ class retroTerm
 		//Label methods
 		bool setWidgetLabel(uint8_t widgetId, char* label);							//Add/change a label to a widget
 		bool setWidgetLabel(uint8_t widgetId, String label);						//Add/change a label to a widget
+		bool setWidgetLabel(uint8_t widgetId, const char* label);					//Add/change a label to a widget
 		bool setWidgetLabel(uint8_t widgetId, const __FlashStringHelper* label);	//Add/change a label to a widget PROGMEM version
 		bool deleteWidgetLabel(const uint8_t widgetId);								//Delete the label for a widget, returns true if there was one to delete
 
@@ -583,43 +585,219 @@ class retroTerm
 
 		//Buttons
 		
-		uint8_t newButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h);
-		uint8_t newButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label);
-		uint8_t newButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label, uint16_t attributes);
-		uint8_t newButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label, uint16_t attributes, uint8_t style);
-		uint8_t newButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label);
-		uint8_t newButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes);
-		uint8_t newButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes, uint8_t style);
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h)
+		#else
+		uint8_t newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h)
+		#endif
+		{
+			return(newWidget(_widgetTypes::button, x, y, w, h, _defaultAttributes, _defaultStyle));
+		}
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
+		#else
+		uint8_t newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
+		#endif
+		{
+			return(newWidget(_widgetTypes::button, x, y, w, h, attributes, _defaultStyle));
+		}
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
+		#else
+		uint8_t newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
+		#endif
+		{
+			return(newWidget(_widgetTypes::button, x, y, w, h, attributes, style));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, labelType label)
+		#else
+		uint8_t newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, labelType label)
+		#endif
+		{
+			return(newWidget(_widgetTypes::button, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, labelType label, const uint16_t attributes)
+		#else
+		uint8_t newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, labelType label, const uint16_t attributes)
+		#endif
+		{
+			return(newWidget(_widgetTypes::button, x, y, w, h, label, attributes, _defaultStyle));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, labelType label, const uint16_t attributes, const uint8_t style)
+		#else
+		uint8_t newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, labelType label, const uint16_t attributes, uint8_t style)
+		#endif
+		{
+			return(newWidget(_widgetTypes::button, x, y, w, h, label, attributes, style));
+		}
 		
 		//Checkboxes
 		
-		uint8_t newCheckbox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label);
-		uint8_t newCheckbox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label, uint16_t attributes);
-		uint8_t newCheckbox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label, uint16_t attributes, uint8_t style);
-		uint8_t newCheckbox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label);
-		uint8_t newCheckbox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes);
-		uint8_t newCheckbox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes, uint8_t style);
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
+		#else
+		uint8_t newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
+		#endif
+		{
+			return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+		}
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
+		#else
+		uint8_t newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
+		#endif
+		{
+			return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, attributes, _defaultStyle));
+		}
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
+		#else
+		uint8_t newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
+		#endif
+		{
+			return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, attributes, style));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newCheckbox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
+		#else
+		uint8_t newCheckbox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
+		#endif
+		{
+			return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newCheckbox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes)
+		#else
+		uint8_t newCheckbox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes)
+		#endif
+		{
+			return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, attributes, _defaultStyle));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newCheckbox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes, uint8_t style)
+		#else
+		uint8_t newCheckbox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes, uint8_t style)
+		#endif
+		{
+			return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, attributes, style));
+		}
 		
 		//Radio buttons
 
-		uint8_t newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label);
-		uint8_t newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label, uint16_t attributes);
-		uint8_t newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label, uint16_t attributes, uint8_t style);
-		uint8_t newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label);
-		uint8_t newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes);
-		uint8_t newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes, uint8_t style);
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+		#else
+		uint8_t newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+		#endif
+		{
+			return(newWidget(_widgetTypes::textInput, x, y, w, h, _defaultAttributes, _defaultStyle));
+		}		
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
+		#else
+		uint8_t newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
+		#endif
+		{
+			return(newWidget(_widgetTypes::radioButton, x, y, w, h, attributes, _defaultStyle));
+		}
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
+		#else
+		uint8_t newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
+		#endif
+		{
+			return(newWidget(_widgetTypes::radioButton, x, y, w, h, attributes, style));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
+		#else
+		uint8_t newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
+		#endif
+		{
+			return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes)
+		#else
+		uint8_t newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes)
+		#endif
+		{
+			return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, attributes, _defaultStyle));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes, uint8_t style)
+		#else
+		uint8_t newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes, uint8_t style)
+		#endif
+		{
+			return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, attributes, style));
+		}
 
 		//Text input areas used for interactive text entry with backspace, delete, home and end keys functional. Other non-text keys, like F1 etc. remain readable as single keys
 
-		uint8_t newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h);
-		uint8_t newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t attributes);
-		uint8_t newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t attributes, uint8_t style);
-		uint8_t newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label);
-		uint8_t newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label, uint16_t attributes);
-		uint8_t newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label, uint16_t attributes, uint8_t style);
-		uint8_t newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label);
-		uint8_t newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes);
-		uint8_t newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes, uint8_t style);
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h)
+		#else
+		uint8_t newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h)
+		#endif
+		{
+			return(newWidget(_widgetTypes::textInput, x, y, w, h, _defaultAttributes, _defaultStyle));
+		}
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
+		#else
+		uint8_t newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
+		#endif
+		{
+			return(newWidget(_widgetTypes::textInput, x, y, w, h, attributes, _defaultStyle));
+		}
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
+		#else
+		uint8_t newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
+		#endif
+		{
+			return(newWidget(_widgetTypes::textInput, x, y, w, h, attributes, style));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
+		#else
+		uint8_t newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
+		#endif
+		{
+			return(newWidget(_widgetTypes::textInput, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes)
+		#else
+		uint8_t newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes)
+		#endif
+		{
+			return(newWidget(_widgetTypes::textInput, x, y, w, h, label, attributes, _defaultStyle));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes, uint8_t style)
+		#else
+		uint8_t newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes, uint8_t style)
+		#endif
+		{
+			return(newWidget(_widgetTypes::textInput, x, y, w, h, label, attributes, style));
+		}
 
 		//Manage the content of the text input areas, above
 		
@@ -627,40 +805,167 @@ class retroTerm
 		char* retrieveContent(uint8_t widgetId);		//Return a pointer to the string from a text entry field, they don't have to have finished typing
 		void clearContent(uint8_t widgetId);			//Clears the string and field where the user was typing
 		
-		//Text display areas, this is static text not expected to chance just be read
-
-		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h);																			//No label
-		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t attributes);
-		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t attributes, uint8_t style);
-		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label);															//Label
-		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label, uint16_t attributes);
-		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label, uint16_t attributes, uint8_t style);
-		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label);										//Label in PROGMEM
-		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes);
-		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes, uint8_t style);
+		//Text display areas, this is static text not expected to chance just be read, use setWidgetContent to set the text
 		
-		//Circular text displays, which are for scrolling 'log' type windows where you can items to top and bottom. They DO NOT store the content long term. Use appendWidgetContent, rather than setWidgetContent
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+		#else
+		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+		#endif
+		{
+			return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, _defaultAttributes, _defaultStyle));
+		}
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
+		#else
+		uint8_t newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
+		#endif
+		{
+			return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, attributes, _defaultStyle));
+		}
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
+		#else
+		uint8_t newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
+		#endif
+		{
+			return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, attributes, style));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
+		#else
+		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
+		#endif
+		{
+			return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes)
+		#else
+		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes)
+		#endif
+		{
+			return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, label, attributes, _defaultStyle));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes, uint8_t style)
+		#else
+		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes, uint8_t style)
+		#endif
+		{
+			return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, label, attributes, style));
+		}
+		
+		//Text logs, which are for scrolling 'log' type windows where you can items to top and bottom. They DO NOT store the content long term. Use appendWidgetContent and prependWidget, rather than setWidgetContent
 
-		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h);
-		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t attributes);
-		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t attributes, uint8_t style);
-		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label);
-		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label, uint16_t attributes);
-		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label, uint16_t attributes, uint8_t style);
-		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label);
-		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes);
-		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes, uint8_t style);
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+		#else
+		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+		#endif
+		{
+			return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, _defaultAttributes, _defaultStyle));
+		}
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
+		#else
+		uint8_t newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
+		#endif
+		{
+			return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, attributes, _defaultStyle));
+		}
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
+		#else
+		uint8_t newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
+		#endif
+		{
+			return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, attributes, style));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
+		#else
+		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
+		#endif
+		{
+			return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes)
+		#else
+		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes)
+		#endif
+		{
+			return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, attributes, _defaultStyle));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes, uint8_t style)
+		#else
+		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes, uint8_t style)
+		#endif
+		{
+			return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, attributes, style));
+		}
 		
 		//List boxes, a 'select' with all options in a single text string separated by \r
 
-		uint8_t newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h);
-		uint8_t newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t attributes);
-		uint8_t newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label);
-		uint8_t newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label, uint16_t attributes);
-		uint8_t newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, char *label, uint16_t attributes, uint8_t style);
-		uint8_t newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label);
-		uint8_t newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes);
-		uint8_t newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const __FlashStringHelper* label, uint16_t attributes, uint8_t style);
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+		#else
+		uint8_t newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+		#endif
+		{
+			return(newWidget(_widgetTypes::listBox, x, y, w, h, _defaultAttributes, _defaultStyle));
+		}
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
+		#else
+		uint8_t newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
+		#endif
+		{
+			return(newWidget(_widgetTypes::listBox, x, y, w, h, attributes, _defaultStyle));
+		}
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
+		#else
+		uint8_t newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
+		#endif
+		{
+			return(newWidget(_widgetTypes::listBox, x, y, w, h, attributes, style));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
+		#else
+		uint8_t newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
+		#endif
+		{
+			return(newWidget(_widgetTypes::listBox, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes)
+		#else
+		uint8_t newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes)
+		#endif
+		{
+			return(newWidget(_widgetTypes::listBox, x, y, w, h, label, attributes, _defaultStyle));
+		}
+		template <typename labelType>
+		#if defined(ESP8266) || defined(ESP32)
+		uint8_t ICACHE_FLASH_ATTR newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes, uint8_t style)
+		#else
+		uint8_t newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label, uint16_t attributes, uint8_t style)
+		#endif
+		{
+			return(newWidget(_widgetTypes::listBox, x, y, w, h, label, attributes, style));
+		}
 		
 		class widget							//widget is a nested class of retroTerm
 		{

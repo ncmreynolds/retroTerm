@@ -4219,6 +4219,32 @@ bool retroTerm::setWidgetLabel(uint8_t widgetId, String label)
 	}
 }
 #if defined(ESP8266) || defined(ESP32)
+bool ICACHE_FLASH_ATTR retroTerm::setWidgetLabel(uint8_t widgetId, const char* label) //Add or change label for existing widget
+#else
+bool retroTerm::setWidgetLabel(uint8_t widgetId, const char* label)
+#endif
+{
+	deleteWidgetLabel(widgetId);	//Delete any existing label
+	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	if(_widgetExists(widgetId))
+	{
+		if(label != nullptr)
+		{
+			_widgets[widgetId].label = (char *) label;									//Cast the PROGMEM as a char * to store it
+			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x4008;	//Mark label as changed and label stored in FLASH
+			return(true);
+		}
+		else
+		{
+			return(false);
+		}
+	}
+	else
+	{
+		return(false);
+	}
+}
+#if defined(ESP8266) || defined(ESP32)
 bool ICACHE_FLASH_ATTR retroTerm::setWidgetLabel(uint8_t widgetId, const __FlashStringHelper* label) //Add or change label for existing widget
 #else
 bool retroTerm::setWidgetLabel(uint8_t widgetId, const __FlashStringHelper* label)
@@ -5301,448 +5327,67 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 	}
 }
 #if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+uint8_t ICACHE_FLASH_ATTR retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const char* label, const uint16_t attributes, const uint8_t style)
 #else
-uint8_t retroTerm::newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const char* label, const uint16_t attributes, const uint8_t style)
 #endif
 {
-	return(newWidget(_widgetTypes::listBox, x, y, w, h, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
-#else
-uint8_t retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::listBox, x, y, w, h, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#else
-uint8_t retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#endif
-{
-	return(newWidget(_widgetTypes::listBox, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::listBox, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::listBox, x, y, w, h, label, attributes, style));
-}
-//AVR PROGMEM variants
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#else
-uint8_t retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#endif
-{
-	return(newWidget(_widgetTypes::listBox, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::listBox, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::listBox, x, y, w, h, label, attributes, style));
+	if(_numberOfWidgets < _widgetObjectLimit)
+	{
+		uint8_t widgetId = 0;
+		#ifdef retroTerm_DYNAMIC_OBJECT_ALLOCATION
+		while(&_widgets[widgetId] != nullptr) //Find the first free widget slot, they are not necessarily deleted in order of creation
+		{
+			widgetId++;
+		}
+		_widgets[widgetId] = new widget;
+		#else
+		while(_widgetExists(widgetId%_widgetObjectLimit)) //Find the first free widget slot
+		{
+			widgetId++;
+		}
+		#endif
+		_widgets[widgetId].type = type;
+		_widgets[widgetId].x = x;
+		_widgets[widgetId].y = y;
+		_widgets[widgetId].w = w;
+		_widgets[widgetId].h = h;
+		_widgets[widgetId].currentState = 0x411C;						//New widgets and the label are considered changed and active, it is also marked that the lable is in PROGMEM
+		_widgets[widgetId].value = 0;									//New widgets have a value of zero or false
+		if(label != nullptr)
+		{
+			_widgets[widgetId].label = (char *) label;					//Cast the PROGMEM as a char * to store it
+		}
+		else
+		{
+			_widgets[widgetId].label = nullptr;
+		}
+		_widgets[widgetId].attributes = attributes;						//Set the attributes
+		_widgets[widgetId].labelAttributes = attributes;				//Set the label attributes the same as main ones
+		_widgets[widgetId].contentAttributes = attributes;				//Set the label attributes the same as main ones
+		_widgets[widgetId].style = style;								//Set the style
+		_widgets[widgetId].shortcut = noKeyPressed;						//Delete the shortcut
+		if(_widgets[widgetId].type == _widgetTypes::textInput)
+		{
+			_widgets[widgetId].content = new char[w-1];					//Allocate space for the typing buffer
+			_widgets[widgetId].content[0] = 0;							//Null terminate the string
+		}
+		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		{
+			uint16_t bufferSize = _textCapacity(widgetId);
+			_widgets[widgetId].content = new char[bufferSize];			//Allocate space for the scrolling text buffer
+			memset(_widgets[widgetId].content, ' ',bufferSize);			//Fill this with spaces
+		}
+		_widgets[widgetId].contentOffset = 0;							//Set the content offset to the start of the content
+		_numberOfWidgets++;
+		return(widgetId + 1);
+	}
+	else
+	{
+		return(0);	//Return 0 indicates failure
+	}
 }
 
-//'Scrolling' text windows, which have a scrolling buffer of text in them, you can add to the top or bottom to 'scroll' it
-
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
-#else
-uint8_t retroTerm::newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
-#endif
-{
-	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
-#else
-uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, attributes, style));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#else
-uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#endif
-{
-	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, attributes, style));
-}
-//AVR PROGMEM variants
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#else
-uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#endif
-{
-	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, attributes, style));
-}
-
-//Text displays, which store text for showing. Changing the content frequently in large blocks will cause heap fragmentation.
-
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
-#else
-uint8_t retroTerm::newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
-#endif
-{
-	return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
-#else
-uint8_t retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, attributes, style));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#else
-uint8_t retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#endif
-{
-	return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, label, attributes, style));
-}
-//AVR PROGMEM variants
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#else
-uint8_t retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#endif
-{
-	return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, label, attributes, style));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
-#else
-uint8_t retroTerm::newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
-#endif
-{
-	return(newWidget(_widgetTypes::textInput, x, y, w, h, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
-#else
-uint8_t retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::textInput, x, y, w, h, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::textInput, x, y, w, h, attributes, style));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#else
-uint8_t retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#endif
-{
-	return(newWidget(_widgetTypes::textInput, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::textInput, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::textInput, x, y, w, h, label, attributes, style));
-}
-//PROGMEM variants
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#else
-uint8_t retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#endif
-{
-	return(newWidget(_widgetTypes::textInput, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::textInput, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::textInput, x, y, w, h, label, attributes, style));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#else
-uint8_t retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#endif
-{
-	return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, attributes, style));
-}
-//AVR PROGMEM variants
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#else
-uint8_t retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#endif
-{
-	return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, attributes, style));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#else
-uint8_t retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#endif
-{
-	return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, attributes, style));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#else
-uint8_t retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#endif
-{
-	return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, attributes, style));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
-#else
-uint8_t retroTerm::newButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
-#endif
-{
-	return(newWidget(_widgetTypes::button, x, y, w, h, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#else
-uint8_t retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#endif
-{
-	return(newWidget(_widgetTypes::button, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::button, x, y, w, h, label, attributes, _defaultStyle));
-}		
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::button, x, y, w, h, label, attributes, style));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#else
-uint8_t retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#endif
-{
-	return(newWidget(_widgetTypes::button, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::button, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::button, x, y, w, h, label, attributes, style));
-}
 
 #if defined(ESP8266) || defined(ESP32)
 void ICACHE_FLASH_ATTR retroTerm::showWidget(const uint8_t widgetId)	//Show a widget
