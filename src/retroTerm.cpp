@@ -1468,6 +1468,8 @@ uint8_t retroTerm::_displayLineOfContent(const uint8_t widgetIndex, const uint32
 	#if defined(PROCESS_MARKDOWN)
 	bool bold = false;
 	bool italic = false;
+	bool blink = false;
+	bool inverse = false;
 	bool boldItalic = false;
 	bool blockquote = false;
 	uint8_t headingLevel = 0;
@@ -1567,9 +1569,13 @@ uint8_t retroTerm::_displayLineOfContent(const uint8_t widgetIndex, const uint32
 				{
 					if(headingLevel == 1)
 					{
-						attributes(attributes() | ATTRIBUTE_UNDERLINE | ATTRIBUTE_BOLD);
+						attributes(attributes() | ATTRIBUTE_INVERSE);
 					}
 					else if(headingLevel == 2)
+					{
+						attributes(attributes() | ATTRIBUTE_UNDERLINE | ATTRIBUTE_BOLD);
+					}
+					else if(headingLevel == 3)
 					{
 						attributes(attributes() | ATTRIBUTE_UNDERLINE);
 					}
@@ -1787,6 +1793,14 @@ uint8_t retroTerm::_displayLineOfContent(const uint8_t widgetIndex, const uint32
 		if(not italic)
 		{
 			attributes(attributes() & (0xFFFF ^ ATTRIBUTE_FAINT));
+		}
+		if(not blink)
+		{
+			attributes(attributes() & (0xFFFF ^ ATTRIBUTE_BLINK));
+		}
+		if(not inverse)
+		{
+			attributes(attributes() & (0xFFFF ^ ATTRIBUTE_INVERSE));
 		}
 		if(headingLevel > 0)
 		{
@@ -4365,7 +4379,10 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
 			}
 			else
 			{
-				_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];		//Allocate the memory in heap
+				if(_widgets[widgetId].content == nullptr)
+				{
+					_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];	//Allocate the memory in heap, if necessary
+				}
 				memcpy(_widgets[widgetId].content, newContent, strlen(newContent) + 1);				//Copy in the content
 				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
@@ -4380,7 +4397,10 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
 		}
 		else
 		{
-			_widgets[widgetId].content = new char[strlen(newContent) + 1];					//Allocate the memory in heap
+			if(_widgets[widgetId].content == nullptr)
+			{
+				_widgets[widgetId].content = new char[strlen(newContent) + 1];				//Allocate the memory in heap, if necessary
+			}
 			memcpy(_widgets[widgetId].content, newContent, strlen(newContent) + 1);			//Copy in the content
 			_calculateContentLength(widgetId);												//Calculate the number of lines of content, for scrolling
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;		//Mark content as changed
