@@ -7,6 +7,7 @@
   - H2 is now bold + underline
   - H3 is now underline
   - H4+ is now underline + faint
+- Fixed a bug where omitting the space after # character for a Markdown heading would cause an infinite loop, watchdog error and exception
 - Improvements to overloading/templating of widget functions
 - Scrollbar added to textLog widget
 - `newWidget` and `setWidgetContent` now record the size of the content and ONLY reallocate memory on heap if the new content is larger. This should reduce heap fragmentation if your application makes small changes to content frequently.
