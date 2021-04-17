@@ -35,6 +35,7 @@ This documentation is not absolutely complete, there are a lot of legacy or very
 	1. [Show and hide widgets](#show-and-hide-widgets)
 	1. [Moving and resizing](#moving-and-resizing)
 	1. [Content](#content)
+	1. [Markdown support](#markdown-support)
 	1. [Shortcuts](#shortcuts)
 	1. [Values](#values)
 	1. [Events](#values)
@@ -493,7 +494,7 @@ Due to the limited memory of most microcontrollers, text widgets should be used 
 - Radio button (all visible ones for one group)
 - List box
 - Text input (A single line editing field for free form text entry)
-- Text display (Display of static unchanging text information. This widget handles basic MarkDown for styling the content)
+- Text display (Display of static unchanging text information. This widget handles basic [MarkDown](#markdown-support) for styling the content)
 - Text log (Regularly updating text information like a 'log' or 'chat' window. New text can be added at the top or bottom, scrolling the existing text)
 
 You should try the example code on your hardware to see how each type of widget behaves.
@@ -716,17 +717,29 @@ bool deleteWidgetLabel(uint8_t widgetId);
 
 ## Content
 
-The text widgets usually show content as well as the title/label. This is set with the functions below, which will accept most text types.
-
-Content in a `textDisplay` is not expected to change often, if at all. If the content will not change you are strongly advised to use the `F()` macro so it is stored in flash memory.
-
-Content in a `textInput` is expected to change and be read once the user is 'finished editing' and any content you supply will be copied into heap memory and expected to change. The maximum length of the edited text is the space visible onscreen.
-
-Content in a `textLog` is expected to change constantly. Any content you supply will be lost once it scrolls off the top or bottom of the widget, which reserves just enough heap memory for what is currently visible. This can still be quite a lot of memory so in many cases it is worth considering careful use of `setScrollWindow()` and `scroll()` although this requires careful placement of widgets around it.
+The text widgets usually show content as well as the title/label. This is set with the function below, which will accept most text types. There is no specific limit to content length, beyond exhausting the memory of the device.
 
 ```c++
 bool setWidgetContent(uint8_t widgetId, variableType content);
 ```
+
+### Text displays
+
+Content in a `textDisplay` is not expected to change dynamically. If the content will not change you are strongly advised to use the `F()` macro so it is stored in flash memory. You can switch between different blocks of content each stored with the `F()` macro and this works quite nicely. So for example setting the content to `F("Offline")` then later `F("Online")` works well.
+
+If you have large ever-changing content, for example something generated with `sprintf`, or read from a file this can cause heap memory fragmentation.
+
+If you do change the content, the library will only free and re-allocate memory once the content is larger than any previously used in the same widget. This is to try and avoid heap memory fragmentation. You can proactively force freeing up memory with `deleteWidgetContent` before setting the new content.
+
+`textDisplay` widgets have limited support for [Markdown](#markdown) formatting when being displayed.
+
+### Text inputs
+
+Content in a `textInput` is expected to change and be read once the user is 'finished editing' and any content you supply will be copied into heap memory and expected to change. The maximum length of the edited text is the space visible onscreen.
+
+### Text logs
+
+Content in a `textLog` is expected to change constantly. Any content you supply will be lost once it scrolls off the top or bottom of the widget, which reserves just enough heap memory for what is currently visible. This can still be quite a lot of memory so in many cases it is worth considering careful use of `setScrollWindow()` and `scroll()` although this requires careful placement of widgets around it.
 
 For the `textLog` widget **only**, you can append and prepend content at the top/bottom of the widget scrolling the existing content.
 
@@ -734,6 +747,14 @@ For the `textLog` widget **only**, you can append and prepend content at the top
 bool appendWidgetContent(uint8_t widgetId, variableType content);
 bool prependWidgetContent(uint8_t widgetId, variableType content);
 ```
+
+### List boxes
+
+The list of options in a list box is added as content like a `textDisplay` and all the other warnings about memory are the same, but each option is separated by a `\r` or `\n`.
+
+So to set the options "One", "Two" and "Three" in a list box you could use `setWidgetContent(widgetId, F("One\rTwo\rThree"));`.
+
+### Other content functions
 
 If you need to clear the content and free up memory you can use this function. If the widget ID exists and had content to delete it returns true.
 
@@ -747,6 +768,22 @@ As a `textDisplay` will often have a chunk of text too big to display in the wid
 uint32_t contentOffset(uint8_t widgetId);
 bool contentOffset(uint8_t widgetId, uint32_t offset);
 ```
+
+**[Back to top](#table-of-contents)**
+
+## Markdown support
+
+There is some very limited support for Markdown formatting in some widgets to make the content more visually appealing.
+
+- Four levels of headings prefixed with '# ', '## ', '### ', '#### ' at the start of the line
+- Italic, surrounding the bold text with '_' or '*'
+- Bold, surrounding the italic text with '__' or **'
+- Bold italic, surround the text with '___' or '***'
+- Unordered list, '-' at the start of a line before the list text
+- Horizontal rules, '___' on its own at the start of a line
+- Block quotes, prefixing the block text with '>'
+
+As there are no different character sets available easily in the terminal, these are displayed as mixes of `ATTRIBUTE_BRIGHT`, `ATTRIBUTE_FAINT`, `ATTRIBUTE_UNDERLINE` and `ATTRIBUTE_INVERSE` but help break up a wall of text.
 
 **[Back to top](#table-of-contents)**
 

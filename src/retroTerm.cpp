@@ -103,7 +103,7 @@ void retroTerm::_processInput()
 	}
 	if(inputEventCaught == false && _selectedWidget < _widgetObjectLimit && _widgets[_selectedWidget].currentState & 0x0100)	//Process input from the keyboard to the currently selected widget
 	{
-		if(_widgets[_selectedWidget].type ==_widgetTypes::staticTextDisplay || _widgets[_selectedWidget].type ==_widgetTypes::scrollingTextDisplay)	//Handle keyboard input to a scrolling text display
+		if(_widgets[_selectedWidget].type ==_widgetTypes::textDisplay || _widgets[_selectedWidget].type ==_widgetTypes::textLog)	//Handle keyboard input to a scrolling text display
 		{
 			if(_lastKeypress == downPressed)
 			{
@@ -553,7 +553,7 @@ void retroTerm::_displayChanges()
 						}
 						restoreCursorPosition();														//Restore the cursor
 					}
-					else if(_widgets[widgetIndex].type == _widgetTypes::staticTextDisplay)
+					else if(_widgets[widgetIndex].type == _widgetTypes::textDisplay)
 					{
 						if(_widgets[widgetIndex].content == nullptr)	//Clear the content area
 						{
@@ -568,7 +568,7 @@ void retroTerm::_displayChanges()
 							_displayContent(widgetIndex);			//Show the content
 						}
 					}
-					else if(_widgets[widgetIndex].type == _widgetTypes::scrollingTextDisplay)
+					else if(_widgets[widgetIndex].type == _widgetTypes::textLog)
 					{
 						if(_widgets[widgetIndex].content == nullptr)	//Clear the content area
 						{
@@ -787,7 +787,11 @@ bool retroTerm::_scrollbarNeeded(const uint8_t widgetIndex)
 	{
 		return(false);
 	}
-	if(_widgets[widgetIndex].type == _widgetTypes::staticTextDisplay && _widgets[widgetIndex].contentLength > _linesAvailable(widgetIndex))
+	else if(_widgets[widgetIndex].type == _widgetTypes::textDisplay && _widgets[widgetIndex].contentLength > _linesAvailable(widgetIndex))
+	{
+		return(true);
+	}
+	else if(_widgets[widgetIndex].type == _widgetTypes::textLog && _widgets[widgetIndex].contentLength > _linesAvailable(widgetIndex))
 	{
 		return(true);
 	}
@@ -1027,7 +1031,7 @@ void ICACHE_FLASH_ATTR retroTerm::_displayContent(const uint8_t widgetIndex)
 void retroTerm::_displayContent(const uint8_t widgetIndex)
 #endif
 {
-	if(_widgets[widgetIndex].type == _widgetTypes::staticTextDisplay)
+	if(_widgets[widgetIndex].type == _widgetTypes::textDisplay)
 	{
 		attributes(_widgets[widgetIndex].contentAttributes);
 		uint32_t contentPosition = _widgets[widgetIndex].contentOffset;
@@ -1044,7 +1048,7 @@ void retroTerm::_displayContent(const uint8_t widgetIndex)
 		}
 		attributes(_defaultAttributes);
 	}
-	else if(_widgets[widgetIndex].type == _widgetTypes::scrollingTextDisplay)
+	else if(_widgets[widgetIndex].type == _widgetTypes::textLog)
 	{
 		uint16_t textCapacity = _textCapacity(widgetIndex);							//Determine how much space is in the box
 		moveCursorTo(_contentXorigin(widgetIndex), _contentYorigin(widgetIndex));
@@ -1052,7 +1056,7 @@ void retroTerm::_displayContent(const uint8_t widgetIndex)
 		uint8_t line = 0;
 		for(uint16_t characterPosition = 0 ; characterPosition < textCapacity ; characterPosition++)
 		{
-			_terminalStream->print(_widgets[widgetIndex].content[characterPosition + _widgets[widgetIndex].contentOffset]);	//Print the content
+			_terminalStream->print(_widgets[widgetIndex].content[characterPosition]);	//Print the content
 			if((_widgets[widgetIndex].style & OUTER_BOX && (characterPosition % (_widgets[widgetIndex].w - 2) == (_widgets[widgetIndex].w - 3)))
 				|| ((_widgets[widgetIndex].style & OUTER_BOX) == 0x00 && (characterPosition % (_widgets[widgetIndex].w - 1) == (_widgets[widgetIndex].w - 2))))//Move down and back, staying inside the box
 			{
@@ -1464,6 +1468,8 @@ uint8_t retroTerm::_displayLineOfContent(const uint8_t widgetIndex, const uint32
 	#if defined(PROCESS_MARKDOWN)
 	bool bold = false;
 	bool italic = false;
+	bool blink = false;
+	bool inverse = false;
 	bool boldItalic = false;
 	bool blockquote = false;
 	uint8_t headingLevel = 0;
@@ -1556,16 +1562,20 @@ uint8_t retroTerm::_displayLineOfContent(const uint8_t widgetIndex, const uint32
 		{
 			preceededOnlyByWhiteSpace = false;
 			runLength = _runLength(widgetIndex, offset + contentProcessed, '#');
-			headingLevel = runLength;
 			if(_currentCharacter(widgetIndex, offset + contentProcessed + runLength) == ' ')
 			{
+				headingLevel = runLength;
 				if(printContent)
 				{
 					if(headingLevel == 1)
 					{
-						attributes(attributes() | ATTRIBUTE_UNDERLINE | ATTRIBUTE_BOLD);
+						attributes(attributes() | ATTRIBUTE_INVERSE);
 					}
 					else if(headingLevel == 2)
+					{
+						attributes(attributes() | ATTRIBUTE_UNDERLINE | ATTRIBUTE_BOLD);
+					}
+					else if(headingLevel == 3)
 					{
 						attributes(attributes() | ATTRIBUTE_UNDERLINE);
 					}
@@ -1575,6 +1585,16 @@ uint8_t retroTerm::_displayLineOfContent(const uint8_t widgetIndex, const uint32
 					}
 				}
 				contentProcessed += 1 + runLength;	//Gobble up the header formatting
+			}
+			else
+			{
+				headingLevel = 0;
+				if(printContent)
+				{
+					_terminalStream->print(currentCharacter);
+				}
+				contentProcessed++;
+				column++;
 			}
 		}
 		#endif
@@ -1783,6 +1803,14 @@ uint8_t retroTerm::_displayLineOfContent(const uint8_t widgetIndex, const uint32
 		if(not italic)
 		{
 			attributes(attributes() & (0xFFFF ^ ATTRIBUTE_FAINT));
+		}
+		if(not blink)
+		{
+			attributes(attributes() & (0xFFFF ^ ATTRIBUTE_BLINK));
+		}
+		if(not inverse)
+		{
+			attributes(attributes() & (0xFFFF ^ ATTRIBUTE_INVERSE));
 		}
 		if(headingLevel > 0)
 		{
@@ -2132,7 +2160,7 @@ void retroTerm::_clickWidget(const uint8_t widgetIndex)
 			_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState | 0x0210;	//Mark the widget clicked
 		}
 	}
-	else if(_widgets[widgetIndex].type == _widgetTypes::staticTextDisplay)
+	else if(_widgets[widgetIndex].type == _widgetTypes::textDisplay)
 	{
 		if(_selectedWidget != widgetIndex)														//Only select if not previously selected
 		{
@@ -2141,7 +2169,7 @@ void retroTerm::_clickWidget(const uint8_t widgetIndex)
 		}
 		_handleScrollbarClicks(widgetIndex);
 	}
-	else if(_widgets[widgetIndex].type == _widgetTypes::scrollingTextDisplay)
+	else if(_widgets[widgetIndex].type == _widgetTypes::textLog)
 	{
 		if(_selectedWidget != widgetIndex)														//Only select if not previously selected
 		{
@@ -2216,7 +2244,7 @@ void ICACHE_FLASH_ATTR retroTerm::_scrollDown(const uint8_t widgetIndex)
 void retroTerm::_scrollDown(const uint8_t widgetIndex)
 #endif
 {
-	if(_widgets[widgetIndex].type == _widgetTypes::staticTextDisplay)
+	if(_widgets[widgetIndex].type == _widgetTypes::textDisplay)
 	{
 		if(_widgets[widgetIndex].contentOffset + _widgets[widgetIndex].value < _contentSize(widgetIndex))	//Don't overflow
 		{
@@ -2264,7 +2292,7 @@ void ICACHE_FLASH_ATTR retroTerm::_scrollUp(const uint8_t widgetIndex)
 void retroTerm::_scrollUp(const uint8_t widgetIndex)
 #endif
 {
-	if(_widgets[widgetIndex].type == _widgetTypes::staticTextDisplay)
+	if(_widgets[widgetIndex].type == _widgetTypes::textDisplay)
 	{
 		/*if(_widgets[widgetIndex].contentOffset > _previousLineOffset(widgetIndex, _widgets[widgetIndex].contentOffset))
 		{
@@ -4219,6 +4247,32 @@ bool retroTerm::setWidgetLabel(uint8_t widgetId, String label)
 	}
 }
 #if defined(ESP8266) || defined(ESP32)
+bool ICACHE_FLASH_ATTR retroTerm::setWidgetLabel(uint8_t widgetId, const char* label) //Add or change label for existing widget
+#else
+bool retroTerm::setWidgetLabel(uint8_t widgetId, const char* label)
+#endif
+{
+	deleteWidgetLabel(widgetId);	//Delete any existing label
+	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	if(_widgetExists(widgetId))
+	{
+		if(label != nullptr)
+		{
+			_widgets[widgetId].label = (char *) label;									//Cast the PROGMEM as a char * to store it
+			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x4008;	//Mark label as changed and label stored in FLASH
+			return(true);
+		}
+		else
+		{
+			return(false);
+		}
+	}
+	else
+	{
+		return(false);
+	}
+}
+#if defined(ESP8266) || defined(ESP32)
 bool ICACHE_FLASH_ATTR retroTerm::setWidgetLabel(uint8_t widgetId, const __FlashStringHelper* label) //Add or change label for existing widget
 #else
 bool retroTerm::setWidgetLabel(uint8_t widgetId, const __FlashStringHelper* label)
@@ -4323,7 +4377,17 @@ bool ICACHE_FLASH_ATTR retroTerm::setWidgetContent(uint8_t widgetId, char *newCo
 bool retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
 #endif
 {
-	deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
+	if(_widgets[widgetId - 1].content != nullptr)
+	{
+		if(_widgets[widgetId].currentState & 0x8000 == 0x8000)	//Previous content stored in flash, delete the pointer
+		{
+			_widgets[widgetId].content == nullptr;
+		}
+		else if(strlen(newContent) + 1 > _widgets[widgetId-1].contentSize)
+		{
+			deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
+		}
+	}
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
@@ -4335,7 +4399,11 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
 			}
 			else
 			{
-				_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];		//Allocate the memory in heap
+				if(_widgets[widgetId].content == nullptr)
+				{
+					_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];	//Allocate the memory in heap, if necessary
+					_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;			//Record the size of the content, which is used to reduce heap fragmentation
+				}
 				memcpy(_widgets[widgetId].content, newContent, strlen(newContent) + 1);				//Copy in the content
 				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
@@ -4344,13 +4412,17 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
 				return(true);
 			}
 		}
-		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			return(false);
 		}
 		else
 		{
-			_widgets[widgetId].content = new char[strlen(newContent) + 1];					//Allocate the memory in heap
+			if(_widgets[widgetId].content == nullptr)
+			{
+				_widgets[widgetId].content = new char[strlen(newContent) + 1];				//Allocate the memory in heap, if necessary
+				_widgets[widgetId].contentSize = strlen(newContent) + 1;					//Record the size of the content, which is used to reduce heap fragmentation
+			}
 			memcpy(_widgets[widgetId].content, newContent, strlen(newContent) + 1);			//Copy in the content
 			_calculateContentLength(widgetId);												//Calculate the number of lines of content, for scrolling
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;		//Mark content as changed
@@ -4369,7 +4441,17 @@ bool ICACHE_FLASH_ATTR retroTerm::setWidgetContent(uint8_t widgetId, String newC
 bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 #endif
 {
-	deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
+	if(_widgets[widgetId - 1].content != nullptr)
+	{
+		if(_widgets[widgetId].currentState & 0x8000 == 0x8000)	//Previous content stored in flash, delete the pointer
+		{
+			_widgets[widgetId].content == nullptr;
+		}
+		else if(newContent.length() + 1 > _widgets[widgetId-1].contentSize)
+		{
+			deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
+		}
+	}
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
@@ -4381,7 +4463,11 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 			}
 			else
 			{
-				_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];		//Allocate the memory in heap
+				if(_widgets[widgetId].content == nullptr)
+				{
+					_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];	//Allocate the memory in heap
+					_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;			//Record the size of the content, which is used to reduce heap fragmentation
+				}
 				memcpy(_widgets[widgetId].content, (newContent).c_str(), newContent.length() + 1);	//Copy in the content
 				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
@@ -4390,13 +4476,17 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 				return(true);
 			}
 		}
-		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			return(false);
 		}
 		else
 		{
-			_widgets[widgetId].content = new char[newContent.length() + 1];						//Allocate the memory in heap
+			if(_widgets[widgetId].content == nullptr)
+			{
+				_widgets[widgetId].content = new char[newContent.length() + 1];					//Allocate the memory in heap
+				_widgets[widgetId].contentSize = newContent.length() + 1;						//Record the size of the content, which is used to reduce heap fragmentation
+			}
 			memcpy(_widgets[widgetId].content, (newContent).c_str(), newContent.length() + 1);	//Copy in the content
 			_calculateContentLength(widgetId);													//Calculate the number of lines of content, for scrolling
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark content as changed
@@ -4429,6 +4519,7 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, const __FlashStringHelper* ne
 			else
 			{
 				_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];		//Allocate the memory in heap
+				_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;				//Record the size of the content, which is used to reduce heap fragmentation
 				memcpy_P(_widgets[widgetId].content, newContent, strlen_P((PGM_P) newContent) + 1);	//Copy in the content
 				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
@@ -4437,13 +4528,14 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, const __FlashStringHelper* ne
 				return(true);
 			}
 		}
-		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			return(false);
 		}
 		else	//Most widgets just store the pointer to the content as the widget CANNOT change the content
 		{
 			_widgets[widgetId].content = (char *) newContent;										//Point at the copy in flash
+			_widgets[widgetId].contentSize = strlen_P((PGM_P) newContent) + 1;						//Record the size of the content, for consistency with heap methods
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x8010;				//Mark as content changed AND that the content is stored in FLASH. Used on AVR implementation
 			_calculateContentLength(widgetId);														//Calculate the number of lines of content, for scrolling
 			return(true);
@@ -4473,6 +4565,7 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, const char* newContent)
 			else
 			{
 				_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];		//Allocate the memory in heap
+				_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;				//Record the size of the content, which is used to reduce heap fragmentation
 				memcpy_P(_widgets[widgetId].content, newContent, strlen_P((PGM_P) newContent) + 1);	//Copy in the content
 				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Move the cursor to the end
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
@@ -4481,13 +4574,14 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, const char* newContent)
 				return(true);
 			}
 		}
-		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			return(false);
 		}
 		else	//Most widgets just store the pointer to the content as the widget CANNOT change the content
 		{
 			_widgets[widgetId].content = (char *) newContent;										//Point at the copy in flash
+			_widgets[widgetId].contentSize = strlen_P((PGM_P) newContent) + 1;						//Record the size of the content, for consistency with heap methods
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x8010;				//Mark as content changed AND that the content is stored in FLASH. Used on AVR implementation
 			_calculateContentLength(widgetId);														//Calculate the number of lines of content, for scrolling
 			return(true);
@@ -4509,7 +4603,7 @@ void retroTerm::_calculateContentLength(uint8_t widgetIndex)						//Calculate co
 	{
 		_widgets[widgetIndex].contentLength = _calculateNumberOfOptions(widgetIndex);	//Calculate the number of options
 	}
-	else if(_widgets[widgetIndex].type == _widgetTypes::staticTextDisplay)
+	else if(_widgets[widgetIndex].type == _widgetTypes::textDisplay)
 	{
 		_widgets[widgetIndex].contentLength = _calculateNumberOfLines(widgetIndex);		//Calculate the number of lines of FORMATTED text. This is time consuming!
 	}
@@ -4534,7 +4628,7 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, char* newContent)		//Add/c
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint8_t columns = _columnsAvailable(widgetId);
 			uint8_t lines = _linesAvailable(widgetId);
@@ -4545,7 +4639,22 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, char* newContent)		//Add/c
 			{
 				memset(_widgets[widgetId].content + columns * (lines - 1) + strlen(newContent), ' ', columns - newContentLength);
 			}
-			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			bool scrollBarNeeded = _scrollbarNeeded(widgetId);							//See if this has tripped it into needing a scrollbar
+			_widgets[widgetId].contentLength++;											//Add a line to the content length
+			if(_scrollbarNeeded(widgetId) != scrollBarNeeded)
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0014;	//Mark content & widget as changed
+				_widgets[widgetId].contentOffset = _widgets[widgetId].contentLength;		//Place the scrollbar marker at the end
+			}
+			else
+			{
+				if(_widgets[widgetId].contentOffset == _widgets[widgetId].contentLength - 1)
+				{
+					_widgets[widgetId].contentOffset = _widgets[widgetId].contentLength;		//Follow the end if already at the end
+					_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0020;	//Mark content as changed
+				}
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			}
 			return(true);
 		}
 		else
@@ -4564,7 +4673,7 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, String newContent)		//Add/
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint8_t columns = _columnsAvailable(widgetId);
 			uint8_t lines = _linesAvailable(widgetId);
@@ -4579,7 +4688,22 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, String newContent)		//Add/
 			{
 				memset(_widgets[widgetId].content + columns * (lines - 1) + newContentLength, ' ', columns - newContentLength);
 			}
-			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			bool scrollBarNeeded = _scrollbarNeeded(widgetId);							//See if this has tripped it into needing a scrollbar
+			_widgets[widgetId].contentLength++;											//Add a line to the content length
+			if(_scrollbarNeeded(widgetId) != scrollBarNeeded)
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0014;	//Mark content & widget as changed
+				_widgets[widgetId].contentOffset = _widgets[widgetId].contentLength;		//Place the scrollbar marker at the end
+			}
+			else
+			{
+				if(_widgets[widgetId].contentOffset == _widgets[widgetId].contentLength - 1)
+				{
+					_widgets[widgetId].contentOffset = _widgets[widgetId].contentLength;		//Follow the end if already at the end
+					_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0020;	//Mark content as changed
+				}
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			}
 			return(true);
 		}
 		else
@@ -4599,7 +4723,7 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, const char* newContent)	//
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint8_t columns = _columnsAvailable(widgetId);
 			uint8_t lines = _linesAvailable(widgetId);
@@ -4610,7 +4734,22 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, const char* newContent)	//
 			{
 				memset(_widgets[widgetId].content + columns * (lines - 1) + strlen(newContent), ' ', columns - newContentLength);
 			}
-			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			bool scrollBarNeeded = _scrollbarNeeded(widgetId);							//See if this has tripped it into needing a scrollbar
+			_widgets[widgetId].contentLength++;											//Add a line to the content length
+			if(_scrollbarNeeded(widgetId) != scrollBarNeeded)
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0014;	//Mark content & widget as changed
+				_widgets[widgetId].contentOffset = _widgets[widgetId].contentLength;		//Place the scrollbar marker at the end
+			}
+			else
+			{
+				if(_widgets[widgetId].contentOffset == _widgets[widgetId].contentLength - 1)
+				{
+					_widgets[widgetId].contentOffset = _widgets[widgetId].contentLength;		//Follow the end if already at the end
+					_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0020;	//Mark content as changed
+				}
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			}
 			return(true);
 		}
 		else
@@ -4630,7 +4769,7 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, const __FlashStringHelper*
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint8_t columns = _columnsAvailable(widgetId);
 			uint8_t lines = _linesAvailable(widgetId);
@@ -4661,7 +4800,22 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, const __FlashStringHelper*
 			{
 				memset(_widgets[widgetId].content + columns * (lines - 1) + newContentLength, ' ', columns - newContentLength);
 			}
-			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			bool scrollBarNeeded = _scrollbarNeeded(widgetId);							//See if this has tripped it into needing a scrollbar
+			_widgets[widgetId].contentLength++;											//Add a line to the content length
+			if(_scrollbarNeeded(widgetId) != scrollBarNeeded)
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0014;	//Mark content & widget as changed
+				_widgets[widgetId].contentOffset = _widgets[widgetId].contentLength;		//Place the scrollbar marker at the end
+			}
+			else
+			{
+				if(_widgets[widgetId].contentOffset == _widgets[widgetId].contentLength - 1)
+				{
+					_widgets[widgetId].contentOffset = _widgets[widgetId].contentLength;		//Follow the end if already at the end
+					_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0020;	//Mark content as changed
+				}
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			}
 			return(true);
 		}
 		else
@@ -4669,7 +4823,6 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, const __FlashStringHelper*
 			return(false);
 		}
 	}
-	//_terminalStream->print("__FlashStringHelper*");
 	return(false);
 }
 
@@ -4684,10 +4837,31 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, char* newContent)		//Add/
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
-			_terminalStream->print("char*");
-			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			uint8_t columns = _columnsAvailable(widgetId);
+			uint8_t lines = _linesAvailable(widgetId);
+			uint8_t newContentLength = strlen(newContent);
+			if(newContentLength > columns)	//Limit the length of what can be added
+			{
+				newContentLength = columns;
+			}
+			memmove (_widgets[widgetId].content + columns, _widgets[widgetId].content , columns * (lines - 1) );	//Scroll the existing content up
+			memcpy(_widgets[widgetId].content, &newContent, newContentLength);			//Copy in the new content at the end
+			if(newContentLength < columns)
+			{
+				memset(_widgets[widgetId].content + newContentLength, ' ', columns - newContentLength);
+			}
+			bool scrollBarNeeded = _scrollbarNeeded(widgetId);							//See if this has tripped it into needing a scrollbar
+			_widgets[widgetId].contentLength++;											//Add a line to the content length
+			if(_scrollbarNeeded(widgetId) != scrollBarNeeded)
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0014;	//Mark content & widget as changed
+			}
+			else
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			}
 			return(true);
 		}
 		else
@@ -4706,7 +4880,7 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, String newContent)		//Add
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint8_t columns = _columnsAvailable(widgetId);
 			uint8_t lines = _linesAvailable(widgetId);
@@ -4721,7 +4895,16 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, String newContent)		//Add
 			{
 				memset(_widgets[widgetId].content + newContentLength, ' ', columns - newContentLength);
 			}
-			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			bool scrollBarNeeded = _scrollbarNeeded(widgetId);							//See if this has tripped it into needing a scrollbar
+			_widgets[widgetId].contentLength++;											//Add a line to the content length
+			if(_scrollbarNeeded(widgetId) != scrollBarNeeded)
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0014;	//Mark content & widget as changed
+			}
+			else
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			}
 			return(true);
 		}
 		else
@@ -4741,7 +4924,7 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, const char* newContent)	/
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint8_t columns = _columnsAvailable(widgetId);
 			uint8_t lines = _linesAvailable(widgetId);
@@ -4756,7 +4939,16 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, const char* newContent)	/
 			{
 				memset(_widgets[widgetId].content + strlen(newContent), ' ', columns - newContentLength);
 			}
-			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			bool scrollBarNeeded = _scrollbarNeeded(widgetId);							//See if this has tripped it into needing a scrollbar
+			_widgets[widgetId].contentLength++;											//Add a line to the content length
+			if(_scrollbarNeeded(widgetId) != scrollBarNeeded)
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0014;	//Mark content & widget as changed
+			}
+			else
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			}
 			return(true);
 		}
 		else
@@ -4776,7 +4968,7 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, const __FlashStringHelper
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint8_t columns = _columnsAvailable(widgetId);
 			uint8_t lines = _linesAvailable(widgetId);
@@ -4803,7 +4995,16 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, const __FlashStringHelper
 			#else
 			memcpy_P(_widgets[widgetId].content, newContent, newContentLength);	//Copy the content to the widget, limited by the width
 			#endif
-			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			bool scrollBarNeeded = _scrollbarNeeded(widgetId);							//See if this has tripped it into needing a scrollbar
+			_widgets[widgetId].contentLength++;											//Add a line to the content length
+			if(_scrollbarNeeded(widgetId) != scrollBarNeeded)
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0014;	//Mark content & widget as changed
+			}
+			else
+			{
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+			}
 			return(true);
 		}
 		else
@@ -4826,10 +5027,9 @@ bool retroTerm::deleteWidgetContent(uint8_t widgetId)
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		_widgets[widgetId].contentOffset = 0;											//Reset the content offset
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
-			memset(_widgets[widgetId].content, ' ',_textCapacity(widgetId));			//Clear the scrolling content
+			memset(_widgets[widgetId].content, ' ',_textCapacity(widgetId));				//Clear the scrolling content, which is always in heap
 		}
 		else
 		{
@@ -4841,9 +5041,11 @@ bool retroTerm::deleteWidgetContent(uint8_t widgetId)
 			else																			//Content is stored in heap
 			{
 				delete[] _widgets[widgetId].content;										//Free the space in heap
-				_widgets[widgetId].content = nullptr;
+				_widgets[widgetId].content = nullptr;										//Clear the pointer
 			}
+			_widgets[widgetId].contentSize = 0;												//Reset the content size
 		}
+		_widgets[widgetId].contentOffset = 0;												//Reset the content offset
 		_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
 		return(true);
 	}
@@ -4852,6 +5054,23 @@ bool retroTerm::deleteWidgetContent(uint8_t widgetId)
 		return(false);
 	}
 }
+
+#if defined(ESP8266) || defined(ESP32)
+uint32_t ICACHE_FLASH_ATTR retroTerm::contentSize(const uint8_t widgetId)
+#else
+uint32_t retroTerm::contentSize(const uint8_t widgetId)
+#endif
+{
+	if(_widgetExists(widgetId - 1))
+	{
+		return(_widgets[widgetId - 1].contentSize);	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	}
+	else
+	{
+		return(0);
+	}
+}
+
 
 #if defined(ESP8266) || defined(ESP32)
 uint32_t ICACHE_FLASH_ATTR retroTerm::contentOffset(uint8_t widgetId)
@@ -5098,21 +5317,8 @@ bool retroTerm::deleteWidget(uint8_t widgetId)
 			_widgets[widgetId].content = nullptr;
 			_widgets[widgetId].contentOffset = 0;						//Clear content offset
 			_widgets[widgetId].contentLength = 0;						//Clear content length
+			_widgets[widgetId].contentSize = 0;							//Clear content size
 		}
-		/*if(_widgets[widgetId].type == _widgetTypes::staticTextDisplay)
-		{
-			_widgets[widgetId].content = nullptr;						//Remove address of any content
-		}
-		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
-		{
-			delete[] _widgets[widgetId].content;						//De-allocate scrolling buffer memory
-			_widgets[widgetId].content = nullptr;						//Remove address of any content
-		}
-		else if(_widgets[widgetId].type == _widgetTypes::textInput)
-		{
-			delete[] _widgets[widgetId].content;						//De-allocate typing buffer memory
-			_widgets[widgetId].content = nullptr;
-		}*/
 		_widgets[widgetId].currentState = 0x0000;						//Set to no usable status
 		#endif
 		_numberOfWidgets--;
@@ -5159,14 +5365,16 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 		_widgets[widgetId].shortcut = noKeyPressed;						//Delete the shortcut
 		if(_widgets[widgetId].type == _widgetTypes::textInput)
 		{
-			_widgets[widgetId].content = new char[w-1];					//Allocate space for the typing buffer
-			_widgets[widgetId].content[0] = 0;							//Null terminate the string
+			_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];	//Allocate space for the typing buffer
+			_widgets[widgetId].content[0] = 0;												//Null terminate the string
+			_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;			//Record the content size for consistency with other widget types
 		}
-		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint16_t bufferSize = _textCapacity(widgetId);
 			_widgets[widgetId].content = new char[bufferSize];			//Allocate space for the scrolling text buffer
 			memset(_widgets[widgetId].content, ' ',bufferSize);			//Fill this with spaces
+			_widgets[widgetId].contentSize = bufferSize;				//Record the content size for consistency with other widget types
 		}
 		_widgets[widgetId].contentOffset = 0;							//Clear content offset
 		_numberOfWidgets++;
@@ -5221,14 +5429,16 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 		_widgets[widgetId].shortcut = noKeyPressed;						//Delete the shortcut
 		if(_widgets[widgetId].type == _widgetTypes::textInput)
 		{
-			_widgets[widgetId].content = new char[w-1];					//Allocate space for the typing buffer
-			_widgets[widgetId].content[0] = 0;							//Null terminate the string
+			_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];	//Allocate space for the typing buffer
+			_widgets[widgetId].content[0] = 0;												//Null terminate the string
+			_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;			//Record the content size for consistency with other widget types
 		}
-		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint16_t bufferSize = _textCapacity(widgetId);
 			_widgets[widgetId].content = new char[bufferSize];			//Allocate space for the scrolling text buffer
 			memset(_widgets[widgetId].content, ' ',bufferSize);			//Fill this with spaces
+			_widgets[widgetId].contentSize = bufferSize;				//Record the content size for consistency with other widget types
 		}
 		_widgets[widgetId].contentOffset = 0;							//Clear content offset
 		_numberOfWidgets++;
@@ -5282,14 +5492,16 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 		_widgets[widgetId].shortcut = noKeyPressed;						//Delete the shortcut
 		if(_widgets[widgetId].type == _widgetTypes::textInput)
 		{
-			_widgets[widgetId].content = new char[w-1];					//Allocate space for the typing buffer
-			_widgets[widgetId].content[0] = 0;							//Null terminate the string
+			_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];	//Allocate space for the typing buffer
+			_widgets[widgetId].content[0] = 0;												//Null terminate the string
+			_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;			//Record the content size for consistency with other widget types
 		}
-		else if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint16_t bufferSize = _textCapacity(widgetId);
 			_widgets[widgetId].content = new char[bufferSize];			//Allocate space for the scrolling text buffer
 			memset(_widgets[widgetId].content, ' ',bufferSize);			//Fill this with spaces
+			_widgets[widgetId].contentSize = bufferSize;				//Record the content size for consistency with other widget types
 		}
 		_widgets[widgetId].contentOffset = 0;							//Set the content offset to the start of the content
 		_numberOfWidgets++;
@@ -5301,448 +5513,69 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 	}
 }
 #if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+uint8_t ICACHE_FLASH_ATTR retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const char* label, const uint16_t attributes, const uint8_t style)
 #else
-uint8_t retroTerm::newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const char* label, const uint16_t attributes, const uint8_t style)
 #endif
 {
-	return(newWidget(_widgetTypes::listBox, x, y, w, h, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
-#else
-uint8_t retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::listBox, x, y, w, h, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#else
-uint8_t retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#endif
-{
-	return(newWidget(_widgetTypes::listBox, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::listBox, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::listBox, x, y, w, h, label, attributes, style));
-}
-//AVR PROGMEM variants
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#else
-uint8_t retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#endif
-{
-	return(newWidget(_widgetTypes::listBox, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::listBox, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::listBox, x, y, w, h, label, attributes, style));
+	if(_numberOfWidgets < _widgetObjectLimit)
+	{
+		uint8_t widgetId = 0;
+		#ifdef retroTerm_DYNAMIC_OBJECT_ALLOCATION
+		while(&_widgets[widgetId] != nullptr) //Find the first free widget slot, they are not necessarily deleted in order of creation
+		{
+			widgetId++;
+		}
+		_widgets[widgetId] = new widget;
+		#else
+		while(_widgetExists(widgetId%_widgetObjectLimit)) //Find the first free widget slot
+		{
+			widgetId++;
+		}
+		#endif
+		_widgets[widgetId].type = type;
+		_widgets[widgetId].x = x;
+		_widgets[widgetId].y = y;
+		_widgets[widgetId].w = w;
+		_widgets[widgetId].h = h;
+		_widgets[widgetId].currentState = 0x411C;						//New widgets and the label are considered changed and active, it is also marked that the lable is in PROGMEM
+		_widgets[widgetId].value = 0;									//New widgets have a value of zero or false
+		if(label != nullptr)
+		{
+			_widgets[widgetId].label = (char *) label;					//Cast the PROGMEM as a char * to store it
+		}
+		else
+		{
+			_widgets[widgetId].label = nullptr;
+		}
+		_widgets[widgetId].attributes = attributes;						//Set the attributes
+		_widgets[widgetId].labelAttributes = attributes;				//Set the label attributes the same as main ones
+		_widgets[widgetId].contentAttributes = attributes;				//Set the label attributes the same as main ones
+		_widgets[widgetId].style = style;								//Set the style
+		_widgets[widgetId].shortcut = noKeyPressed;						//Delete the shortcut
+		if(_widgets[widgetId].type == _widgetTypes::textInput)
+		{
+			_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];	//Allocate space for the typing buffer
+			_widgets[widgetId].content[0] = 0;												//Null terminate the string
+			_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;			//Record the content size for consistency with other widget types
+		}
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
+		{
+			uint16_t bufferSize = _textCapacity(widgetId);
+			_widgets[widgetId].content = new char[bufferSize];			//Allocate space for the scrolling text buffer
+			memset(_widgets[widgetId].content, ' ',bufferSize);			//Fill this with spaces
+			_widgets[widgetId].contentSize = bufferSize;				//Record the content size for consistency with other widget types
+		}
+		_widgets[widgetId].contentOffset = 0;							//Set the content offset to the start of the content
+		_numberOfWidgets++;
+		return(widgetId + 1);
+	}
+	else
+	{
+		return(0);	//Return 0 indicates failure
+	}
 }
 
-//'Scrolling' text windows, which have a scrolling buffer of text in them, you can add to the top or bottom to 'scroll' it
-
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
-#else
-uint8_t retroTerm::newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
-#endif
-{
-	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
-#else
-uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, attributes, style));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#else
-uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#endif
-{
-	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, attributes, style));
-}
-//AVR PROGMEM variants
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#else
-uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#endif
-{
-	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::scrollingTextDisplay, x, y, w, h, label, attributes, style));
-}
-
-//Text displays, which store text for showing. Changing the content frequently in large blocks will cause heap fragmentation.
-
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
-#else
-uint8_t retroTerm::newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
-#endif
-{
-	return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
-#else
-uint8_t retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, attributes, style));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#else
-uint8_t retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#endif
-{
-	return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, label, attributes, style));
-}
-//AVR PROGMEM variants
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#else
-uint8_t retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#endif
-{
-	return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::staticTextDisplay, x, y, w, h, label, attributes, style));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
-#else
-uint8_t retroTerm::newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
-#endif
-{
-	return(newWidget(_widgetTypes::textInput, x, y, w, h, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
-#else
-uint8_t retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::textInput, x, y, w, h, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::textInput, x, y, w, h, attributes, style));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#else
-uint8_t retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#endif
-{
-	return(newWidget(_widgetTypes::textInput, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::textInput, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::textInput, x, y, w, h, label, attributes, style));
-}
-//PROGMEM variants
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#else
-uint8_t retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#endif
-{
-	return(newWidget(_widgetTypes::textInput, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::textInput, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::textInput, x, y, w, h, label, attributes, style));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#else
-uint8_t retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#endif
-{
-	return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, attributes, style));
-}
-//AVR PROGMEM variants
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#else
-uint8_t retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#endif
-{
-	return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, attributes, style));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#else
-uint8_t retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#endif
-{
-	return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, attributes, style));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#else
-uint8_t retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#endif
-{
-	return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, attributes, style));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
-#else
-uint8_t retroTerm::newButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
-#endif
-{
-	return(newWidget(_widgetTypes::button, x, y, w, h, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#else
-uint8_t retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
-#endif
-{
-	return(newWidget(_widgetTypes::button, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::button, x, y, w, h, label, attributes, _defaultStyle));
-}		
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::button, x, y, w, h, label, attributes, style));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#else
-uint8_t retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label)
-#endif
-{
-	return(newWidget(_widgetTypes::button, x, y, w, h, label, _defaultAttributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#else
-uint8_t retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes)
-#endif
-{
-	return(newWidget(_widgetTypes::button, x, y, w, h, label, attributes, _defaultStyle));
-}
-#if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#else
-uint8_t retroTerm::newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const __FlashStringHelper* label, const uint16_t attributes, const uint8_t style)
-#endif
-{
-	return(newWidget(_widgetTypes::button, x, y, w, h, label, attributes, style));
-}
 
 #if defined(ESP8266) || defined(ESP32)
 void ICACHE_FLASH_ATTR retroTerm::showWidget(const uint8_t widgetId)	//Show a widget
@@ -5809,7 +5642,7 @@ void retroTerm::resizeWidget(uint8_t widgetId, const uint8_t w, const uint8_t h)
 	widgetId--;																		//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId) && (_widgets[widgetId].w != w || _widgets[widgetId].h != h))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::scrollingTextDisplay)//A resize of the content needs to occur
+		if(_widgets[widgetId].type == _widgetTypes::textLog)//A resize of the content needs to occur
 		{
 			uint8_t oldWidth = _columnsAvailable(widgetId);				//Record info about the previous content
 			uint8_t oldHeight = _linesAvailable(widgetId);

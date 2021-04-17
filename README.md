@@ -57,13 +57,13 @@ This project was originally created to help with making a fake 'mainframe' that 
 
 Creation and management of GUI-esque objects
 
-* Buttons
-* Checkboxes
-* Radio buttons
-* List boxes
-* Text boxes (editable text) single line editing of text, with support for 'expected' behaviour like home/end/insert/delete and the arrow keys
-* Text boxes (fixed text) with scrollbars, word wrapping and basic markdown support
-* Text boxes (changing text) for 'logging' windows that scroll content
+* [Buttons](examples/Example04_singleButton/README.md)
+* [Checkboxes](examples/Example05_singleCheckbox/README.md)
+* [Radio buttons](examples/Example06_twoRadioButtons/README.md)
+* [List boxes](examples/Example07_oneListBoxSixOptions/README.md)
+* [Text boxes](examples/Example08_oneTextInput/README.md) (editable text) single line editing of text, with support for 'expected' behaviour like home/end/insert/delete and the arrow keys
+* [Text boxes](examples/Example09_oneTextDisplay/README.md) (fixed text) with scrollbars, word wrapping and basic markdown support
+* [Text boxes](examples/Example10_oneTextLog/README.md) (changing text) for 'logging' windows that scroll content
 * Keyboard shortcuts for use without a mouse
 * Basic styling for widget outlines/labels
 
@@ -73,7 +73,7 @@ As you might expect, this library can use a lot of working memory. There is expl
 
 ## Project Status
 
-This is the very first public release, which is working for the specific project I wrote it for. However I'm aware my naming of methods, approaches to passing arguments and so on are messy and inconsistent so some of this may change frequently. This is reflected in the version numbering, which is currently 0.1.0.
+This is the very first public release, which is working for the specific project I wrote it for. However I'm aware my naming of methods, approaches to passing arguments and so on are messy and inconsistent so some of this may change frequently. This is reflected in the version numbering, which is currently 0.1.2.
 
 **[Back to top](#table-of-contents)**
 
@@ -186,7 +186,7 @@ This project uses [Semantic Versioning](http://semver.org/) to be compatible wit
 
 ### Version history
 
-#### 0.1.0
+#### 0.1.2
 
 First public release.
 
