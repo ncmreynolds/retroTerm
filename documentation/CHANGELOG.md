@@ -9,6 +9,7 @@
   - H4+ is now underline + faint
 - Improvements to overloading/templating of widget functions
 - Scrollbar added to textLog widget
+- `newWidget` and `setWidgetContent` now record the size of the content and ONLY reallocate memory on heap if the new content is larger. This should reduce heap fragmentation if your application makes small changes to content frequently.
 - Internal refactoring
 
 ## Version 0.1.1
