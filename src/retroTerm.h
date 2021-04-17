@@ -574,6 +574,7 @@ class retroTerm
 		bool prependWidgetContent(uint8_t widgetId, const char*);					//Add/change widget content string literal version
 		bool prependWidgetContent(uint8_t widgetId, const __FlashStringHelper*);	//Add/change widget content PROGMEM version
 		uint32_t contentOffset(uint8_t widgetId);									//Current content offset (0 if invalid widget)
+		uint32_t contentSize(uint8_t widgetId);										//Current content size in bytes
 		bool contentOffset(uint8_t widgetId, uint32_t);								//Set current content offset
 
 		//Stored value methods
@@ -1034,6 +1035,7 @@ class retroTerm
 				
 				//Content (optional) used for windows with big chunks of text in, also for the typing buffer
 				char* content = nullptr;			//The widget DOES NOT take a copy of the content, so it must be retained in scope by the user application
+				uint32_t contentSize = 0;			//Size is the size in bytes
 				uint32_t contentLength = 0;			//Length means display 'length' ie. lines of text, number of options in a list box etc.
 				uint32_t contentOffset = 0;			//Offset of the section to display, used for scrolling and editing content
 				uint16_t contentAttributes;			//Attributes of the text being displayed or edited

@@ -4367,7 +4367,17 @@ bool ICACHE_FLASH_ATTR retroTerm::setWidgetContent(uint8_t widgetId, char *newCo
 bool retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
 #endif
 {
-	deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
+	if(_widgets[widgetId - 1].content != nullptr)
+	{
+		if(_widgets[widgetId].currentState & 0x8000 == 0x8000)	//Previous content stored in flash, delete the pointer
+		{
+			_widgets[widgetId].content == nullptr;
+		}
+		else if(strlen(newContent) + 1 > _widgets[widgetId-1].contentSize)
+		{
+			deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
+		}
+	}
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
@@ -4382,6 +4392,7 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
 				if(_widgets[widgetId].content == nullptr)
 				{
 					_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];	//Allocate the memory in heap, if necessary
+					_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;			//Record the size of the content, which is used to reduce heap fragmentation
 				}
 				memcpy(_widgets[widgetId].content, newContent, strlen(newContent) + 1);				//Copy in the content
 				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
@@ -4400,6 +4411,7 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
 			if(_widgets[widgetId].content == nullptr)
 			{
 				_widgets[widgetId].content = new char[strlen(newContent) + 1];				//Allocate the memory in heap, if necessary
+				_widgets[widgetId].contentSize = strlen(newContent) + 1;					//Record the size of the content, which is used to reduce heap fragmentation
 			}
 			memcpy(_widgets[widgetId].content, newContent, strlen(newContent) + 1);			//Copy in the content
 			_calculateContentLength(widgetId);												//Calculate the number of lines of content, for scrolling
@@ -4419,7 +4431,17 @@ bool ICACHE_FLASH_ATTR retroTerm::setWidgetContent(uint8_t widgetId, String newC
 bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 #endif
 {
-	deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
+	if(_widgets[widgetId - 1].content != nullptr)
+	{
+		if(_widgets[widgetId].currentState & 0x8000 == 0x8000)	//Previous content stored in flash, delete the pointer
+		{
+			_widgets[widgetId].content == nullptr;
+		}
+		else if(newContent.length() + 1 > _widgets[widgetId-1].contentSize)
+		{
+			deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
+		}
+	}
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
@@ -4431,7 +4453,11 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 			}
 			else
 			{
-				_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];		//Allocate the memory in heap
+				if(_widgets[widgetId].content == nullptr)
+				{
+					_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];	//Allocate the memory in heap
+					_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;			//Record the size of the content, which is used to reduce heap fragmentation
+				}
 				memcpy(_widgets[widgetId].content, (newContent).c_str(), newContent.length() + 1);	//Copy in the content
 				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
@@ -4446,7 +4472,11 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 		}
 		else
 		{
-			_widgets[widgetId].content = new char[newContent.length() + 1];						//Allocate the memory in heap
+			if(_widgets[widgetId].content == nullptr)
+			{
+				_widgets[widgetId].content = new char[newContent.length() + 1];					//Allocate the memory in heap
+				_widgets[widgetId].contentSize = newContent.length() + 1;						//Record the size of the content, which is used to reduce heap fragmentation
+			}
 			memcpy(_widgets[widgetId].content, (newContent).c_str(), newContent.length() + 1);	//Copy in the content
 			_calculateContentLength(widgetId);													//Calculate the number of lines of content, for scrolling
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark content as changed
@@ -4479,6 +4509,7 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, const __FlashStringHelper* ne
 			else
 			{
 				_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];		//Allocate the memory in heap
+				_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;				//Record the size of the content, which is used to reduce heap fragmentation
 				memcpy_P(_widgets[widgetId].content, newContent, strlen_P((PGM_P) newContent) + 1);	//Copy in the content
 				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
@@ -4494,6 +4525,7 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, const __FlashStringHelper* ne
 		else	//Most widgets just store the pointer to the content as the widget CANNOT change the content
 		{
 			_widgets[widgetId].content = (char *) newContent;										//Point at the copy in flash
+			_widgets[widgetId].contentSize = strlen_P((PGM_P) newContent) + 1;						//Record the size of the content, for consistency with heap methods
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x8010;				//Mark as content changed AND that the content is stored in FLASH. Used on AVR implementation
 			_calculateContentLength(widgetId);														//Calculate the number of lines of content, for scrolling
 			return(true);
@@ -4523,6 +4555,7 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, const char* newContent)
 			else
 			{
 				_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];		//Allocate the memory in heap
+				_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;				//Record the size of the content, which is used to reduce heap fragmentation
 				memcpy_P(_widgets[widgetId].content, newContent, strlen_P((PGM_P) newContent) + 1);	//Copy in the content
 				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Move the cursor to the end
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
@@ -4538,6 +4571,7 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, const char* newContent)
 		else	//Most widgets just store the pointer to the content as the widget CANNOT change the content
 		{
 			_widgets[widgetId].content = (char *) newContent;										//Point at the copy in flash
+			_widgets[widgetId].contentSize = strlen_P((PGM_P) newContent) + 1;						//Record the size of the content, for consistency with heap methods
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x8010;				//Mark as content changed AND that the content is stored in FLASH. Used on AVR implementation
 			_calculateContentLength(widgetId);														//Calculate the number of lines of content, for scrolling
 			return(true);
@@ -4983,10 +5017,9 @@ bool retroTerm::deleteWidgetContent(uint8_t widgetId)
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		_widgets[widgetId].contentOffset = 0;											//Reset the content offset
 		if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
-			memset(_widgets[widgetId].content, ' ',_textCapacity(widgetId));			//Clear the scrolling content
+			memset(_widgets[widgetId].content, ' ',_textCapacity(widgetId));				//Clear the scrolling content, which is always in heap
 		}
 		else
 		{
@@ -4998,9 +5031,11 @@ bool retroTerm::deleteWidgetContent(uint8_t widgetId)
 			else																			//Content is stored in heap
 			{
 				delete[] _widgets[widgetId].content;										//Free the space in heap
-				_widgets[widgetId].content = nullptr;
+				_widgets[widgetId].content = nullptr;										//Clear the pointer
 			}
+			_widgets[widgetId].contentSize = 0;												//Reset the content size
 		}
+		_widgets[widgetId].contentOffset = 0;												//Reset the content offset
 		_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
 		return(true);
 	}
@@ -5009,6 +5044,23 @@ bool retroTerm::deleteWidgetContent(uint8_t widgetId)
 		return(false);
 	}
 }
+
+#if defined(ESP8266) || defined(ESP32)
+uint32_t ICACHE_FLASH_ATTR retroTerm::contentSize(const uint8_t widgetId)
+#else
+uint32_t retroTerm::contentSize(const uint8_t widgetId)
+#endif
+{
+	if(_widgetExists(widgetId - 1))
+	{
+		return(_widgets[widgetId - 1].contentSize);	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	}
+	else
+	{
+		return(0);
+	}
+}
+
 
 #if defined(ESP8266) || defined(ESP32)
 uint32_t ICACHE_FLASH_ATTR retroTerm::contentOffset(uint8_t widgetId)
@@ -5255,21 +5307,8 @@ bool retroTerm::deleteWidget(uint8_t widgetId)
 			_widgets[widgetId].content = nullptr;
 			_widgets[widgetId].contentOffset = 0;						//Clear content offset
 			_widgets[widgetId].contentLength = 0;						//Clear content length
+			_widgets[widgetId].contentSize = 0;							//Clear content size
 		}
-		/*if(_widgets[widgetId].type == _widgetTypes::textDisplay)
-		{
-			_widgets[widgetId].content = nullptr;						//Remove address of any content
-		}
-		else if(_widgets[widgetId].type == _widgetTypes::textLog)
-		{
-			delete[] _widgets[widgetId].content;						//De-allocate scrolling buffer memory
-			_widgets[widgetId].content = nullptr;						//Remove address of any content
-		}
-		else if(_widgets[widgetId].type == _widgetTypes::textInput)
-		{
-			delete[] _widgets[widgetId].content;						//De-allocate typing buffer memory
-			_widgets[widgetId].content = nullptr;
-		}*/
 		_widgets[widgetId].currentState = 0x0000;						//Set to no usable status
 		#endif
 		_numberOfWidgets--;
@@ -5316,14 +5355,16 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 		_widgets[widgetId].shortcut = noKeyPressed;						//Delete the shortcut
 		if(_widgets[widgetId].type == _widgetTypes::textInput)
 		{
-			_widgets[widgetId].content = new char[w-1];					//Allocate space for the typing buffer
-			_widgets[widgetId].content[0] = 0;							//Null terminate the string
+			_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];	//Allocate space for the typing buffer
+			_widgets[widgetId].content[0] = 0;												//Null terminate the string
+			_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;			//Record the content size for consistency with other widget types
 		}
 		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint16_t bufferSize = _textCapacity(widgetId);
 			_widgets[widgetId].content = new char[bufferSize];			//Allocate space for the scrolling text buffer
 			memset(_widgets[widgetId].content, ' ',bufferSize);			//Fill this with spaces
+			_widgets[widgetId].contentSize = bufferSize;				//Record the content size for consistency with other widget types
 		}
 		_widgets[widgetId].contentOffset = 0;							//Clear content offset
 		_numberOfWidgets++;
@@ -5378,14 +5419,16 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 		_widgets[widgetId].shortcut = noKeyPressed;						//Delete the shortcut
 		if(_widgets[widgetId].type == _widgetTypes::textInput)
 		{
-			_widgets[widgetId].content = new char[w-1];					//Allocate space for the typing buffer
-			_widgets[widgetId].content[0] = 0;							//Null terminate the string
+			_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];	//Allocate space for the typing buffer
+			_widgets[widgetId].content[0] = 0;												//Null terminate the string
+			_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;			//Record the content size for consistency with other widget types
 		}
 		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint16_t bufferSize = _textCapacity(widgetId);
 			_widgets[widgetId].content = new char[bufferSize];			//Allocate space for the scrolling text buffer
 			memset(_widgets[widgetId].content, ' ',bufferSize);			//Fill this with spaces
+			_widgets[widgetId].contentSize = bufferSize;				//Record the content size for consistency with other widget types
 		}
 		_widgets[widgetId].contentOffset = 0;							//Clear content offset
 		_numberOfWidgets++;
@@ -5439,14 +5482,16 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 		_widgets[widgetId].shortcut = noKeyPressed;						//Delete the shortcut
 		if(_widgets[widgetId].type == _widgetTypes::textInput)
 		{
-			_widgets[widgetId].content = new char[w-1];					//Allocate space for the typing buffer
-			_widgets[widgetId].content[0] = 0;							//Null terminate the string
+			_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];	//Allocate space for the typing buffer
+			_widgets[widgetId].content[0] = 0;												//Null terminate the string
+			_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;			//Record the content size for consistency with other widget types
 		}
 		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint16_t bufferSize = _textCapacity(widgetId);
 			_widgets[widgetId].content = new char[bufferSize];			//Allocate space for the scrolling text buffer
 			memset(_widgets[widgetId].content, ' ',bufferSize);			//Fill this with spaces
+			_widgets[widgetId].contentSize = bufferSize;				//Record the content size for consistency with other widget types
 		}
 		_widgets[widgetId].contentOffset = 0;							//Set the content offset to the start of the content
 		_numberOfWidgets++;
@@ -5500,14 +5545,16 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 		_widgets[widgetId].shortcut = noKeyPressed;						//Delete the shortcut
 		if(_widgets[widgetId].type == _widgetTypes::textInput)
 		{
-			_widgets[widgetId].content = new char[w-1];					//Allocate space for the typing buffer
-			_widgets[widgetId].content[0] = 0;							//Null terminate the string
+			_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];	//Allocate space for the typing buffer
+			_widgets[widgetId].content[0] = 0;												//Null terminate the string
+			_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;			//Record the content size for consistency with other widget types
 		}
 		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			uint16_t bufferSize = _textCapacity(widgetId);
 			_widgets[widgetId].content = new char[bufferSize];			//Allocate space for the scrolling text buffer
 			memset(_widgets[widgetId].content, ' ',bufferSize);			//Fill this with spaces
+			_widgets[widgetId].contentSize = bufferSize;				//Record the content size for consistency with other widget types
 		}
 		_widgets[widgetId].contentOffset = 0;							//Set the content offset to the start of the content
 		_numberOfWidgets++;
