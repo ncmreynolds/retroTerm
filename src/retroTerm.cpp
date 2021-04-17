@@ -1562,9 +1562,9 @@ uint8_t retroTerm::_displayLineOfContent(const uint8_t widgetIndex, const uint32
 		{
 			preceededOnlyByWhiteSpace = false;
 			runLength = _runLength(widgetIndex, offset + contentProcessed, '#');
-			headingLevel = runLength;
 			if(_currentCharacter(widgetIndex, offset + contentProcessed + runLength) == ' ')
 			{
+				headingLevel = runLength;
 				if(printContent)
 				{
 					if(headingLevel == 1)
@@ -1585,6 +1585,16 @@ uint8_t retroTerm::_displayLineOfContent(const uint8_t widgetIndex, const uint32
 					}
 				}
 				contentProcessed += 1 + runLength;	//Gobble up the header formatting
+			}
+			else
+			{
+				headingLevel = 0;
+				if(printContent)
+				{
+					_terminalStream->print(currentCharacter);
+				}
+				contentProcessed++;
+				column++;
 			}
 		}
 		#endif
