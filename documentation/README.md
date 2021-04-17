@@ -35,6 +35,7 @@ This documentation is not absolutely complete, there are a lot of legacy or very
 	1. [Show and hide widgets](#show-and-hide-widgets)
 	1. [Moving and resizing](#moving-and-resizing)
 	1. [Content](#content)
+	1. [Markdown support](#markdown-support)
 	1. [Shortcuts](#shortcuts)
 	1. [Values](#values)
 	1. [Events](#values)
@@ -493,7 +494,7 @@ Due to the limited memory of most microcontrollers, text widgets should be used 
 - Radio button (all visible ones for one group)
 - List box
 - Text input (A single line editing field for free form text entry)
-- Text display (Display of static unchanging text information. This widget handles basic [MarkDown](#markdown) for styling the content)
+- Text display (Display of static unchanging text information. This widget handles basic [MarkDown](#markdown-support) for styling the content)
 - Text log (Regularly updating text information like a 'log' or 'chat' window. New text can be added at the top or bottom, scrolling the existing text)
 
 You should try the example code on your hardware to see how each type of widget behaves.
