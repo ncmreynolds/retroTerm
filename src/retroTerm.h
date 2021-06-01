@@ -968,13 +968,13 @@ class retroTerm
 			return(newWidget(_widgetTypes::listBox, x, y, w, h, label, attributes, style));
 		}
 		
-		class widget							//widget is a nested class of retroTerm
+		ICACHE_FLASH_ATTR class widget							//widget is a nested class of retroTerm
 		{
 			public:
 			
 				//Constructor method
 				#if defined(ESP8266) || defined(ESP32)
-				ICACHE_FLASH_ATTR widget()
+				widget()
 				#else
 				widget()
 				#endif
@@ -983,7 +983,7 @@ class retroTerm
 				}
 				//Destructor method
 				#if defined(ESP8266) || defined(ESP32)
-				ICACHE_FLASH_ATTR ~widget()
+				~widget()
 				#else
 				~widget()
 				#endif
@@ -994,7 +994,7 @@ class retroTerm
 				_widgetTypes type;					//Differentiate between different widget types
 
 				//State flags
-				uint16_t currentState = 0x010C;		//Use a bitmask for boolean state information to reduce the memory footprint of widgets
+				uint16_t currentState = 0x011C;		//Use a bitmask for boolean state information to reduce the memory footprint of widgets
 													//0x0001 signifies 'visible'
 													//0x0002 signifies 'displayed'
 													//0x0004 signifies 'widget changed and needs redisplaying'
