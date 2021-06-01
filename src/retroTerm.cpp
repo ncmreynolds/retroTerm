@@ -4956,7 +4956,7 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, String newContent)		//Add
 				newContentLength = columns;
 			}
 			memmove (_widgets[widgetId].content + columns, _widgets[widgetId].content , columns * (lines - 1) );	//Scroll the existing content up
-			memcpy(_widgets[widgetId].content, &newContent, newContentLength);			//Copy in the new content at the end
+			memcpy(_widgets[widgetId].content, (newContent).c_str(), newContentLength);			//Copy in the new content at the end
 			if(newContentLength < columns)
 			{
 				memset(_widgets[widgetId].content + newContentLength, ' ', columns - newContentLength);
