@@ -103,18 +103,38 @@ void retroTerm::_processInput()
 	}
 	if(inputEventCaught == false && _selectedWidget < _widgetObjectLimit && _widgets[_selectedWidget].currentState & 0x0100)	//Process input from the keyboard to the currently selected widget
 	{
-		if(_widgets[_selectedWidget].type ==_widgetTypes::textDisplay || _widgets[_selectedWidget].type ==_widgetTypes::textLog)	//Handle keyboard input to a scrolling text display
+		if(_widgets[_selectedWidget].type ==_widgetTypes::listBox)	//Handle keyboard input to a list box
 		{
-			if(_lastKeypress == downPressed)
+			if(_lastKeypress == upPressed)
 			{
-				_scrollDown(_selectedWidget);
+				if(_widgets[_selectedWidget].value > 0)
+				{
+					_widgets[_selectedWidget].value--;
+					_widgets[_selectedWidget].currentState = _widgets[_selectedWidget].currentState | 0x0210;	//Mark the widget content as changed and widget as clicked
+				}
+				else
+				{
+					soundBell();
+				}
 				_lastKeypress = noKeyPressed;	//Gobble up the keypress
 			}
-			else if(_lastKeypress == upPressed)
+			else if(_lastKeypress == downPressed)
 			{
-				_scrollUp(_selectedWidget);
+				if(_widgets[_selectedWidget].value < _widgets[_selectedWidget].contentLength - 1)
+				{
+					_widgets[_selectedWidget].value++;
+					_widgets[_selectedWidget].currentState = _widgets[_selectedWidget].currentState | 0x0210;	//Mark the widget content as changed and widget as clicked
+				}
+				else
+				{
+					soundBell();
+				}
 				_lastKeypress = noKeyPressed;	//Gobble up the keypress
 			}			
+		}
+		if(_widgets[_selectedWidget].type ==_widgetTypes::textDisplay || _widgets[_selectedWidget].type ==_widgetTypes::textLog)	//Handle keyboard input to a scrolling text display
+		{
+			
 		}
 		else if(_widgets[_selectedWidget].type == _widgetTypes::textInput)		//Handle keyboard input to a line editing widget
 		{
@@ -492,13 +512,9 @@ void retroTerm::_displayChanges()
 				}
 				if((_widgets[widgetIndex].currentState & 0x0008) == 0x0008)								//Label has changed
 				{
-					if(_widgets[widgetIndex].style & SHORTCUT_INLINE)
+					_displayLabel(widgetIndex);															//Add the label
+					if((_widgets[widgetIndex].style & SHORTCUT_INLINE) != SHORTCUT_INLINE)
 					{
-						_displayLabel(widgetIndex);														//Add the label, which will also add the shortcut
-					}
-					else
-					{
-						_displayLabel(widgetIndex);														//Add the label
 						_displayKeyboardShortcut(widgetIndex);											//Add the keyboard shortcut
 					}
 					_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState & 0xFFF7;	//Mark the label as drawn
@@ -511,13 +527,25 @@ void retroTerm::_displayChanges()
 						hideCursor();																	//Hide the cursor to reduce flickery movement in the terminal
 						if(_widgets[widgetIndex].style & OUTER_BOX)
 						{
-							//moveCursorTo(_widgets[widgetIndex].x + 1 + _labelLength(widgetIndex), _widgets[widgetIndex].y + 1);		//Move to widget position
-							moveCursorTo(_widgets[widgetIndex].x + 1, _widgets[widgetIndex].y + 1);		//Move to widget position
+							if(_widgets[widgetIndex].style && LABEL_RIGHT_JUSTIFIED)
+							{
+								moveCursorTo(_widgets[widgetIndex].x + 1, _widgets[widgetIndex].y + 1);								//Move to widget position
+							}
+							else
+							{
+								moveCursorTo(_widgets[widgetIndex].x + 1 + _labelLength(widgetIndex), _widgets[widgetIndex].y + 1);	//Move to widget position
+							}
 						}
 						else
 						{
-							//moveCursorTo(_widgets[widgetIndex].x + _labelLength(widgetIndex), _widgets[widgetIndex].y);				//Move to widget position
-							moveCursorTo(_widgets[widgetIndex].x, _widgets[widgetIndex].y);				//Move to widget position
+							if(_widgets[widgetIndex].style && LABEL_RIGHT_JUSTIFIED)
+							{
+								moveCursorTo(_widgets[widgetIndex].x, _widgets[widgetIndex].y);								//Move to widget position
+							}
+							else
+							{
+								moveCursorTo(_widgets[widgetIndex].x + _labelLength(widgetIndex), _widgets[widgetIndex].y);	//Move to widget position
+							}
 						}
 						attributes(_widgets[widgetIndex].attributes);									//Apply widget attributes
 						if(_widgets[widgetIndex].value)													//Boolean state is true
@@ -592,28 +620,7 @@ void retroTerm::_displayChanges()
 						}
 						else	//Display the content
 						{
-							if(_contentSize(widgetIndex) > 0)
-							{
-								if(_widgets[widgetIndex].style & PASSWORD_FIELD)						//Show blobs instead of the string
-								{
-									saveCursorPosition();
-									moveCursorTo(_typingXposition(widgetIndex) - _contentSize(widgetIndex),_contentYorigin(widgetIndex));
-									attributes(_widgets[widgetIndex].attributes);
-									for(uint8_t blob = 0; blob < _contentSize(widgetIndex); blob++)
-									{
-										_printUnicodeCharacter(_widgets[widgetIndex].style & 0x01, 18);
-									}
-									restoreCursorPosition();
-								}
-								else
-								{
-									printAt(_typingXposition(widgetIndex) - _contentSize(widgetIndex),_contentYorigin(widgetIndex), _widgets[widgetIndex].content,  _widgets[widgetIndex].attributes);
-								}
-							}
-							else
-							{
-								clearBox(_contentXorigin(widgetIndex), _contentYorigin(widgetIndex), _columnsAvailable(widgetIndex), _linesAvailable(widgetIndex), _widgets[widgetIndex].contentAttributes);
-							}
+							_displayContent(widgetIndex);			//Show the content
 						}
 					}
 					else if(_widgets[widgetIndex].type == _widgetTypes::listBox)
@@ -743,13 +750,27 @@ uint8_t retroTerm::_linesAvailable(const uint8_t widgetIndex)
 	}
 	else
 	{
-		if(_widgets[widgetIndex].style & LABEL_IN_BOX)
+		if(_widgets[widgetIndex].style & OUTER_BOX)
 		{
-			return(_widgets[widgetIndex].h - 4);
+			if(_widgets[widgetIndex].style & LABEL_IN_BOX)
+			{
+				return(_widgets[widgetIndex].h - 4);
+			}
+			else
+			{
+				return(_widgets[widgetIndex].h - 3);
+			}
 		}
 		else
 		{
-			return(_widgets[widgetIndex].h - 3);
+			if(_widgets[widgetIndex].style & LABEL_IN_BOX)
+			{
+				return(_widgets[widgetIndex].h - 2);
+			}
+			else
+			{
+				return(_widgets[widgetIndex].h);
+			}
 		}
 	}
 }
@@ -871,6 +892,10 @@ uint16_t retroTerm::_labelLength(const uint8_t widgetIndex)
 		return(strlen(_widgets[widgetIndex].label));
 		#endif
 	}
+	else if(_widgets[widgetIndex].label == nullptr)
+	{
+		return(0);
+	}
 	else
 	{
 		return(strlen(_widgets[widgetIndex].label));
@@ -910,7 +935,10 @@ void retroTerm::_displayLabel(const uint8_t widgetIndex)
 		}
 		if(_widgets[widgetIndex].type == _widgetTypes::checkbox || _widgets[widgetIndex].type == _widgetTypes::radioButton)
 		{
-			xOffset++;	//Step past the unicode character used for the checbox or radio button
+			if(_widgets[widgetIndex].style && LABEL_RIGHT_JUSTIFIED)
+			{
+				xOffset++;	//Step past the unicode character used for the checkbox or radio button
+			}
 			availableWidth--;
 		}
 		clearBox(_widgets[widgetIndex].x + xOffset, _widgets[widgetIndex].y + yOffset, availableWidth, 1,  _widgets[widgetIndex].labelAttributes);
@@ -920,12 +948,10 @@ void retroTerm::_displayLabel(const uint8_t widgetIndex)
 			{
 				moveCursorTo(_widgets[widgetIndex].x + (_widgets[widgetIndex].w - (2 + _labelLength(widgetIndex) + _shortcutLength(widgetIndex)))/2, _widgets[widgetIndex].y + yOffset);
 				_printKeyboardShortcut(widgetIndex);
-				_printLabel(widgetIndex);
 			}
 			else
 			{
 				moveCursorTo(_widgets[widgetIndex].x + (_widgets[widgetIndex].w - _labelLength(widgetIndex))/2, _widgets[widgetIndex].y + yOffset);
-				_printLabel(widgetIndex);
 			}
 		}
 		else if(_widgets[widgetIndex].style & LABEL_RIGHT_JUSTIFIED)
@@ -934,12 +960,10 @@ void retroTerm::_displayLabel(const uint8_t widgetIndex)
 			{
 				moveCursorTo(_widgets[widgetIndex].x + _widgets[widgetIndex].w - (2 + _labelLength(widgetIndex) + _shortcutLength(widgetIndex)), _widgets[widgetIndex].y + yOffset);
 				_printKeyboardShortcut(widgetIndex);
-				_printLabel(widgetIndex);
 			}
 			else
 			{
 				moveCursorTo(_widgets[widgetIndex].x + _widgets[widgetIndex].w - _labelLength(widgetIndex), _widgets[widgetIndex].y + yOffset);
-				_printLabel(widgetIndex);
 			}
 		}
 		else
@@ -949,14 +973,13 @@ void retroTerm::_displayLabel(const uint8_t widgetIndex)
 				
 				moveCursorTo(_widgets[widgetIndex].x + xOffset, _widgets[widgetIndex].y + yOffset);
 				_printKeyboardShortcut(widgetIndex);
-				_printLabel(widgetIndex);
 			}
 			else
 			{
 				moveCursorTo(_widgets[widgetIndex].x + xOffset, _widgets[widgetIndex].y + yOffset);
-				_printLabel(widgetIndex);
 			}
 		}
+		_printLabel(widgetIndex);
 		restoreCursorPosition();
 	}
 }
@@ -1031,7 +1054,32 @@ void ICACHE_FLASH_ATTR retroTerm::_displayContent(const uint8_t widgetIndex)
 void retroTerm::_displayContent(const uint8_t widgetIndex)
 #endif
 {
-	if(_widgets[widgetIndex].type == _widgetTypes::textDisplay)
+	if(_widgets[widgetIndex].content == nullptr)
+	{
+		return;
+	}
+	else if(_widgets[widgetIndex].type == _widgetTypes::textInput)
+	{
+		if(_contentSize(widgetIndex) > 0)
+		{
+			if(_widgets[widgetIndex].style & PASSWORD_FIELD)						//Show blobs instead of the string
+			{
+				saveCursorPosition();
+				moveCursorTo(_typingXposition(widgetIndex) - _contentSize(widgetIndex),_contentYorigin(widgetIndex));
+				attributes(_widgets[widgetIndex].attributes);
+				for(uint8_t blob = 0; blob < _contentSize(widgetIndex); blob++)
+				{
+					_printUnicodeCharacter(_widgets[widgetIndex].style & 0x01, 18);
+				}
+				restoreCursorPosition();
+			}
+			else
+			{
+				printAt(_typingXposition(widgetIndex) - _contentSize(widgetIndex),_contentYorigin(widgetIndex), _widgets[widgetIndex].content,  _widgets[widgetIndex].attributes);
+			}
+		}
+	}
+	else if(_widgets[widgetIndex].type == _widgetTypes::textDisplay)
 	{
 		attributes(_widgets[widgetIndex].contentAttributes);
 		uint32_t contentPosition = _widgets[widgetIndex].contentOffset;
@@ -4015,17 +4063,6 @@ void retroTerm::showWidget(uint8_t widgetId, bool newState)	//Set visibility of 
 	if(_widgetExists(widgetId) && bool(_widgets[widgetId].currentState & 0x0001) != newState)
 	{
 		_widgets[widgetId].currentState = _widgets[widgetId].currentState ^ 0x0001;	//Change visibility
-		/*if(_widgets[widgetId].shortcut != noKeyPressed) //Keep a track of the number of widgets with shortcuts, to cut down loop processing of inputs
-		{
-			if(_widgets[widgetId].currentState & 0x0001)	//This widget is visible
-			{
-				_numberOfWidgetShortcuts++;
-			}
-			else
-			{
-				_numberOfWidgetShortcuts--;
-			}
-		}*/
 	}
 }
 #if defined(ESP8266) || defined(ESP32)
@@ -4379,19 +4416,28 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
 {
 	if(_widgets[widgetId - 1].content != nullptr)
 	{
-		if(_widgets[widgetId].currentState & 0x8000 == 0x8000)	//Previous content stored in flash, delete the pointer
+		if(newContent == nullptr)
 		{
-			_widgets[widgetId].content == nullptr;
+			deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
+			return(true);
 		}
-		else if(strlen(newContent) + 1 > _widgets[widgetId-1].contentSize)
+		else if(strlen(newContent) + 1 > _widgets[widgetId-1].contentSize) //More space is needed for the new content
 		{
 			deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
 		}
 	}
+	else if(newContent == nullptr)
+	{
+		return(true);	//Content was already empty, do nothing
+	}
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::textInput)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
+		{
+			return(false);
+		}
+		else if(_widgets[widgetId].type == _widgetTypes::textInput)
 		{
 			if(strlen(newContent) > _typingBufferMaxLength(widgetId)) //Text inputs need to check the length
 			{
@@ -4411,10 +4457,6 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
 				_calculateContentLength(widgetId);													//Calculate the number of lines of content, for scrolling
 				return(true);
 			}
-		}
-		else if(_widgets[widgetId].type == _widgetTypes::textLog)
-		{
-			return(false);
 		}
 		else
 		{
@@ -4445,7 +4487,7 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 	{
 		if(_widgets[widgetId].currentState & 0x8000 == 0x8000)	//Previous content stored in flash, delete the pointer
 		{
-			_widgets[widgetId].content == nullptr;
+			_widgets[widgetId].content = nullptr;
 		}
 		else if(newContent.length() + 1 > _widgets[widgetId-1].contentSize)
 		{
@@ -4468,8 +4510,16 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 					_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];	//Allocate the memory in heap
 					_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;			//Record the size of the content, which is used to reduce heap fragmentation
 				}
-				memcpy(_widgets[widgetId].content, (newContent).c_str(), newContent.length() + 1);	//Copy in the content
-				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
+				if(newContent == nullptr)
+				{
+					_widgets[widgetId].contentOffset = 0;											//Move the cursor to the start
+					_widgets[widgetId].content[0] = char(0);
+				}
+				else
+				{
+					memcpy(_widgets[widgetId].content, (newContent).c_str(), newContent.length() + 1);	//Copy in the content
+					_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
+				}
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0x7fff;			//Mark as stored in heap
 				_calculateContentLength(widgetId);													//Calculate the number of lines of content, for scrolling
@@ -4520,8 +4570,16 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, const __FlashStringHelper* ne
 			{
 				_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];		//Allocate the memory in heap
 				_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;				//Record the size of the content, which is used to reduce heap fragmentation
-				memcpy_P(_widgets[widgetId].content, newContent, strlen_P((PGM_P) newContent) + 1);	//Copy in the content
-				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
+				if(newContent == nullptr)
+				{
+					_widgets[widgetId].contentOffset = 0;											//Move the cursor to the start
+					_widgets[widgetId].content[0] = char(0);
+				}
+				else
+				{
+					memcpy_P(_widgets[widgetId].content, newContent, strlen_P((PGM_P) newContent) + 1);	//Copy in the content
+					_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
+				}
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0x7fff;			//Mark as stored in heap
 				_calculateContentLength(widgetId);													//Calculate the number of lines of content, for scrolling
@@ -4566,8 +4624,16 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, const char* newContent)
 			{
 				_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];		//Allocate the memory in heap
 				_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;				//Record the size of the content, which is used to reduce heap fragmentation
-				memcpy_P(_widgets[widgetId].content, newContent, strlen_P((PGM_P) newContent) + 1);	//Copy in the content
-				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Move the cursor to the end
+				if(newContent == nullptr)
+				{
+					_widgets[widgetId].contentOffset = 0;											//Move the cursor to the start
+					_widgets[widgetId].content[0] = char(0);
+				}
+				else
+				{
+					memcpy_P(_widgets[widgetId].content, newContent, strlen_P((PGM_P) newContent) + 1);	//Copy in the content
+					_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Move the cursor to the end
+				}
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0x7fff;			//Mark as stored in heap
 				_calculateContentLength(widgetId);													//Calculate the number of lines of content, for scrolling
@@ -5027,7 +5093,11 @@ bool retroTerm::deleteWidgetContent(uint8_t widgetId)
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::textLog)
+		if(_widgets[widgetId].type == _widgetTypes::textInput)
+		{
+			_widgets[widgetId].content[0] = char(0);
+		}
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			memset(_widgets[widgetId].content, ' ',_textCapacity(widgetId));				//Clear the scrolling content, which is always in heap
 		}
@@ -5475,7 +5545,7 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 		_widgets[widgetId].y = y;
 		_widgets[widgetId].w = w;
 		_widgets[widgetId].h = h;
-		_widgets[widgetId].currentState = 0x411C;						//New widgets and the label are considered changed and active, it is also marked that the lable is in PROGMEM
+		_widgets[widgetId].currentState = 0x411C;						//New widgets and the label are considered changed and active, it is also marked that the label is in PROGMEM
 		_widgets[widgetId].value = 0;									//New widgets have a value of zero or false
 		if(label != nullptr)
 		{
