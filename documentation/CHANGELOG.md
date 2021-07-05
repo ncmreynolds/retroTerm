@@ -1,5 +1,13 @@
 # Change Log
 
+## Version 0.1.3
+
+- New methods
+  - widgetClicked(), which returns the ID of any widget has been clicked, 0 if not. Resets on read.
+  - scrollDownWidgetContent(uint8_t widgetId), which scrolls down content in a widget
+  - lines(uint8_t widgetId), number of line available for content in a widget
+  - columns(uint8_t widgetId), number of columns available for content in a widget
+
 ## Version 0.1.2
 
 - Markdown formatting changes
