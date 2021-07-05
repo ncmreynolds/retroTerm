@@ -1237,6 +1237,7 @@ class retroTerm
 		void _readInput();								//Reads the incoming data from the terminal and turns it into kepresses, mouse clicks etc.
 		void _processInput();							//Look for clicks on widgets, line editing and so on
 		void _clickWidget(uint8_t);						//Do per-widget actions on clicks
+		void _findNextClick();							//Clear the current click and find the next one to process, if any
 		uint8_t _selectedWidget = _widgetObjectLimit;	//The last selected widget, start as none selected
 		void _displayChanges();							//Look for changes and update the terminal
 		bool _widgetsOverlap(uint8_t, uint8_t);			//Checks if two widgets overlap each other, used by _displayChanges()

@@ -4204,7 +4204,7 @@ bool retroTerm::widgetClicked(uint8_t widgetId)					//Is this widget clicked, re
 		_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0xFDFF;
 		if(_clickedWidget == widgetId)
 		{
-			_clickedWidget = _widgetObjectLimit;		//Clear the top level click
+			_findNextClick();							//Look for the next click
 		}
 		return(true);
 	}
@@ -4221,10 +4221,27 @@ uint8_t retroTerm::widgetClicked()						//Is any widget clicked, resets on read
 	{
 		_widgets[_clickedWidget].currentState = _widgets[_clickedWidget].currentState & 0xFDFF; //Unclick it
 		uint8_t temp = _clickedWidget + 1;
-		_clickedWidget = _widgetObjectLimit;			//Clear the top level click
+		_findNextClick();								//Look for the next click
 		return(temp);
 	}
 	return(0);
+}
+
+#if defined(ESP8266) || defined(ESP32)
+void ICACHE_FLASH_ATTR retroTerm::_findNextClick()
+#else
+void retroTerm::_findNextClick()
+#endif
+{
+	for(uint8_t widgetId = _widgetObjectLimit ; widgetId-- > 0 ; )
+	{
+		if(_widgetExists(widgetId) && _widgets[widgetId].currentState & 0x0200)
+		{
+			_clickedWidget = widgetId;
+			return;
+		}
+	}
+	_clickedWidget = _widgetObjectLimit;			//Clear the top level click
 }
 
 
