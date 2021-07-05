@@ -540,7 +540,8 @@ class retroTerm
 		void deselectWidget();								//Deselect the current widget and ensure nothing is selected
 		void widgetShortcutKey(uint8_t widgetId, uint8_t);	//Set a keyboard shortcut on a widget
 				
-		bool widgetClicked(uint8_t widgetId);				//Is this widget clicked, resets on read
+		bool widgetClicked(uint8_t widgetId);				//Is THIS widget clicked, resets on read
+		uint8_t widgetClicked();							//Is any widget clicked, returns zero otherwise, resets on read
 
 		void widgetAttributes(uint8_t, uint16_t);	//Set widget attributes
 		void labelAttributes(uint8_t, uint16_t);	//Set widget label attributes
@@ -565,17 +566,21 @@ class retroTerm
 		bool setWidgetContent(uint8_t widgetId, const char*);						//Add/change widget content string literal version
 		bool setWidgetContent(uint8_t widgetId, const __FlashStringHelper*);		//Add/change widget content PROGMEM version
 		bool deleteWidgetContent(uint8_t widgetId);									//Delete the widget content, returns true if there was one to delete
-		bool appendWidgetContent(uint8_t widgetId, char*);							//Add/change widget content char array
-		bool appendWidgetContent(uint8_t widgetId, String);							//Add/change widget content String version
-		bool appendWidgetContent(uint8_t widgetId, const char*);					//Add/change widget content string literal version
-		bool appendWidgetContent(uint8_t widgetId, const __FlashStringHelper*);		//Add/change widget content PROGMEM version
-		bool prependWidgetContent(uint8_t widgetId, char*);							//Add/change widget content char array
-		bool prependWidgetContent(uint8_t widgetId, String);						//Add/change widget content String version
-		bool prependWidgetContent(uint8_t widgetId, const char*);					//Add/change widget content string literal version
-		bool prependWidgetContent(uint8_t widgetId, const __FlashStringHelper*);	//Add/change widget content PROGMEM version
+		bool appendWidgetContent(uint8_t widgetId, char*);							//Add widget content char array
+		bool appendWidgetContent(uint8_t widgetId, String);							//Add widget content String version
+		bool appendWidgetContent(uint8_t widgetId, const char*);					//Add widget content string literal version
+		bool appendWidgetContent(uint8_t widgetId, const __FlashStringHelper*);		//Add widget content PROGMEM version
+		bool scrollDownWidgetContent(uint8_t widgetId);								//Add a blank line at the top
+		bool prependWidgetContent(uint8_t widgetId, char*);							//Add widget content char array at the top
+		bool prependWidgetContent(uint8_t widgetId, String);						//Add widget content String version at the top
+		bool prependWidgetContent(uint8_t widgetId, const char*);					//Add widget content string literal version at the top
+		bool prependWidgetContent(uint8_t widgetId, const __FlashStringHelper*);	//Add widget content PROGMEM version at the top
 		uint32_t contentOffset(uint8_t widgetId);									//Current content offset (0 if invalid widget)
 		uint32_t contentSize(uint8_t widgetId);										//Current content size in bytes
 		bool contentOffset(uint8_t widgetId, uint32_t);								//Set current content offset
+		
+		uint8_t lines(uint8_t widgetId);											//Number of lines available for content
+		uint8_t columns(uint8_t widgetId);											//Number of columns available for content
 
 		//Stored value methods
 		bool state(uint8_t widgetId);									//What is the boolean state of this widget (used for checkboxes/radio buttons)
@@ -1213,6 +1218,7 @@ class retroTerm
 													
 		uint8_t _mouseX = 0;						//Last reported mouse X
 		uint8_t _mouseY = 0;						//Last reported mouse Y
+		uint8_t _clickedWidget = _widgetObjectLimit;	//FIRST widget clicked, resets on read
 
 		//Terminal bell
 		bool _bellEnabled = true;					//Is the terminal 'bell' enabled
@@ -1228,7 +1234,6 @@ class retroTerm
 		void _resetEscapeBuffer();						//Clears the escape buffer to process more input
 		uint8_t _typingBufferMaxLength(uint8_t);		//The maximum length of the typing buffer when in use
 		
-		//Input buffer to handle incoming escape sequences and pass input to the application
 		void _readInput();								//Reads the incoming data from the terminal and turns it into kepresses, mouse clicks etc.
 		void _processInput();							//Look for clicks on widgets, line editing and so on
 		void _clickWidget(uint8_t);						//Do per-widget actions on clicks

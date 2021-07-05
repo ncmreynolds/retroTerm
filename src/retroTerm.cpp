@@ -776,6 +776,18 @@ uint8_t retroTerm::_linesAvailable(const uint8_t widgetIndex)
 }
 
 #if defined(ESP8266) || defined(ESP32)
+uint8_t ICACHE_FLASH_ATTR retroTerm::lines(const uint8_t widgetId)
+#else
+uint8_t retroTerm::lines(const uint8_t widgetId)
+#endif
+{
+	if(_widgetExists(widgetId - 1))
+	{
+		return(_linesAvailable(widgetId - 1));
+	}
+}
+
+#if defined(ESP8266) || defined(ESP32)
 uint8_t ICACHE_FLASH_ATTR retroTerm::_columnsAvailable(const uint8_t widgetIndex)
 #else
 uint8_t retroTerm::_columnsAvailable(const uint8_t widgetIndex)
@@ -797,6 +809,19 @@ uint8_t retroTerm::_columnsAvailable(const uint8_t widgetIndex)
 		}
 	}
 }
+
+#if defined(ESP8266) || defined(ESP32)
+uint8_t ICACHE_FLASH_ATTR retroTerm::columns(const uint8_t widgetId)
+#else
+uint8_t retroTerm::columns(const uint8_t widgetId)
+#endif
+{
+	if(_widgetExists(widgetId - 1))
+	{
+		return(_columnsAvailable(widgetId - 1));
+	}
+}
+
 
 #if defined(ESP8266) || defined(ESP32)
 bool ICACHE_FLASH_ATTR retroTerm::_scrollbarNeeded(const uint8_t widgetIndex)
@@ -2253,6 +2278,10 @@ void retroTerm::_clickWidget(const uint8_t widgetIndex)
 		{
 			_handleScrollbarClicks(widgetIndex);
 		}
+	}
+	if(_clickedWidget == _widgetObjectLimit)	//Apply the top level click
+	{
+		_clickedWidget = widgetIndex;
 	}
 }
 
@@ -4173,9 +4202,29 @@ bool retroTerm::widgetClicked(uint8_t widgetId)					//Is this widget clicked, re
 	if(_widgetExists(widgetId) && _widgets[widgetId].currentState & 0x0200)
 	{
 		_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0xFDFF;
+		if(_clickedWidget == widgetId)
+		{
+			_clickedWidget = _widgetObjectLimit;		//Clear the top level click
+		}
 		return(true);
 	}
 	return(false);
+}
+
+#if defined(ESP8266) || defined(ESP32)
+uint8_t ICACHE_FLASH_ATTR retroTerm::widgetClicked()	//Is any widget clicked, resets on read
+#else
+uint8_t retroTerm::widgetClicked()						//Is any widget clicked, resets on read
+#endif
+{
+	if(_clickedWidget != _widgetObjectLimit)			//Some widget has been clicked
+	{
+		_widgets[_clickedWidget].currentState = _widgets[_clickedWidget].currentState & 0xFDFF; //Unclick it
+		uint8_t temp = _clickedWidget + 1;
+		_clickedWidget = _widgetObjectLimit;			//Clear the top level click
+		return(temp);
+	}
+	return(0);
 }
 
 
@@ -4887,6 +4936,27 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, const __FlashStringHelper*
 		else
 		{
 			return(false);
+		}
+	}
+	return(false);
+}
+
+#if defined(ESP8266) || defined(ESP32)
+bool ICACHE_FLASH_ATTR retroTerm::scrollDownWidgetContent(uint8_t widgetId)		//Add/change widget content char array
+#else
+bool retroTerm::scrollDownWidgetContent(uint8_t widgetId)		//Add/change widget content char array
+#endif
+{
+	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	if(_widgetExists(widgetId))
+	{
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
+		{
+			uint8_t columns = _columnsAvailable(widgetId);
+			uint8_t lines = _linesAvailable(widgetId);
+			memmove (_widgets[widgetId].content + columns, _widgets[widgetId].content , columns * (lines - 1) );	//Scroll the existing content down
+			memset(_widgets[widgetId].content, ' ', columns);	//Add a blank line
+			return(true);
 		}
 	}
 	return(false);
