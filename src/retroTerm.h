@@ -1022,7 +1022,7 @@ class retroTerm
 				uint8_t value = 0;					//Generic field for storing a 'value' such as which option is clicked, has it changed or the state of a button
 
 				//Layout
-				uint8_t x = 0;						//Top left corner of the widget
+				uint8_t x = 0;						//Top left corner of the widget, 0 implies non-existence
 				uint8_t y = 0;						//
 				uint8_t w = 0;						//Width of the widget
 				uint8_t h = 0;						//Height of the widget
@@ -1185,6 +1185,7 @@ class retroTerm
 		#endif
 		uint8_t _numberOfWidgets = 0;				//How many widgets are currently allocated
 		//uint8_t _numberOfWidgetShortcuts = 0;		//How many widgets are currently visible
+		bool _widgetChanged = false;				//At least one widget has changed so an update is required
 		
 		//Checkbox objects
 		//checkbox _checkboxes[_checkboxObjectLimit];	//Assign this at startup to avoid fragmentation
@@ -1234,8 +1235,8 @@ class retroTerm
 		void _resetEscapeBuffer();						//Clears the escape buffer to process more input
 		uint8_t _typingBufferMaxLength(uint8_t);		//The maximum length of the typing buffer when in use
 		
-		void _readInput();								//Reads the incoming data from the terminal and turns it into kepresses, mouse clicks etc.
-		void _processInput();							//Look for clicks on widgets, line editing and so on
+		bool _readInput();								//Reads the incoming data from the terminal and turns it into kepresses, mouse clicks etc. true if something was received and understood
+		void _processInput();							//Look for clicks on widgets, true if one was processed
 		void _clickWidget(uint8_t);						//Do per-widget actions on clicks
 		void _findNextClick();							//Clear the current click and find the next one to process, if any
 		uint8_t _selectedWidget = _widgetObjectLimit;	//The last selected widget, start as none selected
