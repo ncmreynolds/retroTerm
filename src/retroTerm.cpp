@@ -58,7 +58,24 @@ void retroTerm::houseKeeping()
 	{
 		if(_readInput())		//Look for mouse and keyboard events
 		{
-			_processInput();
+			if(_processInput())	//It's a mouse click or shortcut
+			{
+				if(clickCallback)
+				{
+					clickCallback(_clickedWidget + 1);		//Call the click callback
+					_widgets[_clickedWidget].currentState = _widgets[_clickedWidget].currentState & 0xFDFF; //Unclick the clicked widget
+					while(_findNextClick() == true)			//Find/clear the next click(s)
+					{
+						clickCallback(_clickedWidget + 1);	//Call the click callback
+						_widgets[_clickedWidget].currentState = _widgets[_clickedWidget].currentState & 0xFDFF; //Unclick the clicked widget
+					}
+				}
+			}
+			else if(typingCallback && _lastKeypress != noKeyPressed)	//It's a key
+			{
+				typingCallback(_lastKeypress);
+				_lastKeypress = noKeyPressed;
+			}
 		}
 		if(_widgetChanged == true)
 		{
@@ -67,7 +84,14 @@ void retroTerm::houseKeeping()
 	}
 	else
 	{
-		_readInput();			//Look for mouse and keyboard events
+		if(_readInput())			//Look for mouse and keyboard events
+		{
+			if(typingCallback && _lastKeypress != noKeyPressed)
+			{
+				typingCallback(_lastKeypress);
+				_lastKeypress = noKeyPressed;
+			}
+		}
 	}
 	#if defined(ESP8266) || defined(ESP32)
 	yield();					//Necessary if the stream passed is WiFi on ESP8266/ESP32 where the usual worries about not causing a WDT reset exist
@@ -75,9 +99,9 @@ void retroTerm::houseKeeping()
 }
 
 #if defined(ESP8266) || defined(ESP32)
-void ICACHE_FLASH_ATTR retroTerm::_processInput()
+bool ICACHE_FLASH_ATTR retroTerm::_processInput()
 #else
-void retroTerm::_processInput()
+bool retroTerm::_processInput()
 #endif
 {
 	for(uint8_t widgetId = _widgetObjectLimit ; widgetId-- > 0; )			//Search for clicks on visible objects and shortcut keys. There is no Z-Index but newest widgets take preference
@@ -88,25 +112,25 @@ void retroTerm::_processInput()
 			{
 				_clickWidget(widgetId);				//Do per-widget-type click handling, only if clickable
 				_mouseStatus = _mouseStatus & 0xF9;	//Gobble the mouse event
-				return;
+				return(true);
 			}
 			else if((_mouseStatus & 0x20) && _mouseX >= _widgets[widgetId].x && _mouseX < _widgets[widgetId].x + _widgets[widgetId].w && _mouseY >= _widgets[widgetId].y && _mouseY < _widgets[widgetId].y + _widgets[widgetId].h)	//Mouse wheel up
 			{
 				_clickWidget(widgetId);				//Do per-widget-type click handling, only if clickable
 				_mouseStatus = _mouseStatus & 0xDF;	//Gobble the mouse event
-				return;
+				return(true);
 			}
 			else if((_mouseStatus & 0x10) && _mouseX >= _widgets[widgetId].x && _mouseX < _widgets[widgetId].x + _widgets[widgetId].w && _mouseY >= _widgets[widgetId].y && _mouseY < _widgets[widgetId].y + _widgets[widgetId].h)	//Mouse wheel down
 			{
 				_clickWidget(widgetId);				//Do per-widget-type click handling, only if clickable
 				_mouseStatus = _mouseStatus & 0xEF;	//Gobble the mouse event
-				return;
+				return(true);
 			}
 			if(_widgets[widgetId].shortcut != noKeyPressed && _shortcutMatches(widgetId))	//Search for used keyboard shortcuts, which appear as 'clicks' of an object for simplicity. This gobbles up the keypress so the application doesn't see it
 			{
 				_clickWidget(widgetId);				//Do per-widget-type click handling, only if clickable
 				_lastKeypress = noKeyPressed;		//Gobble the keypress and stop looking for more shortcuts
-				return;
+				return(true);
 			}
 		}
 	}
@@ -322,6 +346,7 @@ void retroTerm::_processInput()
 			}
 		}
 	}
+	return(false);
 }
 
 
@@ -3569,6 +3594,16 @@ uint8_t retroTerm::readKeypress()
 	}
 }
 
+#if defined(ESP8266) || defined(ESP32)
+retroTerm& ICACHE_FLASH_ATTR retroTerm::setTypingCallback(RETROTERM_TYPING_CALLBACK)
+#else
+retroTerm& retroTerm::setTypingCallback(RETROTERM_TYPING_CALLBACK)
+#endif
+{
+    this->typingCallback = typingCallback;
+    return *this;
+}
+
 
 #if defined(ESP8266) || defined(ESP32)
 bool ICACHE_FLASH_ATTR retroTerm::_readInput()
@@ -4261,9 +4296,9 @@ uint8_t retroTerm::widgetClicked()						//Is any widget clicked, resets on read
 }
 
 #if defined(ESP8266) || defined(ESP32)
-void ICACHE_FLASH_ATTR retroTerm::_findNextClick()
+bool ICACHE_FLASH_ATTR retroTerm::_findNextClick()
 #else
-void retroTerm::_findNextClick()
+bool retroTerm::_findNextClick()
 #endif
 {
 	for(uint8_t widgetId = _widgetObjectLimit ; widgetId-- > 0 ; )
@@ -4271,10 +4306,21 @@ void retroTerm::_findNextClick()
 		if(_widgetExists(widgetId) && _widgets[widgetId].currentState & 0x0200)
 		{
 			_clickedWidget = widgetId;
-			return;
+			return(true);							//Found a click, return true
 		}
 	}
 	_clickedWidget = _widgetObjectLimit;			//Clear the top level click
+	return(false);									//No clicks, return false
+}
+
+#if defined(ESP8266) || defined(ESP32)
+retroTerm& ICACHE_FLASH_ATTR retroTerm::setClickCallback(RETROTERM_CLICK_CALLBACK)
+#else
+retroTerm& retroTerm::setClickCallback(RETROTERM_CLICK_CALLBACK)
+#endif
+{
+    this->clickCallback = clickCallback;
+    return *this;
 }
 
 

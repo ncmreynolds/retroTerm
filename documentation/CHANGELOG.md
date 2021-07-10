@@ -3,10 +3,13 @@
 ## Version 0.1.3
 
 - New methods
-  - widgetClicked(), which returns the ID of any widget has been clicked, 0 if not. Resets on read.
-  - scrollDownWidgetContent(uint8_t widgetId), which scrolls down content in a widget
-  - lines(uint8_t widgetId), number of line available for content in a widget
-  - columns(uint8_t widgetId), number of columns available for content in a widget
+  - `void setClickCallback(void (*clickCallback)(uint8_t))`, which allows you to set a callback function for clicks on widgets. The argument supplied to the callback function is the widget ID of the clicked widget. This avoids polling widgets and is something I've been meaning to implement from the start. As per usual 'clicks' includes the use of shortcut keys on widgets. If there are multiple clicks then the callback function will be called repeatedly until there are none left, without doing any widget updates.
+  - `void setTypingCallback(void (*typingCallback)(uint8_t))`, which allows you to set a callback function for typing.  The argument supplied to the callback function is the ID of the pressed key, as used elsewhere in the library. This avoids polling to see if any typing has occurred. Note that like other functions for reading the keyboard, any navigation/shortcut keys intercepted by a widget are **not** reported.
+  - `uint8_t widgetClicked()`, which returns the ID of any widget has been clicked, 0 if not. Resets on read to the next clicked widget, or 0 if there are no more. Avoids polling all widgets individually.
+  - `void scrollDownWidgetContent(uint8_t widgetId)`, which scrolls down content in a widget
+  - `uint8_t lines(uint8_t widgetId)`, number of line available for displaying content in a widget
+  - `uint8_t columns(uint8_t widgetId)`, number of columns available for displaying content in a widget
+- Improvements to `void houseKeeping()` so it tracks changes better and only iterates through widgets looking for changes/clicks when necessary. This has massively improved 'idle' performance of the library.
 
 ## Version 0.1.2
 
@@ -23,7 +26,7 @@
 
 ## Version 0.1.1
 
-- Single key shortcuts would cause a crash. They are now also case-insensitive when typed, but display as set.
+- Single letter shortcuts (e.g. 'A') would cause a crash. They are now also case-insensitive when typed, but display as set.
 
 ## Version 0.1.0
 

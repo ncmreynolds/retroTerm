@@ -47,6 +47,17 @@ constexpr const uint8_t _widgetObjectLimit = 50;
 constexpr const uint8_t _widgetObjectLimit = 30;
 #endif
 
+//Defines for event callbacks
+
+#if defined(ESP8266) || defined(ESP32)
+#include <functional>
+#define RETROTERM_CLICK_CALLBACK std::function<void(uint8_t)> clickCallback
+#define RETROTERM_TYPING_CALLBACK std::function<void(uint8_t)> typingCallback
+#else
+#define RETROTERM_CLICK_CALLBACK void (*clickCallback)(uint8_t)
+#define RETROTERM_TYPING_CALLBACK void (*typingCallback)(uint8_t)
+#endif
+
 //#define retroTerm_DYNAMIC_OBJECT_ALLOCATION			//Uncomment to allow dynamic object storage allocation, which saves memory but may cause heap fragmentation
 
 //Colours and attributes set for printing with the methods above. This is composed as a bitmask for easy saving/comparison, just OR them together to set
@@ -465,6 +476,8 @@ class retroTerm
 		bool userIsTyping();					//True if there has been input from a user recently, use to check for inactivity
 		bool keyPressed();						//True if there is a keypress available to read
 		uint8_t readKeypress();					//Return the key pressed, no it doesn't support unicode, just ASCII and the constants below to keep it smaller
+		retroTerm& setTypingCallback(RETROTERM_TYPING_CALLBACK);	//Set a callback for typing
+
 				
 		//Mouse support, requires periodic calling of houseKeeping() to work
 		
@@ -535,13 +548,18 @@ class retroTerm
 		void moveWidget(uint8_t widgetId, uint8_t x, uint8_t y);	//Move a widget
 		void resizeWidget(uint8_t widgetId, uint8_t w, uint8_t h);	//Resize a widget
 		void refreshAllWidgets();									//Set all widgets to redraw completely
-		
+
+		//Widget selection
 		bool selectWidget(uint8_t widgetId);				//Select a widget
 		void deselectWidget();								//Deselect the current widget and ensure nothing is selected
-		void widgetShortcutKey(uint8_t widgetId, uint8_t);	//Set a keyboard shortcut on a widget
-				
-		bool widgetClicked(uint8_t widgetId);				//Is THIS widget clicked, resets on read
-		uint8_t widgetClicked();							//Is any widget clicked, returns zero otherwise, resets on read
+		
+		//Shortcuts
+		void widgetShortcutKey(uint8_t widgetId, uint8_t);	//Set a keyboard shortcut on a widget, this interacts like a mouse click
+
+		//Click events
+		bool widgetClicked(uint8_t widgetId);					//Is THIS widget clicked, resets on read
+		uint8_t widgetClicked();								//Is any widget clicked, returns zero otherwise, resets on read
+		retroTerm& setClickCallback(RETROTERM_CLICK_CALLBACK);	//Set a callback for widget clicks
 
 		void widgetAttributes(uint8_t, uint16_t);	//Set widget attributes
 		void labelAttributes(uint8_t, uint16_t);	//Set widget label attributes
@@ -1219,7 +1237,9 @@ class retroTerm
 													
 		uint8_t _mouseX = 0;						//Last reported mouse X
 		uint8_t _mouseY = 0;						//Last reported mouse Y
-		uint8_t _clickedWidget = _widgetObjectLimit;	//FIRST widget clicked, resets on read
+		//Click recording
+		uint8_t _clickedWidget = _widgetObjectLimit;//FIRST widget clicked, resets on read
+		RETROTERM_CLICK_CALLBACK;					//Click callback function 
 
 		//Terminal bell
 		bool _bellEnabled = true;					//Is the terminal 'bell' enabled
@@ -1234,11 +1254,12 @@ class retroTerm
 		uint8_t escapeBufferPosition = 0;
 		void _resetEscapeBuffer();						//Clears the escape buffer to process more input
 		uint8_t _typingBufferMaxLength(uint8_t);		//The maximum length of the typing buffer when in use
+		RETROTERM_TYPING_CALLBACK;						//Typing callback function
 		
 		bool _readInput();								//Reads the incoming data from the terminal and turns it into kepresses, mouse clicks etc. true if something was received and understood
-		void _processInput();							//Look for clicks on widgets, true if one was processed
+		bool _processInput();							//Look for clicks on widgets, true if one was processed
 		void _clickWidget(uint8_t);						//Do per-widget actions on clicks
-		void _findNextClick();							//Clear the current click and find the next one to process, if any
+		bool _findNextClick();							//Clear the current click and find the next one to process, if any
 		uint8_t _selectedWidget = _widgetObjectLimit;	//The last selected widget, start as none selected
 		void _displayChanges();							//Look for changes and update the terminal
 		bool _widgetsOverlap(uint8_t, uint8_t);			//Checks if two widgets overlap each other, used by _displayChanges()
