@@ -697,7 +697,7 @@ class retroTerm
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 		#else
-		uint8_t newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+		uint8_t newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 		#endif
 		{
 			return(newWidget(_widgetTypes::textInput, x, y, w, h, _defaultAttributes, _defaultStyle));
