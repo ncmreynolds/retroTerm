@@ -720,10 +720,10 @@ class retroTerm
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 		#else
-		uint8_t newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+		uint8_t newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 		#endif
 		{
-			return(newWidget(_widgetTypes::textInput, x, y, w, h, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::radioButton, x, y, w, h, _defaultAttributes, _defaultStyle));
 		}		
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
@@ -990,8 +990,12 @@ class retroTerm
 		{
 			return(newWidget(_widgetTypes::listBox, x, y, w, h, label, attributes, style));
 		}
-		
+
+		#if defined(ESP8266) || defined(ESP32)
 		ICACHE_FLASH_ATTR class widget							//widget is a nested class of retroTerm
+		#else
+		class widget											//widget is a nested class of retroTerm
+		#endif
 		{
 			public:
 			
