@@ -48,6 +48,8 @@ uint32_t timeDisplayInterval = 1000ul;
 uint32_t lastBell = 0;
 uint32_t bellInterval = 3000ul;
 
+char timeString[9];
+
 void setup() {
   Serial.begin(115200);
   terminal.begin(Serial);   //Attach the terminal instance to Serial, but it could go elsewhere
@@ -178,7 +180,6 @@ void loop() {
   //Update the clock display
   if(clockOffsetChanged == true || millis() - lastTimeDisplay > timeDisplayInterval)
   {
-    terminal.moveCursorTo(5,5);
     showTime(clockDisplay,millis() + clockOffset);
     clockOffsetChanged = false;
     lastTimeDisplay = millis();
@@ -186,7 +187,6 @@ void loop() {
   //Update the alarm display
   if(alarmOffsetChanged == true)
   {
-    terminal.moveCursorTo(5,6);
     showTime(alarmDisplay,alarmOffset);
     alarmOffsetChanged = false;
   }
@@ -206,9 +206,8 @@ void loop() {
 }
 void showTime(uint8_t widgetId, uint32_t time)
 {
-  char tempString[9];
-  sprintf(tempString,"%02d:%02d:%02d",hour(time),minute(time),second(time));
-  terminal.setWidgetContent(widgetId,tempString);
+  sprintf(timeString,"%02d:%02d:%02d",hour(time),minute(time),second(time));
+  terminal.setWidgetContent(widgetId,timeString);
 }
 uint8_t hour(uint32_t time)
 {
