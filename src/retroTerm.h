@@ -1290,6 +1290,8 @@ class retroTerm
 		uint16_t _labelLength(uint8_t);					//Label length, in bytes. Uses appropriate method if content is in a PROGMEM
 		uint16_t _shortcutLength(uint8_t);				//Shortcut length, in bytes. Uses appropriate method if content is in a PROGMEM
 		uint16_t _contentSize(uint8_t);					//Content length, in bytes. Uses appropriate method if content is in a PROGMEM
+
+		bool _deleteWidgetContent(uint8_t);				//Delete the widget content, returns true if there was one to delete
 		
 		const uint32_t _typingTimeout = 10000ul;
 		uint8_t _lastKeypress = noKeyPressed;
