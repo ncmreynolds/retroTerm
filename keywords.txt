@@ -46,6 +46,7 @@ scroll	KEYWORD2
 userIsTyping	KEYWORD2
 keyPressed	KEYWORD2
 readKeypress	KEYWORD2
+setTypingCallback	KEYWORD2
 
 enableMouse	KEYWORD2
 disableMouse	KEYWORD2
@@ -96,6 +97,7 @@ refreshAllWidgets	KEYWORD2
 moveWidget	KEYWORD2
 resizeWidget	KEYWORD2
 widgetClicked	KEYWORD2
+setClickCallback	KEYWORD2
 widgetActive	KEYWORD2
 widgetPassive	KEYWORD2
 

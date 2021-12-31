@@ -2,7 +2,7 @@ void textDisplayExample()
 {
   newPage(F("Text display window test"));
   red = terminal.newTextDisplay(1,terminal.lines()/2,terminal.columns()/3, (terminal.lines()-2)/2, F("Window 1"),   COLOUR_RED, OUTER_BOX);    //Create a window to display the text
-  green = terminal.newTextDisplay(terminal.columns()/3 + 1,terminal.lines()/2,terminal.columns()/3, (terminal.lines()-2)/2, COLOUR_GREEN | ATTRIBUTE_FAINT, OUTER_BOX | LABEL_IN_BOX | LABEL_CENTRED | SHORTCUT_INLINE | BOX_DOUBLE_LINE);    //Create a window to display the text
+  green = terminal.newTextDisplay(terminal.columns()/3 + 1,terminal.lines()/2,terminal.columns()/3, (terminal.lines()-2)/2, F("Window 2"), COLOUR_GREEN | ATTRIBUTE_FAINT, OUTER_BOX | LABEL_IN_BOX | LABEL_CENTRED | SHORTCUT_INLINE | BOX_DOUBLE_LINE);    //Create a window to display the text
   blue = terminal.newTextDisplay(terminal.columns()*2/3 + 1,terminal.lines()/2,terminal.columns()/3, (terminal.lines()-2)/2, F("Window 3"), COLOUR_BLUE, OUTER_BOX | BOX_ASCII);    //Create a window to display the text
   if(red)
   {

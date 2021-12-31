@@ -53,11 +53,45 @@ void ICACHE_FLASH_ATTR retroTerm::houseKeeping()
 void retroTerm::houseKeeping()
 #endif
 {
-	_readInput();				//Look for mouse and keyboard events
+	
 	if(_numberOfWidgets > 0)
 	{
-		_processInput();		//Pass mouse and keyboard events to widgets
-		_displayChanges();		//Update the terminal with changes
+		if(_readInput())		//Look for mouse and keyboard events
+		{
+			if(_processInput())	//It's a mouse click or shortcut
+			{
+				if(clickCallback)
+				{
+					clickCallback(_clickedWidget + 1);		//Call the click callback
+					_widgets[_clickedWidget].currentState = _widgets[_clickedWidget].currentState & 0xFDFF; //Unclick the clicked widget
+					while(_findNextClick() == true)			//Find/clear the next click(s)
+					{
+						clickCallback(_clickedWidget + 1);	//Call the click callback
+						_widgets[_clickedWidget].currentState = _widgets[_clickedWidget].currentState & 0xFDFF; //Unclick the clicked widget
+					}
+				}
+			}
+			else if(typingCallback && _lastKeypress != noKeyPressed)	//It's a key
+			{
+				typingCallback(_lastKeypress);
+				_lastKeypress = noKeyPressed;
+			}
+		}
+		if(_widgetChanged == true)
+		{
+			_displayChanges();		//Update the terminal with changes
+		}
+	}
+	else
+	{
+		if(_readInput())			//Look for mouse and keyboard events
+		{
+			if(typingCallback && _lastKeypress != noKeyPressed)
+			{
+				typingCallback(_lastKeypress);
+				_lastKeypress = noKeyPressed;
+			}
+		}
 	}
 	#if defined(ESP8266) || defined(ESP32)
 	yield();					//Necessary if the stream passed is WiFi on ESP8266/ESP32 where the usual worries about not causing a WDT reset exist
@@ -65,13 +99,12 @@ void retroTerm::houseKeeping()
 }
 
 #if defined(ESP8266) || defined(ESP32)
-void ICACHE_FLASH_ATTR retroTerm::_processInput()
+bool ICACHE_FLASH_ATTR retroTerm::_processInput()
 #else
-void retroTerm::_processInput()
+bool retroTerm::_processInput()
 #endif
 {
-	bool inputEventCaught = false;																		//Use to bypass checks after an input is found
-	for(uint8_t widgetId = _widgetObjectLimit ; widgetId-- > 0 && inputEventCaught == false ; )			//Search for clicks on visible objects and shortcut keys. There is no Z-Index but newest widgets take preference
+	for(uint8_t widgetId = _widgetObjectLimit ; widgetId-- > 0; )			//Search for clicks on visible objects and shortcut keys. There is no Z-Index but newest widgets take preference
 	{
 		if(_widgetExists(widgetId) && (_widgets[widgetId].currentState & 0x0103) == 0x0103)							//Only check visible, displayed widgets that are clickable
 		{
@@ -79,42 +112,64 @@ void retroTerm::_processInput()
 			{
 				_clickWidget(widgetId);				//Do per-widget-type click handling, only if clickable
 				_mouseStatus = _mouseStatus & 0xF9;	//Gobble the mouse event
-				inputEventCaught = true;			//Stop looking for more events
+				return(true);
 			}
 			else if((_mouseStatus & 0x20) && _mouseX >= _widgets[widgetId].x && _mouseX < _widgets[widgetId].x + _widgets[widgetId].w && _mouseY >= _widgets[widgetId].y && _mouseY < _widgets[widgetId].y + _widgets[widgetId].h)	//Mouse wheel up
 			{
 				_clickWidget(widgetId);				//Do per-widget-type click handling, only if clickable
 				_mouseStatus = _mouseStatus & 0xDF;	//Gobble the mouse event
-				inputEventCaught = true;			//Stop looking for more events
+				return(true);
 			}
 			else if((_mouseStatus & 0x10) && _mouseX >= _widgets[widgetId].x && _mouseX < _widgets[widgetId].x + _widgets[widgetId].w && _mouseY >= _widgets[widgetId].y && _mouseY < _widgets[widgetId].y + _widgets[widgetId].h)	//Mouse wheel down
 			{
 				_clickWidget(widgetId);				//Do per-widget-type click handling, only if clickable
 				_mouseStatus = _mouseStatus & 0xEF;	//Gobble the mouse event
-				inputEventCaught = true;			//Stop looking for more events
+				return(true);
 			}
 			if(_widgets[widgetId].shortcut != noKeyPressed && _shortcutMatches(widgetId))	//Search for used keyboard shortcuts, which appear as 'clicks' of an object for simplicity. This gobbles up the keypress so the application doesn't see it
 			{
 				_clickWidget(widgetId);				//Do per-widget-type click handling, only if clickable
 				_lastKeypress = noKeyPressed;		//Gobble the keypress and stop looking for more shortcuts
-				inputEventCaught = true;			//Stop looking for more events
+				return(true);
 			}
 		}
 	}
-	if(inputEventCaught == false && _selectedWidget < _widgetObjectLimit && _widgets[_selectedWidget].currentState & 0x0100)	//Process input from the keyboard to the currently selected widget
+	if(_selectedWidget < _widgetObjectLimit && _widgets[_selectedWidget].currentState & 0x0100)	//Process input from the keyboard to the currently selected widget
 	{
-		if(_widgets[_selectedWidget].type ==_widgetTypes::textDisplay || _widgets[_selectedWidget].type ==_widgetTypes::textLog)	//Handle keyboard input to a scrolling text display
+		if(_widgets[_selectedWidget].type ==_widgetTypes::listBox)	//Handle keyboard input to a list box
 		{
-			if(_lastKeypress == downPressed)
+			if(_lastKeypress == upPressed)
 			{
-				_scrollDown(_selectedWidget);
+				if(_widgets[_selectedWidget].value > 0)
+				{
+					_widgets[_selectedWidget].value--;
+					_widgets[_selectedWidget].currentState = _widgets[_selectedWidget].currentState | 0x0210;	//Mark the widget content as changed and widget as clicked
+					_widgetChanged = true;
+				}
+				else
+				{
+					soundBell();
+				}
 				_lastKeypress = noKeyPressed;	//Gobble up the keypress
 			}
-			else if(_lastKeypress == upPressed)
+			else if(_lastKeypress == downPressed)
 			{
-				_scrollUp(_selectedWidget);
+				if(_widgets[_selectedWidget].value < _widgets[_selectedWidget].contentLength - 1)
+				{
+					_widgets[_selectedWidget].value++;
+					_widgets[_selectedWidget].currentState = _widgets[_selectedWidget].currentState | 0x0210;	//Mark the widget content as changed and widget as clicked
+					_widgetChanged = true;
+				}
+				else
+				{
+					soundBell();
+				}
 				_lastKeypress = noKeyPressed;	//Gobble up the keypress
 			}			
+		}
+		else if(_widgets[_selectedWidget].type ==_widgetTypes::textDisplay || _widgets[_selectedWidget].type ==_widgetTypes::textLog)	//Handle keyboard input to a scrolling text display
+		{
+			
 		}
 		else if(_widgets[_selectedWidget].type == _widgetTypes::textInput)		//Handle keyboard input to a line editing widget
 		{
@@ -140,6 +195,7 @@ void retroTerm::_processInput()
 					moveCursorTo(_typingXposition(_selectedWidget),_typingYposition(_selectedWidget));
 					showCursor();
 					_widgets[_selectedWidget].value = 1;	//Mark the content as changed for the application
+					_widgetChanged = true;
 				}
 				else if(_widgets[_selectedWidget].contentOffset == _contentSize(_selectedWidget) && _bellEnabled)
 				{
@@ -214,6 +270,7 @@ void retroTerm::_processInput()
 					attributes(_defaultAttributes);
 					showCursor();
 					_widgets[_selectedWidget].value = 1;	//Mark the content as changed for the application
+					_widgetChanged = true;
 				}
 				else if(_bellEnabled)
 				{
@@ -275,6 +332,7 @@ void retroTerm::_processInput()
 						attributes(_defaultAttributes);
 					}
 					_widgets[_selectedWidget].value = 1;	//Mark the content as changed for the application
+					_widgetChanged = true;
 				}
 				else //Discard the character
 				{
@@ -288,7 +346,9 @@ void retroTerm::_processInput()
 			}
 		}
 	}
+	return(false);
 }
+
 
 #if defined(ESP8266) || defined(ESP32)
 bool ICACHE_FLASH_ATTR retroTerm::_shortcutMatches(const uint8_t widgetId)
@@ -453,10 +513,15 @@ void ICACHE_FLASH_ATTR retroTerm::_displayChanges()
 void retroTerm::_displayChanges()
 #endif
 {
-	//Deal with whole widgets appearing and disappearing, order this happens in is IMPORTANT, everything to be cleared must be cleared FIRST before displaying new things
+	// Deal with whole widgets appearing and disappearing, the order this happens in is IMPORTANT
+	// everything to be cleared must be cleared FIRST before displaying new things, so it iterates twice
 	for (uint8_t widgetIndex = 0 ; widgetIndex < _widgetObjectLimit ; widgetIndex++)
 	{
-		if(_widgetExists(widgetIndex))
+		#ifdef retroTerm_DYNAMIC_OBJECT_ALLOCATION
+		if(_widgets[widgetIndex] != nullptr)//Widget exists
+		#else
+		if(_widgets[widgetIndex].x != 0)	//Widget exists
+		#endif
 		{
 			if((_widgets[widgetIndex].currentState & 0x0003) == 0x0002)								//Widget is displayed but 'invisible' and needs clearing
 			{
@@ -476,7 +541,11 @@ void retroTerm::_displayChanges()
 	}
 	for (uint8_t widgetIndex = 0 ; widgetIndex < _widgetObjectLimit ; widgetIndex++)
 	{
-		if(_widgetExists(widgetIndex))
+		#ifdef retroTerm_DYNAMIC_OBJECT_ALLOCATION
+		if(_widgets[widgetIndex] != nullptr)//Widget exists
+		#else
+		if(_widgets[widgetIndex].x != 0)	//Widget exists
+		#endif
 		{
 			if((_widgets[widgetIndex].currentState & 0x0003) == 0x0001)									//Widget is visible but not displayed
 			{
@@ -492,13 +561,9 @@ void retroTerm::_displayChanges()
 				}
 				if((_widgets[widgetIndex].currentState & 0x0008) == 0x0008)								//Label has changed
 				{
-					if(_widgets[widgetIndex].style & SHORTCUT_INLINE)
+					_displayLabel(widgetIndex);															//Add the label
+					if((_widgets[widgetIndex].style & SHORTCUT_INLINE) != SHORTCUT_INLINE)
 					{
-						_displayLabel(widgetIndex);														//Add the label, which will also add the shortcut
-					}
-					else
-					{
-						_displayLabel(widgetIndex);														//Add the label
 						_displayKeyboardShortcut(widgetIndex);											//Add the keyboard shortcut
 					}
 					_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState & 0xFFF7;	//Mark the label as drawn
@@ -511,13 +576,25 @@ void retroTerm::_displayChanges()
 						hideCursor();																	//Hide the cursor to reduce flickery movement in the terminal
 						if(_widgets[widgetIndex].style & OUTER_BOX)
 						{
-							//moveCursorTo(_widgets[widgetIndex].x + 1 + _labelLength(widgetIndex), _widgets[widgetIndex].y + 1);		//Move to widget position
-							moveCursorTo(_widgets[widgetIndex].x + 1, _widgets[widgetIndex].y + 1);		//Move to widget position
+							if(_widgets[widgetIndex].style && LABEL_RIGHT_JUSTIFIED)
+							{
+								moveCursorTo(_widgets[widgetIndex].x + 1, _widgets[widgetIndex].y + 1);								//Move to widget position
+							}
+							else
+							{
+								moveCursorTo(_widgets[widgetIndex].x + 1 + _labelLength(widgetIndex), _widgets[widgetIndex].y + 1);	//Move to widget position
+							}
 						}
 						else
 						{
-							//moveCursorTo(_widgets[widgetIndex].x + _labelLength(widgetIndex), _widgets[widgetIndex].y);				//Move to widget position
-							moveCursorTo(_widgets[widgetIndex].x, _widgets[widgetIndex].y);				//Move to widget position
+							if(_widgets[widgetIndex].style && LABEL_RIGHT_JUSTIFIED)
+							{
+								moveCursorTo(_widgets[widgetIndex].x, _widgets[widgetIndex].y);								//Move to widget position
+							}
+							else
+							{
+								moveCursorTo(_widgets[widgetIndex].x + _labelLength(widgetIndex), _widgets[widgetIndex].y);	//Move to widget position
+							}
 						}
 						attributes(_widgets[widgetIndex].attributes);									//Apply widget attributes
 						if(_widgets[widgetIndex].value)													//Boolean state is true
@@ -592,28 +669,7 @@ void retroTerm::_displayChanges()
 						}
 						else	//Display the content
 						{
-							if(_contentSize(widgetIndex) > 0)
-							{
-								if(_widgets[widgetIndex].style & PASSWORD_FIELD)						//Show blobs instead of the string
-								{
-									saveCursorPosition();
-									moveCursorTo(_typingXposition(widgetIndex) - _contentSize(widgetIndex),_contentYorigin(widgetIndex));
-									attributes(_widgets[widgetIndex].attributes);
-									for(uint8_t blob = 0; blob < _contentSize(widgetIndex); blob++)
-									{
-										_printUnicodeCharacter(_widgets[widgetIndex].style & 0x01, 18);
-									}
-									restoreCursorPosition();
-								}
-								else
-								{
-									printAt(_typingXposition(widgetIndex) - _contentSize(widgetIndex),_contentYorigin(widgetIndex), _widgets[widgetIndex].content,  _widgets[widgetIndex].attributes);
-								}
-							}
-							else
-							{
-								clearBox(_contentXorigin(widgetIndex), _contentYorigin(widgetIndex), _columnsAvailable(widgetIndex), _linesAvailable(widgetIndex), _widgets[widgetIndex].contentAttributes);
-							}
+							_displayContent(widgetIndex);			//Show the content
 						}
 					}
 					else if(_widgets[widgetIndex].type == _widgetTypes::listBox)
@@ -641,6 +697,7 @@ void retroTerm::_displayChanges()
 	{
 		moveCursorTo(_typingXposition(_selectedWidget), _contentYorigin(_selectedWidget));					//Move the cursor
 	}
+	_widgetChanged = false;
 }
 
 #if defined(ESP8266) || defined(ESP32)
@@ -743,14 +800,40 @@ uint8_t retroTerm::_linesAvailable(const uint8_t widgetIndex)
 	}
 	else
 	{
-		if(_widgets[widgetIndex].style & LABEL_IN_BOX)
+		if(_widgets[widgetIndex].style & OUTER_BOX)
 		{
-			return(_widgets[widgetIndex].h - 4);
+			if(_widgets[widgetIndex].style & LABEL_IN_BOX)
+			{
+				return(_widgets[widgetIndex].h - 4);
+			}
+			else
+			{
+				return(_widgets[widgetIndex].h - 3);
+			}
 		}
 		else
 		{
-			return(_widgets[widgetIndex].h - 3);
+			if(_widgets[widgetIndex].style & LABEL_IN_BOX)
+			{
+				return(_widgets[widgetIndex].h - 2);
+			}
+			else
+			{
+				return(_widgets[widgetIndex].h);
+			}
 		}
+	}
+}
+
+#if defined(ESP8266) || defined(ESP32)
+uint8_t ICACHE_FLASH_ATTR retroTerm::lines(const uint8_t widgetId)
+#else
+uint8_t retroTerm::lines(const uint8_t widgetId)
+#endif
+{
+	if(_widgetExists(widgetId - 1))
+	{
+		return(_linesAvailable(widgetId - 1));
 	}
 }
 
@@ -776,6 +859,19 @@ uint8_t retroTerm::_columnsAvailable(const uint8_t widgetIndex)
 		}
 	}
 }
+
+#if defined(ESP8266) || defined(ESP32)
+uint8_t ICACHE_FLASH_ATTR retroTerm::columns(const uint8_t widgetId)
+#else
+uint8_t retroTerm::columns(const uint8_t widgetId)
+#endif
+{
+	if(_widgetExists(widgetId - 1))
+	{
+		return(_columnsAvailable(widgetId - 1));
+	}
+}
+
 
 #if defined(ESP8266) || defined(ESP32)
 bool ICACHE_FLASH_ATTR retroTerm::_scrollbarNeeded(const uint8_t widgetIndex)
@@ -871,6 +967,10 @@ uint16_t retroTerm::_labelLength(const uint8_t widgetIndex)
 		return(strlen(_widgets[widgetIndex].label));
 		#endif
 	}
+	else if(_widgets[widgetIndex].label == nullptr)
+	{
+		return(0);
+	}
 	else
 	{
 		return(strlen(_widgets[widgetIndex].label));
@@ -910,7 +1010,10 @@ void retroTerm::_displayLabel(const uint8_t widgetIndex)
 		}
 		if(_widgets[widgetIndex].type == _widgetTypes::checkbox || _widgets[widgetIndex].type == _widgetTypes::radioButton)
 		{
-			xOffset++;	//Step past the unicode character used for the checbox or radio button
+			if(_widgets[widgetIndex].style && LABEL_RIGHT_JUSTIFIED)
+			{
+				xOffset++;	//Step past the unicode character used for the checkbox or radio button
+			}
 			availableWidth--;
 		}
 		clearBox(_widgets[widgetIndex].x + xOffset, _widgets[widgetIndex].y + yOffset, availableWidth, 1,  _widgets[widgetIndex].labelAttributes);
@@ -920,12 +1023,10 @@ void retroTerm::_displayLabel(const uint8_t widgetIndex)
 			{
 				moveCursorTo(_widgets[widgetIndex].x + (_widgets[widgetIndex].w - (2 + _labelLength(widgetIndex) + _shortcutLength(widgetIndex)))/2, _widgets[widgetIndex].y + yOffset);
 				_printKeyboardShortcut(widgetIndex);
-				_printLabel(widgetIndex);
 			}
 			else
 			{
 				moveCursorTo(_widgets[widgetIndex].x + (_widgets[widgetIndex].w - _labelLength(widgetIndex))/2, _widgets[widgetIndex].y + yOffset);
-				_printLabel(widgetIndex);
 			}
 		}
 		else if(_widgets[widgetIndex].style & LABEL_RIGHT_JUSTIFIED)
@@ -934,12 +1035,10 @@ void retroTerm::_displayLabel(const uint8_t widgetIndex)
 			{
 				moveCursorTo(_widgets[widgetIndex].x + _widgets[widgetIndex].w - (2 + _labelLength(widgetIndex) + _shortcutLength(widgetIndex)), _widgets[widgetIndex].y + yOffset);
 				_printKeyboardShortcut(widgetIndex);
-				_printLabel(widgetIndex);
 			}
 			else
 			{
 				moveCursorTo(_widgets[widgetIndex].x + _widgets[widgetIndex].w - _labelLength(widgetIndex), _widgets[widgetIndex].y + yOffset);
-				_printLabel(widgetIndex);
 			}
 		}
 		else
@@ -949,14 +1048,13 @@ void retroTerm::_displayLabel(const uint8_t widgetIndex)
 				
 				moveCursorTo(_widgets[widgetIndex].x + xOffset, _widgets[widgetIndex].y + yOffset);
 				_printKeyboardShortcut(widgetIndex);
-				_printLabel(widgetIndex);
 			}
 			else
 			{
 				moveCursorTo(_widgets[widgetIndex].x + xOffset, _widgets[widgetIndex].y + yOffset);
-				_printLabel(widgetIndex);
 			}
 		}
+		_printLabel(widgetIndex);
 		restoreCursorPosition();
 	}
 }
@@ -1031,7 +1129,32 @@ void ICACHE_FLASH_ATTR retroTerm::_displayContent(const uint8_t widgetIndex)
 void retroTerm::_displayContent(const uint8_t widgetIndex)
 #endif
 {
-	if(_widgets[widgetIndex].type == _widgetTypes::textDisplay)
+	if(_widgets[widgetIndex].content == nullptr)
+	{
+		return;
+	}
+	else if(_widgets[widgetIndex].type == _widgetTypes::textInput)
+	{
+		if(_contentSize(widgetIndex) > 0)
+		{
+			if(_widgets[widgetIndex].style & PASSWORD_FIELD)						//Show blobs instead of the string
+			{
+				saveCursorPosition();
+				moveCursorTo(_typingXposition(widgetIndex) - _contentSize(widgetIndex),_contentYorigin(widgetIndex));
+				attributes(_widgets[widgetIndex].attributes);
+				for(uint8_t blob = 0; blob < _contentSize(widgetIndex); blob++)
+				{
+					_printUnicodeCharacter(_widgets[widgetIndex].style & 0x01, 18);
+				}
+				restoreCursorPosition();
+			}
+			else
+			{
+				printAt(_typingXposition(widgetIndex) - _contentSize(widgetIndex),_contentYorigin(widgetIndex), _widgets[widgetIndex].content,  _widgets[widgetIndex].attributes);
+			}
+		}
+	}
+	else if(_widgets[widgetIndex].type == _widgetTypes::textDisplay)
 	{
 		attributes(_widgets[widgetIndex].contentAttributes);
 		uint32_t contentPosition = _widgets[widgetIndex].contentOffset;
@@ -2141,6 +2264,7 @@ void retroTerm::_clickWidget(const uint8_t widgetIndex)
 	{
 		_widgets[widgetIndex].value = not _widgets[widgetIndex].value;						//Invert the state
 		_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState | 0x0210;	//Mark the widget clicked and content as changed
+		_widgetChanged = true;
 		_selectedWidget = widgetIndex;														//Select this widget, but nothing actually changes
 	}
 	else if(_widgets[widgetIndex].type == _widgetTypes::radioButton)
@@ -2158,6 +2282,7 @@ void retroTerm::_clickWidget(const uint8_t widgetIndex)
 			_widgets[widgetIndex].value = true;													//Mark the widget as checked
 			_selectedWidget = widgetIndex;														//Select this widget, but nothing actually changes
 			_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState | 0x0210;	//Mark the widget clicked
+			_widgetChanged = true;
 		}
 	}
 	else if(_widgets[widgetIndex].type == _widgetTypes::textDisplay)
@@ -2200,11 +2325,16 @@ void retroTerm::_clickWidget(const uint8_t widgetIndex)
 		{
 			_widgets[widgetIndex].value = _mouseY + _widgets[widgetIndex].contentOffset - _contentYorigin(widgetIndex);		//Choose the option
 			_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState | 0x0210;								//Mark the widget content as changed and widget as clicked
+			_widgetChanged = true;
 		}
 		else
 		{
 			_handleScrollbarClicks(widgetIndex);
 		}
+	}
+	if(_clickedWidget == _widgetObjectLimit)	//Apply the top level click
+	{
+		_clickedWidget = widgetIndex;
 	}
 }
 
@@ -2250,12 +2380,14 @@ void retroTerm::_scrollDown(const uint8_t widgetIndex)
 		{
 			_widgets[widgetIndex].contentOffset += _widgets[widgetIndex].value;						//Move down one line, using the stored line size from when it was printed
 			_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState | 0x0010;		//Mark the widget state as changed
+			_widgetChanged = true;
 		}
 	}
 	else if(_widgets[widgetIndex].type == _widgetTypes::listBox && _widgets[widgetIndex].contentOffset + _linesAvailable(widgetIndex) < _widgets[widgetIndex].contentLength)
 	{
 		_widgets[widgetIndex].contentOffset++;													//Move down one option
 		_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState | 0x0010;		//Mark the widget state as changed
+		_widgetChanged = true;
 	}
 }
 
@@ -2307,17 +2439,20 @@ void retroTerm::_scrollUp(const uint8_t widgetIndex)
 		{
 			_widgets[widgetIndex].contentOffset -= _columnsAvailable(widgetIndex);
 			_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState | 0x0010;	//Mark the widget state as changed
+			_widgetChanged = true;
 		}
 		else if(_widgets[widgetIndex].contentOffset > 0)
 		{
 			_widgets[widgetIndex].contentOffset = 0;
 			_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState | 0x0010;	//Mark the widget state as changed
+			_widgetChanged = true;
 		}
 	}
 	else if(_widgets[widgetIndex].type == _widgetTypes::listBox && _widgets[widgetIndex].contentOffset > 0)
 	{
 		_widgets[widgetIndex].contentOffset--;
 		_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState | 0x0010;	//Mark the widget state as changed
+		_widgetChanged = true;
 	}
 }
 
@@ -3459,22 +3594,30 @@ uint8_t retroTerm::readKeypress()
 	}
 }
 
+#if defined(ESP8266) || defined(ESP32)
+retroTerm& ICACHE_FLASH_ATTR retroTerm::setTypingCallback(RETROTERM_TYPING_CALLBACK)
+#else
+retroTerm& retroTerm::setTypingCallback(RETROTERM_TYPING_CALLBACK)
+#endif
+{
+    this->typingCallback = typingCallback;
+    return *this;
+}
+
 
 #if defined(ESP8266) || defined(ESP32)
-void ICACHE_FLASH_ATTR retroTerm::_readInput()
+bool ICACHE_FLASH_ATTR retroTerm::_readInput()
 #else
-void retroTerm::_readInput()
+bool retroTerm::_readInput()
 #endif
 {
 	if(_escapeReceived == true && millis() - _escapeReceivedAt > 100ul)	//Potentially time out checking for escape character sequences
 	{
 		//We've timed out reading an escape sequence so assume it's a user keypress
-		//if(strlen(_escapeBuffer) > 0)
 		if(escapeBufferPosition > 0)
 		{
 			//Show what was sent
 			_terminalStream->print(F("\r\fUnknown Control character ESC + "));
-			//for(uint8_t bufferIndex = 0; bufferIndex < strlen(_escapeBuffer) ; bufferIndex++)
 			for(uint8_t bufferIndex = 0; bufferIndex < escapeBufferPosition ; bufferIndex++)
 			{
 				if(_escapeBuffer[bufferIndex] > 31 && _escapeBuffer[bufferIndex] < 127)
@@ -3496,22 +3639,21 @@ void retroTerm::_readInput()
 				}
 			}
 			_resetEscapeBuffer();
+			return(false);
 		}
 		else
 		{
 			_lastKeypress = escapePressed;
+			_resetEscapeBuffer();
+			return(true);
 		}
-		_resetEscapeBuffer();
 	}
 	while(_terminalStream->available())
 	{
-		//Update the inactivity timer
-		_lastInputActivity = millis();
+		_lastInputActivity = millis();										//Update the inactivity timer
 		uint8_t typedCharacter = _terminalStream->read();
-		//if(_escapeReceived && strlen(_escapeBuffer) < 11)
 		if(_escapeReceived && escapeBufferPosition < 24)
 		{
-			//_escapeBuffer[strlen(_escapeBuffer)] = char(typedCharacter);
 			_escapeBuffer[escapeBufferPosition++] = char(typedCharacter);
 			//Now see if there's an escape sequence we understand
 			if(_escapeBuffer[0] == '?')
@@ -3524,26 +3666,31 @@ void retroTerm::_readInput()
 				{
 					_resetEscapeBuffer();
 					_lastKeypress = upPressed;
+					return(true);
 				}
 				else if(_escapeBuffer[1] == 'B')		//Down arrow
 				{
 					_resetEscapeBuffer();
 					_lastKeypress = downPressed;
+					return(true);
 				}
 				else if(_escapeBuffer[1] == 'C')		//Right arrow
 				{
 					_resetEscapeBuffer();
 					_lastKeypress = rightPressed;
+					return(true);
 				}
 				else if(_escapeBuffer[1] == 'D')		//Left arrow
 				{
 					_resetEscapeBuffer();
 					_lastKeypress = leftPressed;
+					return(true);
 				}
 				else if(_escapeBuffer[1] == 'Z')		//Shift+tab / backtab
 				{
 					_resetEscapeBuffer();
 					_lastKeypress = backTabPressed;
+					return(true);
 				}
 				else if(_escapeBuffer[2] == '~')
 				{
@@ -3551,31 +3698,37 @@ void retroTerm::_readInput()
 					{
 						_resetEscapeBuffer();
 						_lastKeypress = homePressed;
+						return(true);
 					}
 					else if(_escapeBuffer[1] == '2')		//Insert
 					{
 						_resetEscapeBuffer();
 						_lastKeypress = insertPressed;
+						return(true);
 					}
 					else if(_escapeBuffer[1] == '3')		//Delete
 					{
 						_resetEscapeBuffer();
 						_lastKeypress = deletePressed;
+						return(true);
 					}
 					else if(_escapeBuffer[1] == '4')		//End
 					{
 						_resetEscapeBuffer();
 						_lastKeypress = endPressed;
+						return(true);
 					}
 					else if(_escapeBuffer[1] == '5')		//Page Up
 					{
 						_resetEscapeBuffer();
 						_lastKeypress = pageUpPressed;
+						return(true);
 					}
 					else if(_escapeBuffer[1] == '6')		//Page Down
 					{
 						_resetEscapeBuffer();
 						_lastKeypress = pageDownPressed;
+						return(true);
 					}
 				}
 				else if(_escapeBuffer[3] == '~')
@@ -3586,41 +3739,49 @@ void retroTerm::_readInput()
 						{
 							_resetEscapeBuffer();
 							_lastKeypress = f1Pressed;
+							return(true);
 						}
 						else if(_escapeBuffer[2] == '2')	//F2
 						{
 							_resetEscapeBuffer();
 							_lastKeypress = f2Pressed;
+							return(true);
 						}
 						else if(_escapeBuffer[2] == '3')	//F3
 						{
 							_resetEscapeBuffer();
 							_lastKeypress = f3Pressed;
+							return(true);
 						}
 						else if(_escapeBuffer[2] == '4')	//F4
 						{
 							_resetEscapeBuffer();
 							_lastKeypress = f4Pressed;
+							return(true);
 						}
 						else if(_escapeBuffer[2] == '5')	//F5
 						{
 							_resetEscapeBuffer();
 							_lastKeypress = f5Pressed;
+							return(true);
 						}
 						else if(_escapeBuffer[2] == '7')	//F6
 						{
 							_resetEscapeBuffer();
 							_lastKeypress = f6Pressed;
+							return(true);
 						}
 						else if(_escapeBuffer[2] == '8')	//F7
 						{
 							_resetEscapeBuffer();
 							_lastKeypress = f7Pressed;
+							return(true);
 						}
 						else if(_escapeBuffer[2] == '9')	//F8
 						{
 							_resetEscapeBuffer();
 							_lastKeypress = f8Pressed;
+							return(true);
 						}
 					}
 					else if(_escapeBuffer[1] == '2')
@@ -3629,21 +3790,25 @@ void retroTerm::_readInput()
 						{
 							_resetEscapeBuffer();
 							_lastKeypress = f9Pressed;
+							return(true);
 						}
 						else if(_escapeBuffer[2] == '1')	//F10
 						{
 							_resetEscapeBuffer();
 							_lastKeypress = f10Pressed;
+							return(true);
 						}
 						else if(_escapeBuffer[2] == '3')	//F11
 						{
 							_resetEscapeBuffer();
 							_lastKeypress = f11Pressed;
+							return(true);
 						}
 						else if(_escapeBuffer[2] == '4')	//F12
 						{
 							_resetEscapeBuffer();
 							_lastKeypress = f12Pressed;
+							return(true);
 						}
 					}
 				}
@@ -3697,6 +3862,7 @@ void retroTerm::_readInput()
 						}
 						_resetEscapeBuffer();
 						_lastKeypress = noKeyPressed;
+						return(true);
 					}
 					else if(_escapeBuffer[2] == '#')	//Left mouse button up
 					{
@@ -3708,6 +3874,7 @@ void retroTerm::_readInput()
 						}
 						_resetEscapeBuffer();
 						_lastKeypress = noKeyPressed;
+						return(true);
 					}
 					else if(_escapeBuffer[2] == '!')	//Middle mouse button down
 					{
@@ -3719,6 +3886,7 @@ void retroTerm::_readInput()
 						}
 						_resetEscapeBuffer();
 						_lastKeypress = noKeyPressed;
+						return(true);
 					}
 					else if(_escapeBuffer[2] == 'a')	//Mouse wheel roll up
 					{
@@ -3730,6 +3898,7 @@ void retroTerm::_readInput()
 						}
 						_resetEscapeBuffer();
 						_lastKeypress = noKeyPressed;
+						return(true);
 					}
 					else if(_escapeBuffer[2] == '`')	//Mouse wheel roll down
 					{
@@ -3741,6 +3910,7 @@ void retroTerm::_readInput()
 						}
 						_resetEscapeBuffer();
 						_lastKeypress = noKeyPressed;
+						return(true);
 					}
 					else if(_escapeBuffer[2] == '"')	//Mouse right button down
 					{
@@ -3752,6 +3922,7 @@ void retroTerm::_readInput()
 						}
 						_resetEscapeBuffer();
 						_lastKeypress = noKeyPressed;
+						return(true);
 					}
 				}
 			}
@@ -3761,30 +3932,37 @@ void retroTerm::_readInput()
 			if(typedCharacter==127 || typedCharacter==8)		//Backspace
 			{
 				_lastKeypress = backspacePressed;
+				return(true);
 			}
 			else if(typedCharacter==9)							//Tab
 			{
 				_lastKeypress = tabPressed;
+				return(true);
 			}
 			else if(typedCharacter==26 || typedCharacter==0)	//Break
 			{
 				_lastKeypress = breakPressed;
+				return(true);
 			}
 			else if(typedCharacter==10)							//An enter
 			{
 				_lastKeypress = enterPressed;
+				return(true);
 			}
 			else if(typedCharacter==13)							//A return
 			{
 				_lastKeypress = returnPressed;
+				return(true);
 			}
 			else if(typedCharacter==28)							//A file space (` + CTRL)
 			{
 				_lastKeypress = fsPressed;
+				return(true);
 			}
 			else if(typedCharacter>31 && typedCharacter<127)	//Normal typing
 			{
 				_lastKeypress = typedCharacter;
+				return(true);
 			}
 			else if(typedCharacter==27)							//Escape
 			{
@@ -3797,9 +3975,11 @@ void retroTerm::_readInput()
 				//_terminalStream->print(F("Unknown character - "));
 				//_terminalStream->print(typedCharacter, HEX);
 				//_lastKeypress = unknownKeyPressed;
+				return(false);
 			}
 		}
 	}
+	return(false);
 }
 
 
@@ -4015,17 +4195,7 @@ void retroTerm::showWidget(uint8_t widgetId, bool newState)	//Set visibility of 
 	if(_widgetExists(widgetId) && bool(_widgets[widgetId].currentState & 0x0001) != newState)
 	{
 		_widgets[widgetId].currentState = _widgets[widgetId].currentState ^ 0x0001;	//Change visibility
-		/*if(_widgets[widgetId].shortcut != noKeyPressed) //Keep a track of the number of widgets with shortcuts, to cut down loop processing of inputs
-		{
-			if(_widgets[widgetId].currentState & 0x0001)	//This widget is visible
-			{
-				_numberOfWidgetShortcuts++;
-			}
-			else
-			{
-				_numberOfWidgetShortcuts--;
-			}
-		}*/
+		_widgetChanged = true;
 	}
 }
 #if defined(ESP8266) || defined(ESP32)
@@ -4039,6 +4209,7 @@ void retroTerm::hideAllWidgets()					//Make all widgets invisible
 		if(_widgetExists(widgetIndex))
 		{
 			_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState & 0xFFFE;	//Change visibility
+			_widgetChanged = true;
 		}
 	}
 }
@@ -4053,47 +4224,10 @@ void retroTerm::showAllWidgets()					//Make all widgets visible
 		if(_widgetExists(widgetIndex))
 		{
 			_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState | 0x0001;	//Change visibility
+			_widgetChanged = true;
 		}
 	}
 }
-/*#if defined(ESP8266) || defined(ESP32)
-bool ICACHE_FLASH_ATTR retroTerm::widgetActive(uint8_t widgetId)	//Is this widget active
-#else
-bool retroTerm::widgetActive(uint8_t widgetId)						//Is this widget active
-#endif
-{
-	if(_widgetExists(widgetId - 1) && _widgets[widgetId - 1].currentState & 0x0100)
-	{
-		return(true);
-	}
-	else
-	{
-		return(false);
-	}
-}
-#if defined(ESP8266) || defined(ESP32)
-void ICACHE_FLASH_ATTR retroTerm::widgetActive(uint8_t widgetId, bool newState)	//Control if this widget is active
-#else
-void retroTerm::widgetActive(uint8_t widgetId, bool newState)	//Control if this widget is active
-#endif
-{
-	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
-	if(bool(_widgets[widgetId].currentState & 0x0100) != newState)
-	{
-		_widgets[widgetId].currentState = _widgets[widgetId].currentState ^ 0x0100;	//Change active state
-	}
-	if(widgetId == _selectedWidget && _widgets[widgetId].type == _widgetTypes::textInput)
-	{
-		if(newState == false)
-		{
-			hideCursor();	//Hide cursor when an input field goes inactive
-		}
-		else
-		{
-			showCursor();
-		}
-	}
-}*/
 
 #if defined(ESP8266) || defined(ESP32)
 void ICACHE_FLASH_ATTR retroTerm::widgetActive(const uint8_t widgetId)	//Make this widget active
@@ -4136,9 +4270,57 @@ bool retroTerm::widgetClicked(uint8_t widgetId)					//Is this widget clicked, re
 	if(_widgetExists(widgetId) && _widgets[widgetId].currentState & 0x0200)
 	{
 		_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0xFDFF;
+		if(_clickedWidget == widgetId)
+		{
+			_findNextClick();							//Look for the next click
+		}
 		return(true);
 	}
 	return(false);
+}
+
+#if defined(ESP8266) || defined(ESP32)
+uint8_t ICACHE_FLASH_ATTR retroTerm::widgetClicked()	//Is any widget clicked, resets on read
+#else
+uint8_t retroTerm::widgetClicked()						//Is any widget clicked, resets on read
+#endif
+{
+	if(_clickedWidget != _widgetObjectLimit)			//Some widget has been clicked
+	{
+		_widgets[_clickedWidget].currentState = _widgets[_clickedWidget].currentState & 0xFDFF; //Unclick it
+		uint8_t temp = _clickedWidget + 1;
+		_findNextClick();								//Look for the next click
+		return(temp);
+	}
+	return(0);
+}
+
+#if defined(ESP8266) || defined(ESP32)
+bool ICACHE_FLASH_ATTR retroTerm::_findNextClick()
+#else
+bool retroTerm::_findNextClick()
+#endif
+{
+	for(uint8_t widgetId = _widgetObjectLimit ; widgetId-- > 0 ; )
+	{
+		if(_widgetExists(widgetId) && _widgets[widgetId].currentState & 0x0200)
+		{
+			_clickedWidget = widgetId;
+			return(true);							//Found a click, return true
+		}
+	}
+	_clickedWidget = _widgetObjectLimit;			//Clear the top level click
+	return(false);									//No clicks, return false
+}
+
+#if defined(ESP8266) || defined(ESP32)
+retroTerm& ICACHE_FLASH_ATTR retroTerm::setClickCallback(RETROTERM_CLICK_CALLBACK)
+#else
+retroTerm& retroTerm::setClickCallback(RETROTERM_CLICK_CALLBACK)
+#endif
+{
+    this->clickCallback = clickCallback;
+    return *this;
 }
 
 
@@ -4153,6 +4335,7 @@ void retroTerm::widgetAttributes(uint8_t widgetId, uint16_t newAttributes)
 	{
 		_widgets[widgetId].attributes = newAttributes;
 		_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0004;		//Mark widget as changed
+		_widgetChanged = true;
 	}
 }
 #if defined(ESP8266) || defined(ESP32)
@@ -4166,6 +4349,7 @@ void retroTerm::labelAttributes(uint8_t widgetId, uint16_t newAttributes)
 	{
 		_widgets[widgetId].labelAttributes = newAttributes;
 		_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0008;	//Mark label as changed
+		_widgetChanged = true;
 	}
 }
 #if defined(ESP8266) || defined(ESP32)
@@ -4179,6 +4363,7 @@ void retroTerm::contentAttributes(uint8_t widgetId, uint16_t newAttributes)
 	{
 		_widgets[widgetId].contentAttributes = newAttributes;
 		_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content changed
+		_widgetChanged = true;
 	}
 }
 
@@ -4193,6 +4378,7 @@ void retroTerm::widgetStyle(uint8_t widgetId, uint8_t newStyle)
 	{
 		_widgets[widgetId].style = newStyle;
 		_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x001c;		//Mark widget as completely changed
+		_widgetChanged = true;
 	}
 }
 
@@ -4218,6 +4404,7 @@ bool retroTerm::setWidgetLabel(uint8_t widgetId, char* label)
 		{
 			_widgets[widgetId].label = nullptr;
 		}
+		_widgetChanged = true;
 		return(true);
 	}
 	else
@@ -4239,6 +4426,7 @@ bool retroTerm::setWidgetLabel(uint8_t widgetId, String label)
 		memcpy(_widgets[widgetId].label, (label).c_str(), label.length());		//Copy in the label
 		_widgets[widgetId].label[label.length()] = 0;
 		_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0008;	//Mark label as changed
+		_widgetChanged = true;
 		return(true);
 	}
 	else
@@ -4260,6 +4448,7 @@ bool retroTerm::setWidgetLabel(uint8_t widgetId, const char* label)
 		{
 			_widgets[widgetId].label = (char *) label;									//Cast the PROGMEM as a char * to store it
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x4008;	//Mark label as changed and label stored in FLASH
+			_widgetChanged = true;
 			return(true);
 		}
 		else
@@ -4286,6 +4475,7 @@ bool retroTerm::setWidgetLabel(uint8_t widgetId, const __FlashStringHelper* labe
 		{
 			_widgets[widgetId].label = (char *) label;									//Cast the PROGMEM as a char * to store it
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x4008;	//Mark label as changed and label stored in FLASH
+			_widgetChanged = true;
 			return(true);
 		}
 		else
@@ -4319,6 +4509,7 @@ bool retroTerm::deleteWidgetLabel(uint8_t widgetId)
 			{
 				_widgets[widgetId].label = nullptr;
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0008;	//Mark label as changed
+				_widgetChanged = true;
 				return(true);
 			}
 		}
@@ -4377,21 +4568,29 @@ bool ICACHE_FLASH_ATTR retroTerm::setWidgetContent(uint8_t widgetId, char *newCo
 bool retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
 #endif
 {
-	if(_widgets[widgetId - 1].content != nullptr)
+	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	if(_widgets[widgetId].content != nullptr)
 	{
 		if(_widgets[widgetId].currentState & 0x8000 == 0x8000)	//Previous content stored in flash, delete the pointer
 		{
-			_widgets[widgetId].content == nullptr;
+			_widgets[widgetId].content = nullptr;
 		}
-		else if(strlen(newContent) + 1 > _widgets[widgetId-1].contentSize)
+		else if(strlen(newContent) + 1 > _widgets[widgetId].contentSize)
 		{
-			deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
+			_deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
 		}
 	}
-	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	else if(newContent == nullptr)
+	{
+		return(true);	//Content was already empty, do nothing
+	}
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::textInput)
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
+		{
+			return(false);
+		}
+		else if(_widgets[widgetId].type == _widgetTypes::textInput)
 		{
 			if(strlen(newContent) > _typingBufferMaxLength(widgetId)) //Text inputs need to check the length
 			{
@@ -4409,12 +4608,9 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0x7fff;			//Mark as stored in heap
 				_calculateContentLength(widgetId);													//Calculate the number of lines of content, for scrolling
+				_widgetChanged = true;
 				return(true);
 			}
-		}
-		else if(_widgets[widgetId].type == _widgetTypes::textLog)
-		{
-			return(false);
 		}
 		else
 		{
@@ -4427,6 +4623,7 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
 			_calculateContentLength(widgetId);												//Calculate the number of lines of content, for scrolling
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;		//Mark content as changed
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0x7fff;		//Mark as stored in heap
+			_widgetChanged = true;
 			return(true);
 		}
 	}
@@ -4441,18 +4638,22 @@ bool ICACHE_FLASH_ATTR retroTerm::setWidgetContent(uint8_t widgetId, String newC
 bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 #endif
 {
-	if(_widgets[widgetId - 1].content != nullptr)
+	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	if(_widgets[widgetId].content != nullptr)
 	{
 		if(_widgets[widgetId].currentState & 0x8000 == 0x8000)	//Previous content stored in flash, delete the pointer
 		{
-			_widgets[widgetId].content == nullptr;
+			_widgets[widgetId].content = nullptr;
 		}
-		else if(newContent.length() + 1 > _widgets[widgetId-1].contentSize)
+		else if(newContent.length() + 1 > _widgets[widgetId].contentSize)
 		{
-			deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
+			_deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
 		}
 	}
-	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	else if(newContent == nullptr)
+	{
+		return(true);	//Content was already empty, do nothing
+	}
 	if(_widgetExists(widgetId))
 	{
 		if(_widgets[widgetId].type == _widgetTypes::textInput) //Text inputs need to check the length
@@ -4468,11 +4669,20 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 					_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];	//Allocate the memory in heap
 					_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;			//Record the size of the content, which is used to reduce heap fragmentation
 				}
-				memcpy(_widgets[widgetId].content, (newContent).c_str(), newContent.length() + 1);	//Copy in the content
-				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
+				if(newContent == nullptr)
+				{
+					_widgets[widgetId].contentOffset = 0;											//Move the cursor to the start
+					_widgets[widgetId].content[0] = char(0);
+				}
+				else
+				{
+					memcpy(_widgets[widgetId].content, (newContent).c_str(), newContent.length() + 1);	//Copy in the content
+					_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
+				}
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0x7fff;			//Mark as stored in heap
 				_calculateContentLength(widgetId);													//Calculate the number of lines of content, for scrolling
+				_widgetChanged = true;
 				return(true);
 			}
 		}
@@ -4491,6 +4701,7 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 			_calculateContentLength(widgetId);													//Calculate the number of lines of content, for scrolling
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark content as changed
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0x7fff;			//Mark as stored in heap
+			_widgetChanged = true;
 			return(true);
 		}
 	}
@@ -4506,8 +4717,8 @@ bool ICACHE_FLASH_ATTR retroTerm::setWidgetContent(uint8_t widgetId, const __Fla
 bool retroTerm::setWidgetContent(uint8_t widgetId, const __FlashStringHelper* newContent)
 #endif
 {
-	deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	_deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
 	if(_widgetExists(widgetId))
 	{
 		if(_widgets[widgetId].type == _widgetTypes::textInput)
@@ -4520,11 +4731,20 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, const __FlashStringHelper* ne
 			{
 				_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];		//Allocate the memory in heap
 				_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;				//Record the size of the content, which is used to reduce heap fragmentation
-				memcpy_P(_widgets[widgetId].content, newContent, strlen_P((PGM_P) newContent) + 1);	//Copy in the content
-				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
+				if(newContent == nullptr)
+				{
+					_widgets[widgetId].contentOffset = 0;											//Move the cursor to the start
+					_widgets[widgetId].content[0] = char(0);
+				}
+				else
+				{
+					memcpy_P(_widgets[widgetId].content, newContent, strlen_P((PGM_P) newContent) + 1);	//Copy in the content
+					_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
+				}
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0x7fff;			//Mark as stored in heap
 				_calculateContentLength(widgetId);													//Calculate the number of lines of content, for scrolling
+				_widgetChanged = true;
 				return(true);
 			}
 		}
@@ -4538,6 +4758,7 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, const __FlashStringHelper* ne
 			_widgets[widgetId].contentSize = strlen_P((PGM_P) newContent) + 1;						//Record the size of the content, for consistency with heap methods
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x8010;				//Mark as content changed AND that the content is stored in FLASH. Used on AVR implementation
 			_calculateContentLength(widgetId);														//Calculate the number of lines of content, for scrolling
+			_widgetChanged = true;
 			return(true);
 		}
 	}
@@ -4552,8 +4773,8 @@ bool ICACHE_FLASH_ATTR retroTerm::setWidgetContent(uint8_t widgetId, const char*
 bool retroTerm::setWidgetContent(uint8_t widgetId, const char* newContent)
 #endif
 {
-	deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	_deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
 	if(_widgetExists(widgetId))
 	{
 		if(_widgets[widgetId].type == _widgetTypes::textInput)
@@ -4566,11 +4787,20 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, const char* newContent)
 			{
 				_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];		//Allocate the memory in heap
 				_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;				//Record the size of the content, which is used to reduce heap fragmentation
-				memcpy_P(_widgets[widgetId].content, newContent, strlen_P((PGM_P) newContent) + 1);	//Copy in the content
-				_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Move the cursor to the end
+				if(newContent == nullptr)
+				{
+					_widgets[widgetId].contentOffset = 0;											//Move the cursor to the start
+					_widgets[widgetId].content[0] = char(0);
+				}
+				else
+				{
+					memcpy_P(_widgets[widgetId].content, newContent, strlen_P((PGM_P) newContent) + 1);	//Copy in the content
+					_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Move the cursor to the end
+				}
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0x7fff;			//Mark as stored in heap
 				_calculateContentLength(widgetId);													//Calculate the number of lines of content, for scrolling
+				_widgetChanged = true;
 				return(true);
 			}
 		}
@@ -4584,6 +4814,7 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, const char* newContent)
 			_widgets[widgetId].contentSize = strlen_P((PGM_P) newContent) + 1;						//Record the size of the content, for consistency with heap methods
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x8010;				//Mark as content changed AND that the content is stored in FLASH. Used on AVR implementation
 			_calculateContentLength(widgetId);														//Calculate the number of lines of content, for scrolling
+			_widgetChanged = true;
 			return(true);
 		}
 	}
@@ -4655,6 +4886,7 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, char* newContent)		//Add/c
 				}
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
 			}
+			_widgetChanged = true;
 			return(true);
 		}
 		else
@@ -4704,6 +4936,7 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, String newContent)		//Add/
 				}
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
 			}
+			_widgetChanged = true;
 			return(true);
 		}
 		else
@@ -4750,6 +4983,7 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, const char* newContent)	//
 				}
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
 			}
+			_widgetChanged = true;
 			return(true);
 		}
 		else
@@ -4816,11 +5050,34 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, const __FlashStringHelper*
 				}
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
 			}
+			_widgetChanged = true;
 			return(true);
 		}
 		else
 		{
 			return(false);
+		}
+	}
+	return(false);
+}
+
+#if defined(ESP8266) || defined(ESP32)
+bool ICACHE_FLASH_ATTR retroTerm::scrollDownWidgetContent(uint8_t widgetId)		//Add/change widget content char array
+#else
+bool retroTerm::scrollDownWidgetContent(uint8_t widgetId)		//Add/change widget content char array
+#endif
+{
+	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	if(_widgetExists(widgetId))
+	{
+		if(_widgets[widgetId].type == _widgetTypes::textLog)
+		{
+			uint8_t columns = _columnsAvailable(widgetId);
+			uint8_t lines = _linesAvailable(widgetId);
+			memmove (_widgets[widgetId].content + columns, _widgets[widgetId].content , columns * (lines - 1) );	//Scroll the existing content down
+			memset(_widgets[widgetId].content, ' ', columns);	//Add a blank line
+			_widgetChanged = true;
+			return(true);
 		}
 	}
 	return(false);
@@ -4862,6 +5119,7 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, char* newContent)		//Add/
 			{
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
 			}
+			_widgetChanged = true;
 			return(true);
 		}
 		else
@@ -4890,7 +5148,7 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, String newContent)		//Add
 				newContentLength = columns;
 			}
 			memmove (_widgets[widgetId].content + columns, _widgets[widgetId].content , columns * (lines - 1) );	//Scroll the existing content up
-			memcpy(_widgets[widgetId].content, &newContent, newContentLength);			//Copy in the new content at the end
+			memcpy(_widgets[widgetId].content, (newContent).c_str(), newContentLength);			//Copy in the new content at the end
 			if(newContentLength < columns)
 			{
 				memset(_widgets[widgetId].content + newContentLength, ' ', columns - newContentLength);
@@ -4905,6 +5163,7 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, String newContent)		//Add
 			{
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
 			}
+			_widgetChanged = true;
 			return(true);
 		}
 		else
@@ -4949,6 +5208,7 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, const char* newContent)	/
 			{
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
 			}
+			_widgetChanged = true;
 			return(true);
 		}
 		else
@@ -5005,6 +5265,7 @@ bool retroTerm::prependWidgetContent(uint8_t widgetId, const __FlashStringHelper
 			{
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
 			}
+			_widgetChanged = true;
 			return(true);
 		}
 		else
@@ -5024,10 +5285,22 @@ bool ICACHE_FLASH_ATTR retroTerm::deleteWidgetContent(uint8_t widgetId)
 bool retroTerm::deleteWidgetContent(uint8_t widgetId)
 #endif
 {
-	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	return(_deleteWidgetContent(widgetId - 1));	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+}
+
+#if defined(ESP8266) || defined(ESP32)
+bool ICACHE_FLASH_ATTR retroTerm::_deleteWidgetContent(const uint8_t widgetId)
+#else
+bool retroTerm::_deleteWidgetContent(const uint8_t widgetId)
+#endif
+{
 	if(_widgetExists(widgetId))
 	{
-		if(_widgets[widgetId].type == _widgetTypes::textLog)
+		if(_widgets[widgetId].type == _widgetTypes::textInput)
+		{
+			_widgets[widgetId].content[0] = char(0);
+		}
+		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
 			memset(_widgets[widgetId].content, ' ',_textCapacity(widgetId));				//Clear the scrolling content, which is always in heap
 		}
@@ -5047,6 +5320,7 @@ bool retroTerm::deleteWidgetContent(uint8_t widgetId)
 		}
 		_widgets[widgetId].contentOffset = 0;												//Reset the content offset
 		_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
+		_widgetChanged = true;
 		return(true);
 	}
 	else
@@ -5230,6 +5504,7 @@ void retroTerm::widgetShortcutKey(uint8_t widgetId, uint8_t shortcut)		//Set a k
 			_widgets[widgetId].style = _widgets[widgetId].style | SHORTCUT_INLINE;	//Shortcuts on a height 1 widget are always inline
 		}
 		_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0004;	//Mark the widget as changed
+		_widgetChanged = true;
 	}
 }
 
@@ -5242,6 +5517,7 @@ bool retroTerm::widgetExists(const uint8_t widgetId)								//Does a particular 
 	return(_widgetExists(widgetId - 1));
 }
 
+/*
 #if defined(ESP8266) || defined(ESP32)
 bool ICACHE_FLASH_ATTR retroTerm::_widgetExists(const uint8_t widgetIndex)				//Does a particular widget exist?
 #else
@@ -5271,7 +5547,38 @@ bool retroTerm::_widgetExists(const uint8_t widgetIndex)								//Does a particu
 		return(false);
 	}
 	#endif
+}*/
+#if defined(ESP8266) || defined(ESP32)
+bool ICACHE_FLASH_ATTR retroTerm::_widgetExists(const uint8_t widgetIndex)				//Does a particular widget exist?
+#else
+bool retroTerm::_widgetExists(const uint8_t widgetIndex)								//Does a particular widget exist?
+#endif
+{
+	#ifdef retroTerm_DYNAMIC_OBJECT_ALLOCATION
+	if(_widgets[widgetIndex] == nullptr)
+	{
+		return(false);
+	}
+	else
+	{
+		return(true);
+	}
+	#else
+	if(_widgets[widgetIndex].x == 0)
+	{
+		return(false);
+	}
+	else if(_numberOfWidgets != 0 && widgetIndex < _widgetObjectLimit)
+	{
+		return(true);
+	}
+	else
+	{
+		return(false);
+	}
+	#endif
 }
+
 #if defined(ESP8266) || defined(ESP32)
 bool ICACHE_FLASH_ATTR retroTerm::deleteWidget(uint8_t widgetId)
 #else
@@ -5322,6 +5629,7 @@ bool retroTerm::deleteWidget(uint8_t widgetId)
 		_widgets[widgetId].currentState = 0x0000;						//Set to no usable status
 		#endif
 		_numberOfWidgets--;
+		_widgetChanged = true;
 		return(true);
 	}
 	else
@@ -5378,6 +5686,7 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 		}
 		_widgets[widgetId].contentOffset = 0;							//Clear content offset
 		_numberOfWidgets++;
+		_widgetChanged = true;
 		return(widgetId + 1);
 	}
 	else
@@ -5442,6 +5751,7 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 		}
 		_widgets[widgetId].contentOffset = 0;							//Clear content offset
 		_numberOfWidgets++;
+		_widgetChanged = true;
 		return(widgetId + 1);
 	}
 	else
@@ -5475,7 +5785,7 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 		_widgets[widgetId].y = y;
 		_widgets[widgetId].w = w;
 		_widgets[widgetId].h = h;
-		_widgets[widgetId].currentState = 0x411C;						//New widgets and the label are considered changed and active, it is also marked that the lable is in PROGMEM
+		_widgets[widgetId].currentState = 0x411C;						//New widgets and the label are considered changed and active, it is also marked that the label is in PROGMEM
 		_widgets[widgetId].value = 0;									//New widgets have a value of zero or false
 		if(label != nullptr)
 		{
@@ -5505,6 +5815,7 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 		}
 		_widgets[widgetId].contentOffset = 0;							//Set the content offset to the start of the content
 		_numberOfWidgets++;
+		_widgetChanged = true;
 		return(widgetId + 1);
 	}
 	else
@@ -5568,6 +5879,7 @@ uint8_t retroTerm::newWidget(_widgetTypes type, const uint8_t x, const uint8_t y
 		}
 		_widgets[widgetId].contentOffset = 0;							//Set the content offset to the start of the content
 		_numberOfWidgets++;
+		_widgetChanged = true;
 		return(widgetId + 1);
 	}
 	else
@@ -5586,6 +5898,7 @@ void retroTerm::showWidget(const uint8_t widgetId)	//Show a widget
 	if(_widgetExists(widgetId - 1) && (_widgets[widgetId - 1].currentState & 0x0001) == 0x0000)
 	{
 		_widgets[widgetId - 1].currentState = _widgets[widgetId - 1].currentState | 0x0001;	//Change visibility
+		_widgetChanged = true;
 	}
 }
 #if defined(ESP8266) || defined(ESP32)
@@ -5601,6 +5914,7 @@ void retroTerm::hideWidget(const uint8_t widgetId)	//Hide a widget
 		{
 			hideCursor();	//Stop the cursor hanging around
 		}
+		_widgetChanged = true;
 	}
 }
 
@@ -5617,6 +5931,7 @@ void retroTerm::refreshAllWidgets()
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0xFFFD;	//Change to not displayed
 		}
 	}
+	_widgetChanged = true;
 }
 #if defined(ESP8266) || defined(ESP32)
 void ICACHE_FLASH_ATTR retroTerm::moveWidget(uint8_t widgetId, const uint8_t x, const uint8_t y)		//Move a widget
@@ -5630,6 +5945,7 @@ void retroTerm::moveWidget(uint8_t widgetId, const uint8_t x, const uint8_t y)		
 		_widgets[widgetId].x = x;
 		_widgets[widgetId].y = y;
 		_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x000C;	//Mark widget and content as changed
+		_widgetChanged = true;
 	}
 }
 
@@ -5681,6 +5997,7 @@ void retroTerm::resizeWidget(uint8_t widgetId, const uint8_t w, const uint8_t h)
 			_widgets[widgetId].h = h;
 		}
 		_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x000C;	//Mark widget and content as changed
+		_widgetChanged = true;
 	}
 }
 
