@@ -4568,24 +4568,22 @@ bool ICACHE_FLASH_ATTR retroTerm::setWidgetContent(uint8_t widgetId, char *newCo
 bool retroTerm::setWidgetContent(uint8_t widgetId, char *newContent)
 #endif
 {
-	if(_widgets[widgetId - 1].content != nullptr)
+	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	if(_widgets[widgetId].content != nullptr)
 	{
-		if(newContent == nullptr)
+		if(_widgets[widgetId].currentState & 0x8000 == 0x8000)	//Previous content stored in flash, delete the pointer
 		{
-			deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
-			_widgetChanged = true;
-			return(true);
+			_widgets[widgetId].content = nullptr;
 		}
-		else if(strlen(newContent) + 1 > _widgets[widgetId-1].contentSize) //More space is needed for the new content
+		else if(strlen(newContent) + 1 > _widgets[widgetId].contentSize)
 		{
-			deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
+			_deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
 		}
 	}
 	else if(newContent == nullptr)
 	{
 		return(true);	//Content was already empty, do nothing
 	}
-	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgetExists(widgetId))
 	{
 		if(_widgets[widgetId].type == _widgetTypes::textLog)
@@ -4640,18 +4638,22 @@ bool ICACHE_FLASH_ATTR retroTerm::setWidgetContent(uint8_t widgetId, String newC
 bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 #endif
 {
-	if(_widgets[widgetId - 1].content != nullptr)
+	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	if(_widgets[widgetId].content != nullptr)
 	{
 		if(_widgets[widgetId].currentState & 0x8000 == 0x8000)	//Previous content stored in flash, delete the pointer
 		{
 			_widgets[widgetId].content = nullptr;
 		}
-		else if(newContent.length() + 1 > _widgets[widgetId-1].contentSize)
+		else if(newContent.length() + 1 > _widgets[widgetId].contentSize)
 		{
-			deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
+			_deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
 		}
 	}
-	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	else if(newContent == nullptr)
+	{
+		return(true);	//Content was already empty, do nothing
+	}
 	if(_widgetExists(widgetId))
 	{
 		if(_widgets[widgetId].type == _widgetTypes::textInput) //Text inputs need to check the length
@@ -4715,8 +4717,8 @@ bool ICACHE_FLASH_ATTR retroTerm::setWidgetContent(uint8_t widgetId, const __Fla
 bool retroTerm::setWidgetContent(uint8_t widgetId, const __FlashStringHelper* newContent)
 #endif
 {
-	deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	_deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
 	if(_widgetExists(widgetId))
 	{
 		if(_widgets[widgetId].type == _widgetTypes::textInput)
@@ -4771,8 +4773,8 @@ bool ICACHE_FLASH_ATTR retroTerm::setWidgetContent(uint8_t widgetId, const char*
 bool retroTerm::setWidgetContent(uint8_t widgetId, const char* newContent)
 #endif
 {
-	deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	_deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
 	if(_widgetExists(widgetId))
 	{
 		if(_widgets[widgetId].type == _widgetTypes::textInput)
@@ -5283,7 +5285,15 @@ bool ICACHE_FLASH_ATTR retroTerm::deleteWidgetContent(uint8_t widgetId)
 bool retroTerm::deleteWidgetContent(uint8_t widgetId)
 #endif
 {
-	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+	return(_deleteWidgetContent(widgetId - 1));	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
+}
+
+#if defined(ESP8266) || defined(ESP32)
+bool ICACHE_FLASH_ATTR retroTerm::_deleteWidgetContent(const uint8_t widgetId)
+#else
+bool retroTerm::_deleteWidgetContent(const uint8_t widgetId)
+#endif
+{
 	if(_widgetExists(widgetId))
 	{
 		if(_widgets[widgetId].type == _widgetTypes::textInput)
