@@ -93,7 +93,7 @@ You should try the first two example sketches to check it works with your termin
 
 [Alarm Clock](examples/Example03_alarmClock/README.md) - a simple interactive application
 
-There are then further examples that serve as a demonstration of how to use each individual type of widget.
+There are then further examples that serve as a demonstration of how to use each individual type of widget. Most of the examples use 'polling' to check if widgets have been clicked to keep the examples simple. For larger applications you should use a callback function as per the callback example, which will be more efficient.
 
 ### Dependencies
 
