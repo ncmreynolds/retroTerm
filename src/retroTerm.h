@@ -615,7 +615,7 @@ class retroTerm
 		uint8_t newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h)
 		#endif
 		{
-			return(newWidget(_widgetTypes::button, x, y, w, h, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::button, x, y, w, h, _defaultWidgetAttributes, _defaultStyle));
 		}
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
@@ -640,7 +640,7 @@ class retroTerm
 		uint8_t newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, labelType label)
 		#endif
 		{
-			return(newWidget(_widgetTypes::button, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::button, x, y, w, h, label, _defaultWidgetAttributes, _defaultStyle));
 		}
 		template <typename labelType>
 		#if defined(ESP8266) || defined(ESP32)
@@ -669,7 +669,7 @@ class retroTerm
 		uint8_t newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
 		#endif
 		{
-			return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, _defaultWidgetAttributes, _defaultStyle));
 		}
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
@@ -694,7 +694,7 @@ class retroTerm
 		uint8_t newCheckbox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
 		#endif
 		{
-			return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, _defaultWidgetAttributes, _defaultStyle));
 		}
 		template <typename labelType>
 		#if defined(ESP8266) || defined(ESP32)
@@ -723,7 +723,7 @@ class retroTerm
 		uint8_t newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 		#endif
 		{
-			return(newWidget(_widgetTypes::radioButton, x, y, w, h, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::radioButton, x, y, w, h, _defaultWidgetAttributes, _defaultStyle));
 		}		
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
@@ -748,7 +748,7 @@ class retroTerm
 		uint8_t newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
 		#endif
 		{
-			return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, _defaultWidgetAttributes, _defaultStyle));
 		}
 		template <typename labelType>
 		#if defined(ESP8266) || defined(ESP32)
@@ -777,7 +777,7 @@ class retroTerm
 		uint8_t newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h)
 		#endif
 		{
-			return(newWidget(_widgetTypes::textInput, x, y, w, h, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::textInput, x, y, w, h, _defaultWidgetAttributes, _defaultStyle));
 		}
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
@@ -802,7 +802,7 @@ class retroTerm
 		uint8_t newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
 		#endif
 		{
-			return(newWidget(_widgetTypes::textInput, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::textInput, x, y, w, h, label, _defaultWidgetAttributes, _defaultStyle));
 		}
 		template <typename labelType>
 		#if defined(ESP8266) || defined(ESP32)
@@ -837,7 +837,7 @@ class retroTerm
 		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 		#endif
 		{
-			return(newWidget(_widgetTypes::textDisplay, x, y, w, h, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::textDisplay, x, y, w, h, _defaultWidgetAttributes, _defaultStyle));
 		}
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
@@ -862,7 +862,7 @@ class retroTerm
 		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
 		#endif
 		{
-			return(newWidget(_widgetTypes::textDisplay, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::textDisplay, x, y, w, h, label, _defaultWidgetAttributes, _defaultStyle));
 		}
 		template <typename labelType>
 		#if defined(ESP8266) || defined(ESP32)
@@ -891,7 +891,7 @@ class retroTerm
 		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 		#endif
 		{
-			return(newWidget(_widgetTypes::textLog, x, y, w, h, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::textLog, x, y, w, h, _defaultWidgetAttributes, _defaultStyle));
 		}
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
@@ -916,7 +916,7 @@ class retroTerm
 		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
 		#endif
 		{
-			return(newWidget(_widgetTypes::textLog, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::textLog, x, y, w, h, label, _defaultWidgetAttributes, _defaultStyle));
 		}
 		template <typename labelType>
 		#if defined(ESP8266) || defined(ESP32)
@@ -945,7 +945,7 @@ class retroTerm
 		uint8_t newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 		#endif
 		{
-			return(newWidget(_widgetTypes::listBox, x, y, w, h, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::listBox, x, y, w, h, _defaultWidgetAttributes, _defaultStyle));
 		}
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
@@ -970,7 +970,7 @@ class retroTerm
 		uint8_t newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
 		#endif
 		{
-			return(newWidget(_widgetTypes::listBox, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::listBox, x, y, w, h, label, _defaultWidgetAttributes, _defaultStyle));
 		}
 		template <typename labelType>
 		#if defined(ESP8266) || defined(ESP32)
