@@ -1,5 +1,10 @@
 # Change Log
 
+## Version 0.1.4
+
+- Bugfixes
+  - Widgets created without attributes specified were created with 'default attributes', not 'default **widget** attributes'.
+
 ## Version 0.1.3
 
 - New methods
