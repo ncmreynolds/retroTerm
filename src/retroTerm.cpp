@@ -647,18 +647,14 @@ void retroTerm::_displayChanges()
 					}
 					else if(_widgets[widgetIndex].type == _widgetTypes::textLog)
 					{
-						if(_widgets[widgetIndex].content == nullptr)	//Clear the content area
+						saveCursorPosition();															//Save current cursor state
+						hideCursor();																	//Hide the cursor to reduce flickery movement in the terminal
+						if(_scrollbarNeeded(widgetIndex))
 						{
-							//clearBox(_contentXorigin(widgetIndex), _contentYorigin(widgetIndex), _columnsAvailable(widgetIndex), _linesAvailable(widgetIndex), _widgets[widgetIndex].contentAttributes );
+							_drawScrollbar(_widgets[widgetIndex].x, _widgets[widgetIndex].y, _widgets[widgetIndex].w, _widgets[widgetIndex].h, (_widgets[widgetIndex].label != nullptr) && (_widgets[widgetIndex].style & LABEL_IN_BOX), _widgets[widgetIndex].contentOffset, uint32_t(_contentSize(widgetIndex)), _widgets[widgetIndex].attributes, _widgets[widgetIndex].style);
 						}
-						else	//Display the content
-						{
-							if(_scrollbarNeeded(widgetIndex))
-							{
-								_drawScrollbar(_widgets[widgetIndex].x, _widgets[widgetIndex].y, _widgets[widgetIndex].w, _widgets[widgetIndex].h, (_widgets[widgetIndex].label != nullptr) && (_widgets[widgetIndex].style & LABEL_IN_BOX), _widgets[widgetIndex].contentOffset, uint32_t(_contentSize(widgetIndex)), _widgets[widgetIndex].attributes, _widgets[widgetIndex].style);
-							}
-							_displayContent(widgetIndex);			//Show the content
-						}
+						_displayContent(widgetIndex);			//Show the content
+						restoreCursorPosition();														//Restore the cursor
 					}
 					else if(_widgets[widgetIndex].type == _widgetTypes::textInput)
 					{
@@ -889,7 +885,7 @@ bool retroTerm::_scrollbarNeeded(const uint8_t widgetIndex)
 	{
 		return(true);
 	}
-	else if(_widgets[widgetIndex].type == _widgetTypes::textLog && _widgets[widgetIndex].contentLength > _linesAvailable(widgetIndex))
+	else if(_widgets[widgetIndex].type == _widgetTypes::textLog) //Assume a textlog always needs a scrollbar eventually because tracking size is impractical && _widgets[widgetIndex].contentLength > _linesAvailable(widgetIndex))
 	{
 		return(true);
 	}
