@@ -835,6 +835,7 @@ uint8_t retroTerm::lines(const uint8_t widgetId)
 	{
 		return(_linesAvailable(widgetId - 1));
 	}
+	return 0;
 }
 
 #if defined(ESP8266) || defined(ESP32)
@@ -870,6 +871,7 @@ uint8_t retroTerm::columns(const uint8_t widgetId)
 	{
 		return(_columnsAvailable(widgetId - 1));
 	}
+	return 0;
 }
 
 
@@ -2389,32 +2391,9 @@ void retroTerm::_scrollDown(const uint8_t widgetIndex)
 		_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState | 0x0010;		//Mark the widget state as changed
 		_widgetChanged = true;
 	}
-}
-
-#if defined(ESP8266) || defined(ESP32)
-char ICACHE_FLASH_ATTR retroTerm::_currentCharacter(const uint8_t widgetIndex, const uint32_t offset)
-#else
-char retroTerm::_currentCharacter(const uint8_t widgetIndex, const uint32_t offset)
-#endif
-{
-	if(offset < _contentSize(widgetIndex))
+	else if(scrollDownCallback)	//Pass it to the application to handle
 	{
-		#if defined(__AVR__) || defined(ESP8266) || defined(ESP32)
-		if(_widgets[widgetIndex].currentState & 0x8000)	//Use the PROGMEM variant
-		{
-			return(pgm_read_byte(_widgets[widgetIndex].content + offset));
-		}
-		else
-		{
-			return(_widgets[widgetIndex].content[offset]);
-		}
-		#else
-		return(_widgets[widgetIndex].content[offset]);
-		#endif
-	}
-	else
-	{
-		return(' ');	//Any invalid content is a space
+		scrollDownCallback(widgetIndex + 1);
 	}
 }
 
@@ -2453,6 +2432,57 @@ void retroTerm::_scrollUp(const uint8_t widgetIndex)
 		_widgets[widgetIndex].contentOffset--;
 		_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState | 0x0010;	//Mark the widget state as changed
 		_widgetChanged = true;
+	}
+	else if(scrollUpCallback)	//Pass it to the application to handle
+	{
+		scrollUpCallback(widgetIndex + 1);
+	}
+}
+
+#if defined(ESP8266) || defined(ESP32)
+retroTerm& ICACHE_FLASH_ATTR retroTerm::setScrollUpCallback(RETROTERM_SCROLLUP_CALLBACK)
+#else
+retroTerm& retroTerm::setScrollUpCallback(RETROTERM_SCROLLUP_CALLBACK)
+#endif
+{
+    this->scrollUpCallback = scrollUpCallback;
+    return *this;
+}
+
+#if defined(ESP8266) || defined(ESP32)
+retroTerm& ICACHE_FLASH_ATTR retroTerm::setScrollDownCallback(RETROTERM_SCROLLDOWN_CALLBACK)
+#else
+retroTerm& retroTerm::setScrollDownCallback(RETROTERM_SCROLLDOWN_CALLBACK)
+#endif
+{
+    this->scrollDownCallback = scrollDownCallback;
+    return *this;
+}
+
+#if defined(ESP8266) || defined(ESP32)
+char ICACHE_FLASH_ATTR retroTerm::_currentCharacter(const uint8_t widgetIndex, const uint32_t offset)
+#else
+char retroTerm::_currentCharacter(const uint8_t widgetIndex, const uint32_t offset)
+#endif
+{
+	if(offset < _contentSize(widgetIndex))
+	{
+		#if defined(__AVR__) || defined(ESP8266) || defined(ESP32)
+		if(_widgets[widgetIndex].currentState & 0x8000)	//Use the PROGMEM variant
+		{
+			return(pgm_read_byte(_widgets[widgetIndex].content + offset));
+		}
+		else
+		{
+			return(_widgets[widgetIndex].content[offset]);
+		}
+		#else
+		return(_widgets[widgetIndex].content[offset]);
+		#endif
+	}
+	else
+	{
+		return(' ');	//Any invalid content is a space
 	}
 }
 
@@ -4889,6 +4919,10 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, char* newContent)		//Add/c
 			_widgetChanged = true;
 			return(true);
 		}
+		else if(_widgets[widgetId].type == _widgetTypes::listBox)
+		{
+			
+		}
 		else
 		{
 			return(false);
@@ -4915,7 +4949,7 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, String newContent)		//Add/
 				newContentLength = columns;
 			}
 			memmove (_widgets[widgetId].content, _widgets[widgetId].content + columns, columns * (lines - 1) );	//Scroll the existing content up
-			memcpy(_widgets[widgetId].content + columns * (lines - 1), (newContent).c_str(), newContentLength);			//Copy in the new content at the end
+			memcpy(_widgets[widgetId].content + columns * (lines - 1), (newContent).c_str(), newContentLength);	//Copy in the new content at the end
 			if(newContentLength < columns)	//If necessary, pad the end of the line with spaces
 			{
 				memset(_widgets[widgetId].content + columns * (lines - 1) + newContentLength, ' ', columns - newContentLength);
@@ -4938,6 +4972,10 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, String newContent)		//Add/
 			}
 			_widgetChanged = true;
 			return(true);
+		}
+		else if(_widgets[widgetId].type == _widgetTypes::listBox)
+		{
+			
 		}
 		else
 		{
@@ -4985,6 +5023,10 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, const char* newContent)	//
 			}
 			_widgetChanged = true;
 			return(true);
+		}
+		else if(_widgets[widgetId].type == _widgetTypes::listBox)
+		{
+			
 		}
 		else
 		{

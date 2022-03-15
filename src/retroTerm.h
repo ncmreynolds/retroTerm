@@ -53,9 +53,13 @@ constexpr const uint8_t _widgetObjectLimit = 30;
 #include <functional>
 #define RETROTERM_CLICK_CALLBACK std::function<void(uint8_t)> clickCallback
 #define RETROTERM_TYPING_CALLBACK std::function<void(uint8_t)> typingCallback
+#define RETROTERM_SCROLLUP_CALLBACK std::function<void(uint8_t)> scrollUpCallback
+#define RETROTERM_SCROLLDOWN_CALLBACK std::function<void(uint8_t)> scrollDownCallback
 #else
 #define RETROTERM_CLICK_CALLBACK void (*clickCallback)(uint8_t)
 #define RETROTERM_TYPING_CALLBACK void (*typingCallback)(uint8_t)
+#define RETROTERM_SCROLLUP_CALLBACK void (*scrollUpCallback)(uint8_t)
+#define RETROTERM_SCROLLDOWN_CALLBACK void (*scrollDownCallback)(uint8_t)
 #endif
 
 //#define retroTerm_DYNAMIC_OBJECT_ALLOCATION			//Uncomment to allow dynamic object storage allocation, which saves memory but may cause heap fragmentation
@@ -489,6 +493,8 @@ class retroTerm
 		bool mouseButtonUp();					//Mouse button up event. Resets on read
 		bool mouseWheelDown();					//Mouse wheel down. Resets on read
 		bool mouseWheelUp();					//Mouse wheel up. Resets on read
+		retroTerm& setScrollUpCallback(RETROTERM_SCROLLUP_CALLBACK);	//Set a callback for scrolling a widget up
+		retroTerm& setScrollDownCallback(RETROTERM_SCROLLDOWN_CALLBACK);	//Set a callback for scrolling a widget down
 				
 		//Box drawing convenience methods to avoid the tedious looking at unicode tables, they are overloaded heavily so be careful when calling
 		
@@ -1244,6 +1250,8 @@ class retroTerm
 		//Click recording
 		uint8_t _clickedWidget = _widgetObjectLimit;//FIRST widget clicked, resets on read
 		RETROTERM_CLICK_CALLBACK;					//Click callback function 
+		RETROTERM_SCROLLUP_CALLBACK;				//Scroll wheel callback
+		RETROTERM_SCROLLDOWN_CALLBACK;				//Scroll wheel callback
 
 		//Terminal bell
 		bool _bellEnabled = true;					//Is the terminal 'bell' enabled
@@ -1259,6 +1267,7 @@ class retroTerm
 		void _resetEscapeBuffer();						//Clears the escape buffer to process more input
 		uint8_t _typingBufferMaxLength(uint8_t);		//The maximum length of the typing buffer when in use
 		RETROTERM_TYPING_CALLBACK;						//Typing callback function
+		
 		
 		bool _readInput();								//Reads the incoming data from the terminal and turns it into kepresses, mouse clicks etc. true if something was received and understood
 		bool _processInput();							//Look for clicks on widgets, true if one was processed
