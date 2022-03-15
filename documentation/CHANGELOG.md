@@ -8,6 +8,7 @@
 
 - Bugfixes
   - Widgets created without attributes specified were created with 'default attributes', not 'default **widget** attributes'.
+  - Improve redraw of `textLog` widgets, which previously failed to hide the cursor.
 
 ## Version 0.1.3
 
