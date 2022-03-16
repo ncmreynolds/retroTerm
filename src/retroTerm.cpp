@@ -116,13 +116,15 @@ bool retroTerm::_processInput()
 			}
 			else if((_mouseStatus & 0x20) && _mouseX >= _widgets[widgetId].x && _mouseX < _widgets[widgetId].x + _widgets[widgetId].w && _mouseY >= _widgets[widgetId].y && _mouseY < _widgets[widgetId].y + _widgets[widgetId].h)	//Mouse wheel up
 			{
-				_clickWidget(widgetId);				//Do per-widget-type click handling, only if clickable
+				//_clickWidget(widgetId);				//Do per-widget-type click handling, only if clickable
+				_handleScrollbarClicks(widgetId);	//Scroll the content
 				_mouseStatus = _mouseStatus & 0xDF;	//Gobble the mouse event
 				return(true);
 			}
 			else if((_mouseStatus & 0x10) && _mouseX >= _widgets[widgetId].x && _mouseX < _widgets[widgetId].x + _widgets[widgetId].w && _mouseY >= _widgets[widgetId].y && _mouseY < _widgets[widgetId].y + _widgets[widgetId].h)	//Mouse wheel down
 			{
-				_clickWidget(widgetId);				//Do per-widget-type click handling, only if clickable
+				//_clickWidget(widgetId);				//Do per-widget-type click handling, only if clickable
+				_handleScrollbarClicks(widgetId);	//Scroll the content
 				_mouseStatus = _mouseStatus & 0xEF;	//Gobble the mouse event
 				return(true);
 			}
@@ -1192,6 +1194,8 @@ void retroTerm::_displayContent(const uint8_t widgetIndex)
 		uint8_t linesAvailable = _linesAvailable(widgetIndex);							//Determine how much space is in the box
 		uint8_t columnsAvailable = _columnsAvailable(widgetIndex);
 		uint8_t currentOption = 0;
+		uint8_t currentRow = 0;
+		bool ignoreThisRow = false;
 		uint16_t contentIndex = 0;
 		uint8_t currentColumn = 0;
 		uint16_t contentLength = _contentSize(widgetIndex);
@@ -1204,7 +1208,15 @@ void retroTerm::_displayContent(const uint8_t widgetIndex)
 				{
 					if(pgm_read_byte(_widgets[widgetIndex].content + contentIndex) == '\n' || pgm_read_byte(_widgets[widgetIndex].content + contentIndex) == '\r')
 					{
-						currentOption++;
+						if(ignoreThisRow == false)
+						{
+							currentOption++;
+						}
+						ignoreThisRow = false;
+					}
+					else if(_widgets[widgetIndex].content[contentIndex] == '\t')
+					{
+						ignoreThisRow = true;
 					}
 					contentIndex++;
 				}
@@ -1212,25 +1224,62 @@ void retroTerm::_displayContent(const uint8_t widgetIndex)
 				{
 					if(_widgets[widgetIndex].content[contentIndex] == '\n' || _widgets[widgetIndex].content[contentIndex] == '\r')
 					{
-						currentOption++;
+						if(ignoreThisRow == false)
+						{
+							currentOption++;
+						}
+						ignoreThisRow = false;
+					}
+					else if(_widgets[widgetIndex].content[contentIndex] == '\t')
+					{
+						ignoreThisRow = true;
 					}
 					contentIndex++;
 				}
 				#else
 				if(_widgets[widgetIndex].content[contentIndex] == '\n' || _widgets[widgetIndex].content[contentIndex] == '\r')
 				{
-					currentOption++;
+					if(ignoreThisRow == false)
+					{
+						currentOption++;
+					}
+					ignoreThisRow = false;
+				}
+				else if(_widgets[widgetIndex].content[contentIndex] == '\t')
+				{
+					ignoreThisRow = true;
 				}
 				contentIndex++;
 				#endif
 			}
 		}
 		attributes(_widgets[widgetIndex].contentAttributes);
-		while(currentOption - _widgets[widgetIndex].contentOffset < linesAvailable && contentIndex < contentLength)
+		while(currentRow - _widgets[widgetIndex].contentOffset < linesAvailable && contentIndex < contentLength)
 		{
 			currentColumn = 0;
-			moveCursorTo(_contentXorigin(widgetIndex), _contentYorigin(widgetIndex) + currentOption - _widgets[widgetIndex].contentOffset);
-			if(currentOption == _widgets[widgetIndex].value)
+			moveCursorTo(_contentXorigin(widgetIndex), _contentYorigin(widgetIndex) + currentRow - _widgets[widgetIndex].contentOffset);
+			#if defined(__AVR__) || defined(ESP8266) || defined(ESP32)
+			if(_widgets[widgetIndex].currentState & 0x8000)										//Use PROGMEM variant
+			{
+				if(pgm_read_byte(_widgets[widgetIndex].content + contentIndex) == '\t')
+				{
+					ignoreThisRow = true;
+				}
+			}
+			else
+			{
+				if(_widgets[widgetIndex].content[contentIndex] == '\t')
+				{
+					ignoreThisRow = true;
+				}
+			}
+			#else
+			if(_widgets[widgetIndex].content[contentIndex] == '\t')
+			{
+				ignoreThisRow = true;
+			}
+			#endif
+			if(ignoreThisRow == false && currentOption == _widgets[widgetIndex].value)
 			{
 				attributes(_widgets[widgetIndex].contentAttributes | ATTRIBUTE_INVERSE);	//Highlight the selected option
 			}
@@ -1239,23 +1288,44 @@ void retroTerm::_displayContent(const uint8_t widgetIndex)
 			{
 				while(pgm_read_byte(_widgets[widgetIndex].content + contentIndex) != '\n' && pgm_read_byte(_widgets[widgetIndex].content + contentIndex) != '\r' && contentIndex < contentLength)	//Print the option
 				{
-					_terminalStream->write(pgm_read_byte(_widgets[widgetIndex].content + contentIndex++));
-					currentColumn++;
+					char nextChar = pgm_read_byte(_widgets[widgetIndex].content + contentIndex++);
+					if(nextChar != '\t') {	//Ignore tabs which are used as markers for 'unclickable' in listboxes
+						_terminalStream->write(nextChar);
+						currentColumn++;
+					}
+					else
+					{
+						ignoreThisRow = true;
+					}
 				}
 			}
 			else
 			{
 				while(_widgets[widgetIndex].content[contentIndex] != '\n' && _widgets[widgetIndex].content[contentIndex] != '\r' && contentIndex < contentLength)	//Print the option
 				{
-					_terminalStream->print(_widgets[widgetIndex].content[contentIndex++]);
-					currentColumn++;
+					char nextChar = _widgets[widgetIndex].content[contentIndex++];
+					if(nextChar != '\t') {	//Ignore tabs which are used as markers for 'unclickable' in listboxes
+						_terminalStream->write(nextChar);
+						currentColumn++;
+					}
+					else
+					{
+						ignoreThisRow = true;
+					}
 				}
 			}
 			#else
 			while(_widgets[widgetIndex].content[contentIndex] != '\n' && _widgets[widgetIndex].content[contentIndex] != '\r' && contentIndex < contentLength)	//Print the option
 			{
-				_terminalStream->print(_widgets[widgetIndex].content[contentIndex++]);
-				currentColumn++;
+				char nextChar = _widgets[widgetIndex].content[contentIndex++];
+				if(nextChar != '\t') {	//Ignore tabs which are used as markers for 'unclickable' in listboxes
+					_terminalStream->write(nextChar);
+					currentColumn++;
+				}
+				else
+				{
+					ignoreThisRow = true;
+				}
 			}
 			#endif
 			while(currentColumn++ < columnsAvailable)	//Blank the space in the widget as options are most likely variable length
@@ -1267,7 +1337,12 @@ void retroTerm::_displayContent(const uint8_t widgetIndex)
 				attributes(_widgets[widgetIndex].contentAttributes);	//Remove highlight
 			}
 			contentIndex++;			//Step over the \n
-			currentOption++;		//Increment the option counter
+			currentRow++;
+			if(ignoreThisRow == false)
+			{
+				currentOption++;		//Increment the option counter
+			}
+			ignoreThisRow = false;
 		}
 		if(_widgets[widgetIndex].contentLength < linesAvailable) //Clear the rest of the box, if necessary
 		{
@@ -2321,9 +2396,13 @@ void retroTerm::_clickWidget(const uint8_t widgetIndex)
 		if((_mouseStatus & 0x04) && _mouseX >= _contentXorigin(widgetIndex) && _mouseX < _contentXorigin(widgetIndex) + _columnsAvailable(widgetIndex) && _mouseY >= _contentYorigin(widgetIndex) && _mouseY < _contentYorigin(widgetIndex) + _linesAvailable(widgetIndex) && _mouseY - _contentYorigin(widgetIndex) < _widgets[widgetIndex].contentLength
 			&& _widgets[widgetIndex].value != _mouseY + _widgets[widgetIndex].contentOffset - _contentYorigin(widgetIndex))	//Option has changed
 		{
-			_widgets[widgetIndex].value = _mouseY + _widgets[widgetIndex].contentOffset - _contentYorigin(widgetIndex);		//Choose the option
-			_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState | 0x0210;								//Mark the widget content as changed and widget as clicked
-			_widgetChanged = true;
+			uint8_t optionClicked = 0;
+			if(_rowIsClickable(widgetIndex, _mouseY + _widgets[widgetIndex].contentOffset - _contentYorigin(widgetIndex), &optionClicked))
+			{
+				_widgets[widgetIndex].value = optionClicked;
+				_widgets[widgetIndex].currentState = _widgets[widgetIndex].currentState | 0x0210;								//Mark the widget content as changed and widget as clicked
+				_widgetChanged = true;
+			}
 		}
 		else
 		{
@@ -2334,6 +2413,137 @@ void retroTerm::_clickWidget(const uint8_t widgetIndex)
 	{
 		_clickedWidget = widgetIndex;
 	}
+}
+//Check a row is clickable and if it is update the option value passed by reference
+#if defined(ESP8266) || defined(ESP32)
+bool ICACHE_FLASH_ATTR retroTerm::_rowIsClickable(const uint8_t widgetIndex, const uint8_t row, uint8_t* option)
+#else
+bool retroTerm::_rowIsClickable(const uint8_t widgetIndex, const uint8_t row, uint8_t* option)
+#endif
+{
+	if(_widgets[widgetIndex].type == _widgetTypes::listBox)
+	{
+		uint8_t currentRow = 0;
+		uint8_t currentOption = 0;
+		uint16_t contentIndex = 0;
+		uint16_t contentLength = _contentSize(widgetIndex);
+		bool ignoreThisRow = false;
+		if(_widgets[widgetIndex].contentOffset > 0)											//Move forward through the content, not using strtok as it modifies the content
+		{
+			while(currentRow<_widgets[widgetIndex].contentOffset)
+			{
+				#if defined(__AVR__) || defined(ESP8266) || defined(ESP32)
+				if(_widgets[widgetIndex].currentState & 0x8000)										//Use PROGMEM variant
+				{
+					if(pgm_read_byte(_widgets[widgetIndex].content + contentIndex) == '\n' || pgm_read_byte(_widgets[widgetIndex].content + contentIndex) == '\r')
+					{
+						if(ignoreThisRow == false)
+						{
+							currentOption++;
+						}
+						currentRow++;
+						ignoreThisRow = false;
+					}
+					else if(pgm_read_byte(_widgets[widgetIndex].content + contentIndex) == '\t')
+					{
+						ignoreThisRow = true;
+					}
+					contentIndex++;
+				}
+				else
+				{
+					if(_widgets[widgetIndex].content[contentIndex] == '\n' || _widgets[widgetIndex].content[contentIndex] == '\r')
+					{
+						if(ignoreThisRow == false)
+						{
+							currentOption++;
+						}
+						currentRow++;
+						ignoreThisRow = false;
+					}
+					else if(_widgets[widgetIndex].content[contentIndex] == '\t')
+					{
+						ignoreThisRow = true;
+					}
+					contentIndex++;
+				}
+				#else
+				if(_widgets[widgetIndex].content[contentIndex] == '\n' || _widgets[widgetIndex].content[contentIndex] == '\r')
+				{
+					if(ignoreThisRow == false)
+					{
+						currentOption++;
+					}
+					currentRow++;
+					ignoreThisRow = false;
+				}
+				else if(_widgets[widgetIndex].content[contentIndex] == '\t')
+				{
+					ignoreThisRow = true;
+				}
+				contentIndex++;
+				#endif
+			}
+		}
+		while(contentIndex < contentLength && currentRow <= row)
+		{
+			#if defined(__AVR__) || defined(ESP8266) || defined(ESP32)
+			if(_widgets[widgetIndex].currentState & 0x8000)										//Use PROGMEM variant
+			{
+				while(pgm_read_byte(_widgets[widgetIndex].content + contentIndex) != '\n' && pgm_read_byte(_widgets[widgetIndex].content + contentIndex) != '\r' && contentIndex < contentLength)	//Print the option
+				{
+					char nextChar = pgm_read_byte(_widgets[widgetIndex].content + contentIndex++);
+					if(nextChar == '\t')
+					{
+						if(currentRow == row)
+						{
+							return false;
+						}
+						ignoreThisRow = true;
+					}
+				}
+			}
+			else
+			{
+				while(_widgets[widgetIndex].content[contentIndex] != '\n' && _widgets[widgetIndex].content[contentIndex] != '\r' && contentIndex < contentLength)	//Print the option
+				{
+					char nextChar = _widgets[widgetIndex].content[contentIndex++];
+					if(nextChar == '\t')
+					{
+						if(currentRow == row)
+						{
+							return false;
+						}
+						ignoreThisRow = true;
+					}
+				}
+			}
+			#else
+			while(_widgets[widgetIndex].content[contentIndex] != '\n' && _widgets[widgetIndex].content[contentIndex] != '\r' && contentIndex < contentLength)	//Print the option
+			{
+				char nextChar = _widgets[widgetIndex].content[contentIndex++];
+				if(nextChar == '\t')
+				{
+					if(currentRow == row)
+					{
+						return false;
+					}
+					ignoreThisRow = true;
+				}
+			}
+			#endif
+			if(ignoreThisRow == false)
+			{
+				currentOption++;
+			}
+			ignoreThisRow = false;
+			contentIndex++;			//Step over the \n
+			currentRow++;		//Increment the option counter
+		}
+		*option = currentOption - 1;
+		return true;
+	}
+	return true;
 }
 
 #if defined(ESP8266) || defined(ESP32)

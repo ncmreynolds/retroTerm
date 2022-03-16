@@ -1272,6 +1272,7 @@ class retroTerm
 		bool _readInput();								//Reads the incoming data from the terminal and turns it into kepresses, mouse clicks etc. true if something was received and understood
 		bool _processInput();							//Look for clicks on widgets, true if one was processed
 		void _clickWidget(uint8_t);						//Do per-widget actions on clicks
+		bool _rowIsClickable(uint8_t, uint8_t, uint8_t*);//Check for unclickable rows in listBox widgets
 		bool _findNextClick();							//Clear the current click and find the next one to process, if any
 		uint8_t _selectedWidget = _widgetObjectLimit;	//The last selected widget, start as none selected
 		void _displayChanges();							//Look for changes and update the terminal
