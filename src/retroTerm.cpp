@@ -1745,12 +1745,15 @@ uint8_t retroTerm::_displayLineOfContent(const uint8_t widgetIndex, const uint32
 			}
 			else
 			{
-				if(printContent)
+				if(column != 1)
 				{
-					_terminalStream->print(currentCharacter);
+					if(printContent)
+					{
+						_terminalStream->print(currentCharacter);
+					}
+					column++;
 				}
 				contentProcessed++;
-				column++;
 			}
 		}
 		#if defined(PROCESS_MARKDOWN)
@@ -5118,7 +5121,7 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, char* newContent)		//Add/c
 				if(_widgets[widgetId].contentOffset == _widgets[widgetId].contentLength - 1)
 				{
 					_widgets[widgetId].contentOffset = _widgets[widgetId].contentLength;		//Follow the end if already at the end
-					_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0020;	//Mark content as changed
+					_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0020;	//Mark scrollbar as changed
 				}
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
 			}
@@ -5127,7 +5130,40 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, char* newContent)		//Add/c
 		}
 		else if(_widgets[widgetId].type == _widgetTypes::listBox)
 		{
-			
+			if(_widgets[widgetId].content == nullptr)
+			{
+				return setWidgetContent(widgetId, newContent);
+			}
+			else
+			{
+				char* oldContent = _widgets[widgetId].content;	//Keep a track of the old pointer
+				uint32_t oldContentLength = strlen(_widgets[widgetId].content);
+				bool needsSeparating = true;
+				if(oldContent[oldContentLength - 1] == '\n' ||
+					oldContent[oldContentLength - 1] == '\r' ||
+					newContent[0]  == '\n' ||
+					newContent[0]  == '\r')
+				{
+					needsSeparating = false;
+				}
+				uint32_t newContentLength = oldContentLength + strlen(newContent) + 1;
+				if(needsSeparating == true)
+				{
+					newContentLength++;
+				}
+				_widgets[widgetId].content = new char[newContentLength];
+				strcpy(_widgets[widgetId].content, oldContent);
+				if(needsSeparating == true)
+				{
+					char separator[] = "\n";
+					strcat(_widgets[widgetId].content,separator);
+				}
+				strcat(_widgets[widgetId].content, newContent);
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+				_calculateContentLength(widgetId);												//Calculate the number of lines of content, for scrolling
+				//delete [] oldContent;
+				return true;
+			}
 		}
 		else
 		{
@@ -5181,7 +5217,40 @@ bool retroTerm::appendWidgetContent(uint8_t widgetId, String newContent)		//Add/
 		}
 		else if(_widgets[widgetId].type == _widgetTypes::listBox)
 		{
-			
+			if(_widgets[widgetId].content == nullptr)
+			{
+				return setWidgetContent(widgetId, newContent);
+			}
+			else
+			{
+				char* oldContent = _widgets[widgetId].content;	//Keep a track of the old pointer
+				uint32_t oldContentLength = strlen(_widgets[widgetId].content);
+				bool needsSeparating = true;
+				if(oldContent[oldContentLength - 1] == '\n' ||
+					oldContent[oldContentLength - 1] == '\r' ||
+					newContent.charAt(0)  == '\n' ||
+					newContent.charAt(0)  == '\r')
+				{
+					needsSeparating = false;
+				}
+				uint32_t newContentLength = oldContentLength + newContent.length() + 1;
+				if(needsSeparating == true)
+				{
+					newContentLength++;
+				}
+				_widgets[widgetId].content = new char[newContentLength];
+				strcpy(_widgets[widgetId].content, oldContent);
+				if(needsSeparating == true)
+				{
+					char separator[] = "\n";
+					strcat(_widgets[widgetId].content,separator);
+				}
+				strcat(_widgets[widgetId].content, (newContent).c_str());
+				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;	//Mark content as changed
+				_calculateContentLength(widgetId);												//Calculate the number of lines of content, for scrolling
+				//delete [] oldContent;
+				return true;
+			}
 		}
 		else
 		{
