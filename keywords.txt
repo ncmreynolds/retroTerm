@@ -7,6 +7,8 @@ houseKeeping	KEYWORD2
 probeSize	KEYWORD2
 columns	KEYWORD2
 lines	KEYWORD2
+setColumns	KEYWORD2
+setLines	KEYWORD2
 probeType	KEYWORD2
 type	KEYWORD2
 
