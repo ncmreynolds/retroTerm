@@ -26,6 +26,7 @@
  */
  
 #define PROCESS_MARKDOWN
+//#define SHOW_UNKNOWN_ESCAPE_SEQUENCES	//Uncomment to get perhaps messy output from unknown/corrupted sequences
 #define tabStopWidth 5
 
 #ifndef retroTerm_h
@@ -359,6 +360,8 @@ class retroTerm
 		bool probeSize();					//Tries to set the width/length of the terminal by probing, this can take up to 1s
 		uint8_t columns();					//Returns the current number of columns, use after calling probeSize()
 		uint8_t lines();					//Returns the current number of lines, use after calling probeSize()
+		uint8_t setColumns(uint8_t columns);//Sets the current number of columns, use instead of calling probeSize()
+		uint8_t setLines(uint8_t lines);	//Sets the current number of lines, use instead of calling probeSize()
 		bool probeType();					//Tries to probe the terminal type, mostly for information, this can take up to 3s. May not be useful!
 		char* type();						//Returns the terminal type
 
@@ -485,7 +488,7 @@ class retroTerm
 				
 		//Mouse support, requires periodic calling of houseKeeping() to work
 		
-		void enableMouse();						//Enables mouse capture, if supported by the terminal application
+		void enableMouse(bool force = false);	//Enables mouse capture, if supported by the terminal application
 		void disableMouse();					//Disables mouse input
 		uint8_t mouseColumn();					//Returns last reported mouse X
 		uint8_t mouseRow();						//Returns last reported mouse Y
@@ -1247,6 +1250,7 @@ class retroTerm
 													
 		uint8_t _mouseX = 0;						//Last reported mouse X
 		uint8_t _mouseY = 0;						//Last reported mouse Y
+		uint32_t _mouseHoldoffTime = 0;				//Mouse scroll events come too fast to be processed and get garbled. Hold off any input for a while after the scroll wheel is used
 		//Click recording
 		uint8_t _clickedWidget = _widgetObjectLimit;//FIRST widget clicked, resets on read
 		RETROTERM_CLICK_CALLBACK;					//Click callback function 
