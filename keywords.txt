@@ -7,6 +7,8 @@ houseKeeping	KEYWORD2
 probeSize	KEYWORD2
 columns	KEYWORD2
 lines	KEYWORD2
+setColumns	KEYWORD2
+setLines	KEYWORD2
 probeType	KEYWORD2
 type	KEYWORD2
 
@@ -56,6 +58,8 @@ mouseButtonDown	KEYWORD2
 mouseButtonUp	KEYWORD2
 mouseWheelDown	KEYWORD2
 mouseWheelUp	KEYWORD2
+setScrollUpCallback	KEYWORD2
+setScrollDownCallback		KEYWORD2
 
 //Boxes
 drawBox	KEYWORD2

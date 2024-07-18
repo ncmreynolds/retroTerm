@@ -26,6 +26,7 @@
  */
  
 #define PROCESS_MARKDOWN
+//#define SHOW_UNKNOWN_ESCAPE_SEQUENCES	//Uncomment to get perhaps messy output from unknown/corrupted sequences
 #define tabStopWidth 5
 
 #ifndef retroTerm_h
@@ -53,9 +54,13 @@ constexpr const uint8_t _widgetObjectLimit = 30;
 #include <functional>
 #define RETROTERM_CLICK_CALLBACK std::function<void(uint8_t)> clickCallback
 #define RETROTERM_TYPING_CALLBACK std::function<void(uint8_t)> typingCallback
+#define RETROTERM_SCROLLUP_CALLBACK std::function<void(uint8_t)> scrollUpCallback
+#define RETROTERM_SCROLLDOWN_CALLBACK std::function<void(uint8_t)> scrollDownCallback
 #else
 #define RETROTERM_CLICK_CALLBACK void (*clickCallback)(uint8_t)
 #define RETROTERM_TYPING_CALLBACK void (*typingCallback)(uint8_t)
+#define RETROTERM_SCROLLUP_CALLBACK void (*scrollUpCallback)(uint8_t)
+#define RETROTERM_SCROLLDOWN_CALLBACK void (*scrollDownCallback)(uint8_t)
 #endif
 
 //#define retroTerm_DYNAMIC_OBJECT_ALLOCATION			//Uncomment to allow dynamic object storage allocation, which saves memory but may cause heap fragmentation
@@ -355,6 +360,8 @@ class retroTerm
 		bool probeSize();					//Tries to set the width/length of the terminal by probing, this can take up to 1s
 		uint8_t columns();					//Returns the current number of columns, use after calling probeSize()
 		uint8_t lines();					//Returns the current number of lines, use after calling probeSize()
+		uint8_t setColumns(uint8_t columns);//Sets the current number of columns, use instead of calling probeSize()
+		uint8_t setLines(uint8_t lines);	//Sets the current number of lines, use instead of calling probeSize()
 		bool probeType();					//Tries to probe the terminal type, mostly for information, this can take up to 3s. May not be useful!
 		char* type();						//Returns the terminal type
 
@@ -481,7 +488,7 @@ class retroTerm
 				
 		//Mouse support, requires periodic calling of houseKeeping() to work
 		
-		void enableMouse();						//Enables mouse capture, if supported by the terminal application
+		void enableMouse(bool force = false);	//Enables mouse capture, if supported by the terminal application
 		void disableMouse();					//Disables mouse input
 		uint8_t mouseColumn();					//Returns last reported mouse X
 		uint8_t mouseRow();						//Returns last reported mouse Y
@@ -489,6 +496,8 @@ class retroTerm
 		bool mouseButtonUp();					//Mouse button up event. Resets on read
 		bool mouseWheelDown();					//Mouse wheel down. Resets on read
 		bool mouseWheelUp();					//Mouse wheel up. Resets on read
+		retroTerm& setScrollUpCallback(RETROTERM_SCROLLUP_CALLBACK);	//Set a callback for scrolling a widget up
+		retroTerm& setScrollDownCallback(RETROTERM_SCROLLDOWN_CALLBACK);	//Set a callback for scrolling a widget down
 				
 		//Box drawing convenience methods to avoid the tedious looking at unicode tables, they are overloaded heavily so be careful when calling
 		
@@ -615,7 +624,7 @@ class retroTerm
 		uint8_t newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h)
 		#endif
 		{
-			return(newWidget(_widgetTypes::button, x, y, w, h, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::button, x, y, w, h, _defaultWidgetAttributes, _defaultStyle));
 		}
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
@@ -640,7 +649,7 @@ class retroTerm
 		uint8_t newButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, labelType label)
 		#endif
 		{
-			return(newWidget(_widgetTypes::button, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::button, x, y, w, h, label, _defaultWidgetAttributes, _defaultStyle));
 		}
 		template <typename labelType>
 		#if defined(ESP8266) || defined(ESP32)
@@ -669,7 +678,7 @@ class retroTerm
 		uint8_t newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label)
 		#endif
 		{
-			return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, _defaultWidgetAttributes, _defaultStyle));
 		}
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newCheckbox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, char *label, const uint16_t attributes)
@@ -694,7 +703,7 @@ class retroTerm
 		uint8_t newCheckbox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
 		#endif
 		{
-			return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::checkbox, x, y, w, h, label, _defaultWidgetAttributes, _defaultStyle));
 		}
 		template <typename labelType>
 		#if defined(ESP8266) || defined(ESP32)
@@ -723,7 +732,7 @@ class retroTerm
 		uint8_t newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 		#endif
 		{
-			return(newWidget(_widgetTypes::radioButton, x, y, w, h, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::radioButton, x, y, w, h, _defaultWidgetAttributes, _defaultStyle));
 		}		
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newRadioButton(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
@@ -748,7 +757,7 @@ class retroTerm
 		uint8_t newRadioButton(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
 		#endif
 		{
-			return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::radioButton, x, y, w, h, label, _defaultWidgetAttributes, _defaultStyle));
 		}
 		template <typename labelType>
 		#if defined(ESP8266) || defined(ESP32)
@@ -777,7 +786,7 @@ class retroTerm
 		uint8_t newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h)
 		#endif
 		{
-			return(newWidget(_widgetTypes::textInput, x, y, w, h, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::textInput, x, y, w, h, _defaultWidgetAttributes, _defaultStyle));
 		}
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newTextInput(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
@@ -802,7 +811,7 @@ class retroTerm
 		uint8_t newTextInput(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
 		#endif
 		{
-			return(newWidget(_widgetTypes::textInput, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::textInput, x, y, w, h, label, _defaultWidgetAttributes, _defaultStyle));
 		}
 		template <typename labelType>
 		#if defined(ESP8266) || defined(ESP32)
@@ -837,7 +846,7 @@ class retroTerm
 		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 		#endif
 		{
-			return(newWidget(_widgetTypes::textDisplay, x, y, w, h, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::textDisplay, x, y, w, h, _defaultWidgetAttributes, _defaultStyle));
 		}
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newTextDisplay(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
@@ -862,7 +871,7 @@ class retroTerm
 		uint8_t newTextDisplay(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
 		#endif
 		{
-			return(newWidget(_widgetTypes::textDisplay, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::textDisplay, x, y, w, h, label, _defaultWidgetAttributes, _defaultStyle));
 		}
 		template <typename labelType>
 		#if defined(ESP8266) || defined(ESP32)
@@ -891,7 +900,7 @@ class retroTerm
 		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 		#endif
 		{
-			return(newWidget(_widgetTypes::textLog, x, y, w, h, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::textLog, x, y, w, h, _defaultWidgetAttributes, _defaultStyle));
 		}
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newTextLog(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
@@ -916,7 +925,7 @@ class retroTerm
 		uint8_t newTextLog(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
 		#endif
 		{
-			return(newWidget(_widgetTypes::textLog, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::textLog, x, y, w, h, label, _defaultWidgetAttributes, _defaultStyle));
 		}
 		template <typename labelType>
 		#if defined(ESP8266) || defined(ESP32)
@@ -945,7 +954,7 @@ class retroTerm
 		uint8_t newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 		#endif
 		{
-			return(newWidget(_widgetTypes::listBox, x, y, w, h, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::listBox, x, y, w, h, _defaultWidgetAttributes, _defaultStyle));
 		}
 		#if defined(ESP8266) || defined(ESP32)
 		uint8_t ICACHE_FLASH_ATTR newListBox(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const uint16_t attributes)
@@ -970,7 +979,7 @@ class retroTerm
 		uint8_t newListBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h, labelType label)
 		#endif
 		{
-			return(newWidget(_widgetTypes::listBox, x, y, w, h, label, _defaultAttributes, _defaultStyle));
+			return(newWidget(_widgetTypes::listBox, x, y, w, h, label, _defaultWidgetAttributes, _defaultStyle));
 		}
 		template <typename labelType>
 		#if defined(ESP8266) || defined(ESP32)
@@ -1241,9 +1250,12 @@ class retroTerm
 													
 		uint8_t _mouseX = 0;						//Last reported mouse X
 		uint8_t _mouseY = 0;						//Last reported mouse Y
+		uint32_t _mouseHoldoffTime = 0;				//Mouse scroll events come too fast to be processed and get garbled. Hold off any input for a while after the scroll wheel is used
 		//Click recording
 		uint8_t _clickedWidget = _widgetObjectLimit;//FIRST widget clicked, resets on read
 		RETROTERM_CLICK_CALLBACK;					//Click callback function 
+		RETROTERM_SCROLLUP_CALLBACK;				//Scroll wheel callback
+		RETROTERM_SCROLLDOWN_CALLBACK;				//Scroll wheel callback
 
 		//Terminal bell
 		bool _bellEnabled = true;					//Is the terminal 'bell' enabled
@@ -1260,9 +1272,11 @@ class retroTerm
 		uint8_t _typingBufferMaxLength(uint8_t);		//The maximum length of the typing buffer when in use
 		RETROTERM_TYPING_CALLBACK;						//Typing callback function
 		
+		
 		bool _readInput();								//Reads the incoming data from the terminal and turns it into kepresses, mouse clicks etc. true if something was received and understood
 		bool _processInput();							//Look for clicks on widgets, true if one was processed
 		void _clickWidget(uint8_t);						//Do per-widget actions on clicks
+		bool _rowIsClickable(uint8_t, uint8_t, uint8_t*);//Check for unclickable rows in listBox widgets
 		bool _findNextClick();							//Clear the current click and find the next one to process, if any
 		uint8_t _selectedWidget = _widgetObjectLimit;	//The last selected widget, start as none selected
 		void _displayChanges();							//Look for changes and update the terminal

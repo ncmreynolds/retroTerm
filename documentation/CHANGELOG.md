@@ -1,5 +1,18 @@
 # Change Log
 
+## Version 0.1.4
+
+- New methods
+  - `void setScrollUpCallback(void (*scrollUpCallback)(uint8_t))`, which allows you to set a callback function for scrolling up the content of widgets. The argument supplied to the callback function is the widget ID of the scrolled widget. This is for when the application needs to feed new content to the bottom of the widget as it's not in memory. Normally this would be used for a `textLog` and the content added with `appendWidgetContent`.
+  - `void setScrollDownCallback(void (*scrollDownCallback)(uint8_t))`, similar to the callback for scrolling widget content up. Normally this would be used for a `textLog` and the content added with `prependWidgetContent`.
+  - Experimental: Putting a tab `\t` at the start of an option in a `listBox` makes that row unclickable. These unclickable rows can be blank, just `\t\n`. Useful for formatting the `listBox` with a heading/dividers of sorts. Ugly code needs fixing.
+  - Experimental: You can add options to a `listBox` with `appendWidgetContent`. This is inefficient but it _does_ work.
+  
+- Bugfixes
+  - Widgets created without attributes specified were created with 'default attributes', not 'default **widget** attributes'.
+  - Improve redraw of `textLog` widgets, which previously failed to hide the cursor.
+  - Improved rendering of text in `textDisplay` so that it should no longer end up with redundant spaces at the beginning of lines.
+
 ## Version 0.1.3
 
 - New methods
