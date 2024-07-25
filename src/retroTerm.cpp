@@ -650,7 +650,7 @@ void retroTerm::_displayChanges()
 					else if(_widgets[widgetIndex].type == _widgetTypes::textLog)
 					{
 						saveCursorPosition();															//Save current cursor state
-						hideCursor();																	//Hide the cursor to reduce flickery movement in the terminal
+						//hideCursor();																	//Hide the cursor to reduce flickery movement in the terminal
 						if(_scrollbarNeeded(widgetIndex))
 						{
 							_drawScrollbar(_widgets[widgetIndex].x, _widgets[widgetIndex].y, _widgets[widgetIndex].w, _widgets[widgetIndex].h, (_widgets[widgetIndex].label != nullptr) && (_widgets[widgetIndex].style & LABEL_IN_BOX), _widgets[widgetIndex].contentOffset, uint32_t(_contentSize(widgetIndex)), _widgets[widgetIndex].attributes, _widgets[widgetIndex].style);
@@ -2743,22 +2743,20 @@ uint8_t retroTerm::lines()
 	return(_lines);
 }
 #if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::setColumns(uint8_t columns)
+void ICACHE_FLASH_ATTR retroTerm::setColumns(uint8_t columns)
 #else
-uint8_t retroTerm::setColumns()
+void retroTerm::setColumns(uint8_t columns)
 #endif
 {
 	_columns = columns;
-	return(_columns);
 }
 #if defined(ESP8266) || defined(ESP32)
-uint8_t ICACHE_FLASH_ATTR retroTerm::setLines(uint8_t lines)
+void ICACHE_FLASH_ATTR retroTerm::setLines(uint8_t lines)
 #else
-uint8_t retroTerm::setLines()
+void retroTerm::setLines(uint8_t lines)
 #endif
 {
 	_lines = lines;
-	return(_lines);
 }
 
 #if defined(ESP8266) || defined(ESP32)
@@ -2906,7 +2904,7 @@ void retroTerm::restoreCursorPosition()
 	_currentAttributes = _savedAttributes;
 	_cursorX = _savedCursorX;
 	_cursorY = _savedCursorY;
-	//_cursorVisible = _savedCursorState;
+	_cursorVisible = _savedCursorState;
 	if(_savedCursorState)	//The terminal does not save the visibiity of the cursor correctly
 	{
 		showCursor();
