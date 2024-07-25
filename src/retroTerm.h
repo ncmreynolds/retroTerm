@@ -360,8 +360,8 @@ class retroTerm
 		bool probeSize();					//Tries to set the width/length of the terminal by probing, this can take up to 1s
 		uint8_t columns();					//Returns the current number of columns, use after calling probeSize()
 		uint8_t lines();					//Returns the current number of lines, use after calling probeSize()
-		uint8_t setColumns(uint8_t columns);//Sets the current number of columns, use instead of calling probeSize()
-		uint8_t setLines(uint8_t lines);	//Sets the current number of lines, use instead of calling probeSize()
+		void setColumns(uint8_t columns);	//Sets the current number of columns, use instead of calling probeSize()
+		void setLines(uint8_t lines);		//Sets the current number of lines, use instead of calling probeSize()
 		bool probeType();					//Tries to probe the terminal type, mostly for information, this can take up to 3s. May not be useful!
 		char* type();						//Returns the terminal type
 

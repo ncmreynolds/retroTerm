@@ -1,5 +1,10 @@
 # Change Log
 
+## Version 0.1.5
+
+- Bugfixes
+  - Fix compilation error on AVR, had only been tested on ESP32.
+
 ## Version 0.1.4
 
 - New methods
