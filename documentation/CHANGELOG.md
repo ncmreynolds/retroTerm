@@ -1,5 +1,14 @@
 # Change Log
 
+## Version 0.1.6
+
+- New example
+  - Added a Widgets example using Classic Bluetooth Serial as the connecting Stream, as this may be useful
+
+- Bugfixes
+  - Fixed non-scrolling of listboxes when they overflow the widget. I had thought this was working but meh, perhaps it never did.
+  - Made option selection in listboxes using arrow keys scroll the content up/down when going off the top/bottom of the widget. Previously it selected the  correct option but did not scroll the options to keep it visible inside the widget.
+
 ## Version 0.1.5
 
 - Bugfixes
