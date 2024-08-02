@@ -91,7 +91,7 @@ void loop() {
     textInputExample();           //Demo methods for creating and retrieving input from text input fields, see the tab 'textInputDemo' for code
   }
   delay(1000);
-  Serial.println(F("Waiting for Bluetooth connection"));
+  Serial.println(F("Waiting for Bluetooth client"));
 }
 
 /*
