@@ -188,11 +188,9 @@ This project uses [Semantic Versioning](http://semver.org/) to be compatible wit
 
 ### Version history
 
-#### 0.1.2
+#### 0.1.6
 
-First public release.
-
-For a full list of available versions, see the [repository tag list](https://github.com/ncmreynolds/retroTerm/tags). There is also a [change log](documentation/CHANGELOG.md) included in the documentation.
+This is the current moderately usable and stable release. For a full list of available versions, see the [repository tag list](https://github.com/ncmreynolds/retroTerm/tags). There is also a [change log](documentation/CHANGELOG.md) included in the documentation.
 
 ## How to Get Help
 
