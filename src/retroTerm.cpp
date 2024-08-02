@@ -1204,7 +1204,7 @@ void retroTerm::_displayContent(const uint8_t widgetIndex)
 			while(currentOption<_widgets[widgetIndex].contentOffset)
 			{
 				#if defined(__AVR__) || defined(ESP8266) || defined(ESP32)
-				if((_widgets[widgetIndex].currentState & 0x8000) == 0x8000)										//Use PROGMEM variant
+				if((_widgets[widgetIndex].currentState & 0x8000) == 0x8000)					//Use PROGMEM variant
 				{
 					if(pgm_read_byte(_widgets[widgetIndex].content + contentIndex) == '\n' || pgm_read_byte(_widgets[widgetIndex].content + contentIndex) == '\r')
 					{
@@ -1254,10 +1254,10 @@ void retroTerm::_displayContent(const uint8_t widgetIndex)
 			}
 		}
 		attributes(_widgets[widgetIndex].contentAttributes);
-		while(currentRow - _widgets[widgetIndex].contentOffset < linesAvailable && contentIndex < contentLength)
+		while(currentRow < linesAvailable && contentIndex < contentLength)
 		{
 			currentColumn = 0;
-			moveCursorTo(_contentXorigin(widgetIndex), _contentYorigin(widgetIndex) + currentRow - _widgets[widgetIndex].contentOffset);
+			moveCursorTo(_contentXorigin(widgetIndex), _contentYorigin(widgetIndex) + currentRow);
 			#if defined(__AVR__) || defined(ESP8266) || defined(ESP32)
 			if((_widgets[widgetIndex].currentState & 0x8000) == 0x8000)										//Use PROGMEM variant
 			{
@@ -4906,26 +4906,20 @@ bool ICACHE_FLASH_ATTR retroTerm::setWidgetContent(uint8_t widgetId, String newC
 bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 #endif
 {
-	//Serial.print("String update:");
-	//Serial.print(newContent);
-	//Serial.print(' ');
 	widgetId--;	//Using ID 0 as 'unallocated/fail' when feeding back to the application so adjust it
 	if(_widgets[widgetId].content != nullptr)
 	{
 		if((_widgets[widgetId].currentState & 0x8000) == 0x8000)	//Previous content stored in flash, delete the pointer
 		{
 			_widgets[widgetId].content = nullptr;
-			//Serial.print(" cleared pointer to flash ");
 		}
 		else if(newContent.length() + 1 > _widgets[widgetId].contentSize)
 		{
 			_deleteWidgetContent(widgetId);	//Delete content if it exists already, freeing heap as necessary
-			//Serial.print(" deleted old content ");
 		}
 	}
 	else if(newContent.length() == 0)
 	{
-		//Serial.println("no content");
 		return true;	//Content was already empty, do nothing
 	}
 	if(_widgetExists(widgetId))
@@ -4934,7 +4928,6 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 		{
 			if(newContent.length() > _typingBufferMaxLength(widgetId))
 			{
-				//Serial.println("too big");
 				return false;
 			}
 			else
@@ -4943,8 +4936,6 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 				{
 					_widgets[widgetId].content = new char[_typingBufferMaxLength(widgetId) + 1];	//Allocate the memory in heap
 					_widgets[widgetId].contentSize = _typingBufferMaxLength(widgetId) + 1;			//Record the size of the content, which is used to reduce heap fragmentation
-					//Serial.print("assigned heap:");
-					//Serial.print(_widgets[widgetId].contentSize);
 				}
 				if(newContent.length() == 0)
 				{
@@ -4955,19 +4946,16 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 				{
 					memcpy(_widgets[widgetId].content, (newContent).c_str(), newContent.length() + 1);	//Copy in the content
 					_widgets[widgetId].contentOffset = strlen(_widgets[widgetId].content);				//Place the cursor at the end of the content
-					//Serial.print("copied content");
 				}
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark as content changed
 				_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0x7fff;			//Mark as stored in heap
 				_calculateContentLength(widgetId);													//Calculate the number of lines of content, for scrolling
 				_widgetChanged = true;
-				//Serial.println();
 				return true;
 			}
 		}
 		else if(_widgets[widgetId].type == _widgetTypes::textLog)
 		{
-			//Serial.println();
 			return false;
 		}
 		else
@@ -4976,23 +4964,17 @@ bool retroTerm::setWidgetContent(uint8_t widgetId, String newContent)
 			{
 				_widgets[widgetId].content = new char[newContent.length() + 1];					//Allocate the memory in heap
 				_widgets[widgetId].contentSize = newContent.length() + 1;						//Record the size of the content, which is used to reduce heap fragmentation
-				//Serial.print("assigned heap:");
-				//Serial.print(_widgets[widgetId].contentSize);
-				//Serial.print(' ');
 			}
 			memcpy(_widgets[widgetId].content, (newContent).c_str(), newContent.length() + 1);	//Copy in the content
-			//Serial.print("copied in content");
 			_calculateContentLength(widgetId);													//Calculate the number of lines of content, for scrolling
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState | 0x0010;			//Mark content as changed
 			_widgets[widgetId].currentState = _widgets[widgetId].currentState & 0x7fff;			//Mark as stored in heap
 			_widgetChanged = true;
-			//Serial.println();
 			return true;
 		}
 	}
 	else
 	{
-		//Serial.println();
 		return false;
 	}
 }

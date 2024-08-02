@@ -5,3 +5,4 @@ examples/Example04_singleButton/esp32s2.svd
 examples/Example10_oneTextLog/debug.cfg
 examples/Example10_oneTextLog/debug_custom.json
 examples/Example10_oneTextLog/esp32s2.svd
+.development
