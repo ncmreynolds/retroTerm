@@ -1,9 +1,9 @@
 void checkboxExample()
 {
   newPage(F("Checkbox test"));
-  red = terminal.newCheckbox(terminal.columns()/3, 16, 14, 1, F("Red"),   COLOUR_RED, SHORTCUT_INLINE);    //Create three new widgets and record the IDs
-  green = terminal.newCheckbox(terminal.columns()/3, 17, 14, 1, F("Green"), COLOUR_GREEN, SHORTCUT_INLINE);  //The method returns 0 if it fails
-  blue = terminal.newCheckbox(terminal.columns()/3, 18, 14, 1, F("Blue"),  COLOUR_BLUE, SHORTCUT_INLINE);   //Colour is the colour of the frame, lettering can be different
+  red = terminal.newCheckbox(terminal.columns()/3, terminal.lines()/2, 14, 1, F("Red"),   COLOUR_RED, SHORTCUT_INLINE);    //Create three new widgets and record the IDs
+  green = terminal.newCheckbox(terminal.columns()/3, terminal.lines()/2 + 1, 14, 1, F("Green"), COLOUR_GREEN, SHORTCUT_INLINE);  //The method returns 0 if it fails
+  blue = terminal.newCheckbox(terminal.columns()/3, terminal.lines()/2 + 2, 14, 1, F("Blue"),  COLOUR_BLUE, SHORTCUT_INLINE);   //Colour is the colour of the frame, lettering can be different
   if(red)
   {
     terminal.labelAttributes(red, COLOUR_RED | ATTRIBUTE_BRIGHT);     //Make the label text more emphasised, for better contrast

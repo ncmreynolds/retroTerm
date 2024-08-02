@@ -1,9 +1,9 @@
 void buttonExample()
 {
   newPage(F("Button test"));
-  red = terminal.newButton(1                         , 16, terminal.columns()/3, 3, F("Red button"),   COLOUR_WHITE | ATTRIBUTE_BRIGHT | BACKGROUND_COLOUR_RED, SHORTCUT_INLINE | LABEL_CENTRED);    //Create three new buttons and record the IDs
-  green = terminal.newButton(terminal.columns()/3 +1   , 16, terminal.columns()/3, 3, F("Green button"), COLOUR_GREEN, OUTER_BOX | BOX_SINGLE_LINE | SHORTCUT_INLINE);  //The method returns 0 if it fails
-  blue = terminal.newButton(terminal.columns()*2/3 + 1, 16, terminal.columns()/3, 3, F("Blue button"),  COLOUR_BLUE,  OUTER_BOX | BOX_DOUBLE_LINE | LABEL_CENTRED);   //Colour is the colour of the frame, lettering can be different
+  red = terminal.newButton(1, terminal.lines()/2, terminal.columns()/3, 3, F("Red button"),   COLOUR_WHITE | ATTRIBUTE_BRIGHT | BACKGROUND_COLOUR_RED, SHORTCUT_INLINE | LABEL_CENTRED);    //Create three new buttons and record the IDs
+  green = terminal.newButton(terminal.columns()/3 +1, terminal.lines()/2, terminal.columns()/3, 3, F("Green button"), COLOUR_GREEN, OUTER_BOX | BOX_SINGLE_LINE | SHORTCUT_INLINE);  //The method returns 0 if it fails
+  blue = terminal.newButton(terminal.columns()*2/3 + 1, terminal.lines()/2, terminal.columns()/3, 3, F("Blue button"),  COLOUR_BLUE,  OUTER_BOX | BOX_DOUBLE_LINE | LABEL_CENTRED);   //Colour is the colour of the frame, lettering can be different
   if(red)
   {
     terminal.labelAttributes(red, COLOUR_WHITE | ATTRIBUTE_BRIGHT | BACKGROUND_COLOUR_RED);    //Make the button text more emphasised, for better contrast

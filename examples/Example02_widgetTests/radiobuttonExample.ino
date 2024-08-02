@@ -1,9 +1,9 @@
 void radioButtonExample()
 {
   newPage(F("Radio button test"));
-  red = terminal.newRadioButton(terminal.columns()/3 - 1, 15, 16, 5, F("Red"),   COLOUR_WHITE, OUTER_BOX | SHORTCUT_INLINE);    //Create three new widgets and record the IDs
-  green = terminal.newRadioButton(terminal.columns()/3,     17, 14, 1, F("Green"), COLOUR_WHITE, SHORTCUT_INLINE);  //The method returns 0 if it fails
-  blue = terminal.newRadioButton(terminal.columns()/3,     18, 14, 1, F("Blue"),  COLOUR_WHITE, SHORTCUT_INLINE);   //Colour is the colour of the frame, lettering can be different
+  red = terminal.newRadioButton(terminal.columns()/3 - 1, terminal.lines()/2, 16, 5, F("Red"),   COLOUR_WHITE, OUTER_BOX | SHORTCUT_INLINE);    //Create three new widgets and record the IDs
+  green = terminal.newRadioButton(terminal.columns()/3, terminal.lines()/2+2, 14, 1, F("Green"), COLOUR_WHITE, SHORTCUT_INLINE);  //The method returns 0 if it fails
+  blue = terminal.newRadioButton(terminal.columns()/3, terminal.lines()/2+3, 14, 1, F("Blue"),  COLOUR_WHITE, SHORTCUT_INLINE);   //Colour is the colour of the frame, lettering can be different
   if(red)
   {
     terminal.labelAttributes(red, COLOUR_RED | ATTRIBUTE_BRIGHT);     //Make the label text more emphasised, for better contrast
