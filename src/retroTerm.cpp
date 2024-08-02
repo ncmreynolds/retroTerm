@@ -144,6 +144,10 @@ bool retroTerm::_processInput()
 			{
 				if(_widgets[_selectedWidget].value > 0)
 				{
+					if(_widgets[_selectedWidget].value - _widgets[_selectedWidget].contentOffset == 0)	//Gone off the top of the widget
+					{
+						_widgets[_selectedWidget].contentOffset--;							//Scroll all the content down to bring it back into view
+					}
 					_widgets[_selectedWidget].value--;
 					_widgets[_selectedWidget].currentState = _widgets[_selectedWidget].currentState | 0x0210;	//Mark the widget content as changed and widget as clicked
 					_widgetChanged = true;
@@ -158,7 +162,11 @@ bool retroTerm::_processInput()
 			{
 				if(_widgets[_selectedWidget].value < _widgets[_selectedWidget].contentLength - 1)
 				{
-					_widgets[_selectedWidget].value++;
+					_widgets[_selectedWidget].value++;										//Increment the selected option
+					if(_widgets[_selectedWidget].value - _widgets[_selectedWidget].contentOffset == _linesAvailable(_selectedWidget))	//Gone off the bottom of the widget
+					{
+						_widgets[_selectedWidget].contentOffset++;							//Scroll all the content up to bring it back into view
+					}
 					_widgets[_selectedWidget].currentState = _widgets[_selectedWidget].currentState | 0x0210;	//Mark the widget content as changed and widget as clicked
 					_widgetChanged = true;
 				}
