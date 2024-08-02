@@ -97,7 +97,9 @@ There are then further examples that serve as a demonstration of how to use each
 
 ### Dependencies
 
-This library has no specific dependencies, but you will need a fully featured terminal emulator that can connect to your target microcontroller over a serial or USB-serial interface. Testing is done with [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/) and it is strongly recommend you start with using this.
+This library has no specific dependencies, but you will need a fully featured terminal emulator that can connect to your target microcontroller over a serial or USB-serial interface.
+
+Testing of retroTerm's features is done with [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/) and it is strongly recommend you start by using this. Alternatively, GNU Screen makes a very good command line terminal emulator in Linux and you can use it to connect to a device on a USB serial port with a command line like 'screen /dev/ttyUSB0 230400', simply substitute 'ttyUSB0' with whatever device the microcontroller appears as. This is often 'ttyACM0' for microcontrollers with their own USB CDC device.
 
 It is only fully tested on the handful of microcontrollers below and some of these have specific code, usually related to storing strings/character arrays in flash memory to save working memory. Other microcontrollers may use working memory for all strings.
 
