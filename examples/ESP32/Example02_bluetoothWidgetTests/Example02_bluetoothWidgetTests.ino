@@ -70,21 +70,28 @@ uint8_t green = 0;
 uint8_t blue = 0;
 
 void setup() {
+  Serial.begin(115200);
   SerialBT.begin(bluetoothDeviceName); //Set the Bluetooth device name
+  while(SerialBT.hasClient() == false) {}  //Only start the demo once something connects
+  Serial.println(F("Bluetooth client connected"));
   terminal.begin(SerialBT);    //Initialise the retroterm library
   terminal.defaultAttributes(BACKGROUND_COLOR_BLACK | COLOUR_WHITE);  //Set some initial attributes for printing
   terminal.probeSize();   //Attempts to determine how many lines and columns the terminal has
 }
 
 void loop() {
-  probingExample();             //Demo methods that 'probe' the terminal, see the tab 'probingDemo' for code
-  buttonExample();              //Demo methods for creating and checking the state of button widgets, see the tab 'buttonDemo' for code
-  checkboxExample();            //Demo methods for creating and checking the state of checkbox widgets, see the tab 'checkboxDemo' for code
-  radioButtonExample();         //Demo methods for creating and checking the state of radio button widgets, see the tab 'radiobuttonDemo' for code
-  textDisplayExample();         //Demo methods for creating static content text box widgets, see the tab 'textDisplayDemo' for code
-  textLogExample();             //Demo methods for creating 'logging' text box widgets, see the tab 'textLogDemo' for code. This widget does NOT store content long term, it's intended to be a logging/chat window etc.
-  listBoxExample();             //Demo methods for creating list box widgets, see the tab 'listBoxExample' for code
-  textInputExample();           //Demo methods for creating and retrieving input from text input fields, see the tab 'textInputDemo' for code
+  while(SerialBT.hasClient() == true) { //Only run the demo while something is connected
+    probingExample();             //Demo methods that 'probe' the terminal, see the tab 'probingDemo' for code
+    buttonExample();              //Demo methods for creating and checking the state of button widgets, see the tab 'buttonDemo' for code
+    checkboxExample();            //Demo methods for creating and checking the state of checkbox widgets, see the tab 'checkboxDemo' for code
+    radioButtonExample();         //Demo methods for creating and checking the state of radio button widgets, see the tab 'radiobuttonDemo' for code
+    textDisplayExample();         //Demo methods for creating static content text box widgets, see the tab 'textDisplayDemo' for code
+    textLogExample();             //Demo methods for creating 'logging' text box widgets, see the tab 'textLogDemo' for code. This widget does NOT store content long term, it's intended to be a logging/chat window etc.
+    listBoxExample();             //Demo methods for creating list box widgets, see the tab 'listBoxExample' for code
+    textInputExample();           //Demo methods for creating and retrieving input from text input fields, see the tab 'textInputDemo' for code
+  }
+  delay(1000);
+  Serial.println(F("Waiting for Bluetooth connection"));
 }
 
 /*
